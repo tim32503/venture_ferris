@@ -1,0 +1,97 @@
+/*----- 字型設定 -----*/
+@import url(//fonts.googleapis.com/earlyaccess/notosanstc.css);
+*{ font-family: 'Noto Sans TC'; }
+
+/*----- 基本設定 -----*/
+body { 
+	background-image: asset-url("bg.jpg"); 
+	background-repeat: repeat; 
+	background-attachment: fixed; 
+	background-position: center top; 
+	background-size: cover; 
+}
+header { margin: 2rem; padding-bottom: 1em; color: white; text-shadow: 0px 0 black, 0 1.5px black, 1.5px 0 black, 0 0px black; }
+header .inline{ -webkit-box-orient: horizontal; -webkit-box-direction: normal; -ms-flex-flow: row wrap; flex-flow: row wrap; -webkit-box-align: center; -ms-flex-align: center; align-items: center; }
+header .navbar{ position: fixed; z-index: 2000; top: 0; left: 0; right: 0; box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12); }
+footer{ color: white; }
+footer .ad{ color: white; border: 3px solid white; padding: .25rem; margin: 0 10rem; }
+main{ 
+	padding-bottom: 5em; 
+	color: white; 
+	text-shadow: 1px 0 5px black, 0 1px 5px black;
+}
+
+.dialog{ font-size: 1.25rem; color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; padding: .75rem 1.25rem; border: 5px solid white; background-color: #999; box-shadow: 0.5px 0.5px 0 3px #999; margin: 1.5rem }
+.modal-header, .modal-body{
+	color: black; 
+	text-shadow: 1px 0 5px white, 0 1px 5px white;
+}
+
+/*----- 客製設定-打字機效果 -----*/
+@keyframes blink { from, to{ color: transparent; text-shadow: -1.5px 0 transparent, 0 1.5px transparent, 1.5px 0 transparent, 0 -1.5px transparent; } 50% { color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; } }
+@-webkit-keyframes blink { from, to{ color: transparent; text-shadow: -1.5px 0 transparent, 0 1.5px transparent, 1.5px 0 transparent, 0 -1.5px transparent; } 50% { color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; } }
+.cursor-blink{ animation: blink 1s step-end infinite; }
+ 
+/*----- 客製設定-登入頁 -----*/
+.login{ position: relative; }
+.login-bg{ height: 100%; width: 100%; }
+.login-logo{ width: 80%; position: absolute; top:5rem; left:10%; }
+.login-dialog{ font-size: 1.25rem; color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; position: absolute; padding: .75rem 1.25rem; border: 5px solid white; background-color: #999; box-shadow: 0.5px 0.5px 0 3px #999; top: 23rem; left:10%; right: 10% }
+.login-grass{ width: 100%; position: absolute; bottom:-8rem; }
+
+/*----- 客製設定-首頁 -----*/
+.home-group{ 
+	padding-left: 5rem;
+    padding-right: 5rem;
+    width: 100%; 
+}
+
+/*----- 客製設定-地圖頁 -----*/
+.map-menu {
+	position: fixed;
+	top: 1rem;
+	left: 1rem;
+}
+
+.map-menu:hover {
+	cursor: pointer;
+}
+
+/*----- 客製設定-遊戲頁 -----*/
+.light { filter: brightness(1); -webkit-filter: brightness(1); }
+.dark { filter: brightness(0); -webkit-filter: brightness(0); }
+.alertText{ text-shadow: 1px 0 5px white, 0 1px 5px white; }
+
+/*----- 客製設定-職業頁 -----*/
+#carouselJob{
+	margin: 0rem 3rem;
+	padding: 2rem;
+}
+
+/*----- 客製設定-熊檢頁 -----*/
+.bear-check {
+	position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+}
+
+.bear-check:hover {
+	cursor: pointer;
+}
+
+/*----- 客製設定-魔王頁 -----*/
+.boss-bg{ height: 100%; width: 100%; }
+.boss-grass{ width: 100%; position: absolute; bottom: -2rem; left: 0; z-index: 100; }
+.boss{ width: 100%; position: absolute; bottom: -2rem; left: 0; z-index: 10; }
+
+#counter {
+    font-size: 3rem;
+    color: yellow;
+    text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black;
+	
+}
+
+#bossHP{
+	z-index: 200;
+	margin: .5rem;
+}
