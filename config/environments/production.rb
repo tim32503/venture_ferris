@@ -100,6 +100,15 @@ Rails.application.configure do
   #   "example.com",     # Allow requests from example.com
   #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
   # ]
+  # Deployment target is not yet decided (see README.md "部署待辦"), so this
+  # only takes effect when the ALLOWED_HOSTS env var is actually set — a
+  # comma-separated list of hostnames, e.g. "example.com,www.example.com".
+  # Leaving it unset keeps the default (commented-out, i.e. no allowlist)
+  # behavior above.
+  if ENV["ALLOWED_HOSTS"].present?
+    config.hosts = ENV["ALLOWED_HOSTS"].split(",").map(&:strip)
+  end
+
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end
