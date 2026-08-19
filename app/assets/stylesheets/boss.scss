@@ -1,0 +1,82 @@
+/*----- 字型設定 -----*/
+@import url(//fonts.googleapis.com/earlyaccess/notosanstc.css);
+*{ font-family: 'Noto Sans TC'; }
+
+/*----- 基本設定 -----*/
+body { 
+	background-image: asset-url("bossBg.png");
+	background-repeat: no-repeat; 
+	background-attachment: fixed; 
+	background-position: center top; 
+	background-size: cover; 
+}
+header { margin: 2rem; padding-bottom: 1em; }
+header .inline{ -webkit-box-orient: horizontal; -webkit-box-direction: normal; -ms-flex-flow: row wrap; flex-flow: row wrap; -webkit-box-align: center; -ms-flex-align: center; align-items: center; }
+header .navbar{ position: fixed; z-index: 2000; top: 0; left: 0; right: 0; box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12); }
+footer{ color: white; }
+footer .ad{ color: white; border: 3px solid white; padding: .25rem; margin: 0 10rem; }
+main{ 
+	padding-bottom: 5em; 
+	color: white; 
+	text-shadow: 1px 0 5px black, 0 1px 5px black;
+}
+
+h2{	color: white; text-shadow: 0px 0 black, 0 1.5px black, 1.5px 0 black, 0 0px black; }
+p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
+.dialog{ font-size: 1.25rem; color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; padding: .75rem 1.25rem; border: 5px solid white; background-color: #999; box-shadow: 0.5px 0.5px 0 3px #999; margin: 1.5rem }
+
+/*----- 客製設定-打字機效果 -----*/
+@keyframes blink { from, to{ color: transparent; text-shadow: -1.5px 0 transparent, 0 1.5px transparent, 1.5px 0 transparent, 0 -1.5px transparent; } 50% { color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; } }
+@-webkit-keyframes blink { from, to{ color: transparent; text-shadow: -1.5px 0 transparent, 0 1.5px transparent, 1.5px 0 transparent, 0 -1.5px transparent; } 50% { color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; } }
+.cursor-blink{ animation: blink 1s step-end infinite; }
+
+/*----- 客製設定-魔王頁 -----*/
+.boss-bg{ height: 100%; width: 100%; }
+.boss-grass{ width: 100%; position: absolute; bottom: -2rem; left: 0; z-index: 100; }
+.boss{ z-index: 10; }
+.mon01{ width: 80%; position: absolute; bottom: 15rem; left: 3rem; z-index: 10; }
+.mon02{ width: 90%; position: absolute; bottom: 10rem; left: 1.5rem; z-index: 10; }
+.mon03{ width: 70%; position: absolute; bottom: 10rem; left: 3.5rem; z-index: 10; }
+.mon04{ width: 40%; position: absolute; bottom: 5rem; left: 8rem; z-index: 10; }
+.mon05{ width: 80%; position: absolute; bottom: 10rem; left: 2.5rem; z-index: 10; }
+.mon06{ width: 70%; position: absolute; bottom: 15rem; left: 4rem; z-index: 10; }
+.mon07{ width: 60%; position: absolute; bottom: 8rem; left: 5rem; z-index: 10; }
+.mon08{ width: 100%; position: absolute; bottom: 10rem; left: 0.5rem; z-index: 10; }
+.mon09{ width: 80%; position: absolute; bottom: 10rem; left: 2rem; z-index: 10; }
+.mon11{ width: 150%; position: absolute; bottom: 13rem; left: -6rem; z-index: 10; }
+
+
+#counter {
+    font-size: 3rem;
+    color: #ffc107;
+    text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black;
+	
+}
+
+#bossHP{
+	z-index: 200;
+	margin: .5rem;
+}
+
+
+
+.ripple {
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0);
+  position: absolute;
+  opacity: 1;
+}
+
+.rippleEffect {
+  animation: rippleDrop .6s linear;
+}
+
+@keyframes rippleDrop {
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
