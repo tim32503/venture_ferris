@@ -1,0 +1,52 @@
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">序號產生器</h1>
+    <%= link_to "回 Dashboard", admin_root_path, class: "btn btn-outline-secondary btn-sm" %>
+  </div>
+
+  <% if flash[:notice] %>
+    <div class="alert alert-success"><%= flash[:notice] %></div>
+  <% end %>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h5">批量產生</h2>
+      <%= form_with url: admin_serial_codes_path, method: :post, local: true, class: "form-inline" do |f| %>
+        <div class="form-group mr-3">
+          <%= f.label :count, "產生筆數", class: "mr-2" %>
+          <%= f.number_field :count, value: Admin::SerialCodesController::DEFAULT_COUNT,
+                                      min: 1, max: Admin::SerialCodesController::MAX_COUNT,
+                                      class: "form-control", style: "width: 8rem;" %>
+        </div>
+
+        <div class="form-check mr-3">
+          <%= f.check_box :test_mode, class: "form-check-input" %>
+          <%= f.label :test_mode, "測試模式 (test_mode)", class: "form-check-label" %>
+        </div>
+
+        <%= f.submit "產生序號", class: "btn btn-primary" %>
+      <% end %>
+    </div>
+  </div>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>序號 (serial_no)</th>
+        <th>test_mode</th>
+        <th>建立時間</th>
+        <th>QR Code</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @teams.each do |team| %>
+        <tr>
+          <td><code><%= team.serial_no %></code></td>
+          <td><%= team.test_mode? ? "是" : "否" %></td>
+          <td><%= team.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+          <td><%= serial_code_qr_svg(team) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

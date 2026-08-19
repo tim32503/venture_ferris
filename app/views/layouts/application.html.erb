@@ -1,23 +1,66 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Venture Ferris" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+      
+    <title>勇闖摩天輪</title>
+
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <%= yield :head %>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz" crossorigin="anonymous">
 
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+    <%= javascript_include_tag "jquery.ui.touch-punch", "jquery.snap-puzzle.min" %>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+    <%= stylesheet_link_tag "site" %>
     <%= javascript_importmap_tags %>
+
+    <script type="text/javascript">
+      //JS-打字機效果
+      function type(text, field){
+        if($('#cursor_blink').length >= 1){
+          $('#cursor_blink').remove();
+        }
+        
+        field = field || "teletype";
+        var cursor = "<span class='cursor-blink' id='cursor_blink'>_</span>";
+        var telecopy = text;
+        var counter = 0;
+        $('#'+field).html(cursor);
+        $('#'+field).removeAttr("hidden");
+        var timer = setInterval(function(){
+          $('#'+field).html(telecopy.substr(0, counter) + cursor);
+          counter++;
+          
+          if(counter === telecopy.length +1){
+            clearInterval(timer);
+          }
+        }, 100);
+      }
+    </script>
+
+    <%= yield :head %>
   </head>
 
   <body>
     <%= yield %>
+    
+    <footer class="container-fluid">
+      <div class="text-center">
+        <p>遊戲設計/Escapeholics密室逃脫</p>
+        <p>主辦單位/臺北市商業處、臺北市商圈產業聯合會</p>
+        <p>指導單位/經濟部中小企業處</p>
+        <br>
+        <p class="ad">廣告</p>
+      </div>	
+    </footer>
   </body>
 </html>

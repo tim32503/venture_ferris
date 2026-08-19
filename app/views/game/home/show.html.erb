@@ -1,0 +1,66 @@
+<% content_for :title, "遊戲選單" %>
+
+<header class="container">
+  <h2 class="text-center">遊戲選單</h2>
+</header>
+
+<div class="container-fluid">
+  <% if flash[:alert] %>
+    <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
+  <% end %>
+  <% if flash[:notice] %>
+    <div class="alert alert-success text-center" role="alert"><%= flash[:notice] %></div>
+  <% end %>
+</div>
+
+<%# The active-question poll anchors on question #1's status endpoint just to have a
+    concrete URL to hit — questions#status answers with team-wide
+    active_question_number info no matter which number is in the path. See
+    active_question_poll_controller.js. Boss polling (legacy BossIsStart()) is now
+    wired up (REFACTOR_PLAN.md P4) via the same endpoint's `active_boss_number`
+    field and the controller's `bossBasePath` value, rather than a second
+    data-controller. %>
+<main class="container-fluid"
+      data-controller="active-question-poll"
+      data-active-question-poll-url-value="<%= status_game_question_path(Question::FIRST_NUMBER) %>"
+      data-active-question-poll-question-base-path-value="<%= question_redirect_base_path %>"
+      data-active-question-poll-boss-base-path-value="<%= boss_redirect_base_path %>">
+
+  <div class="dialog text-center">
+    <% if current_team.test_mode? %>
+      <span class="badge badge-warning">Demo</span>
+    <% end %>
+    <p>冒險團：<strong><%= current_team.name || "尚未命名" %></strong></p>
+    <p><%= role_label(current_player.role) %>／<%= current_player.job.present? ? job_label(current_player.job) : "尚未選擇職業" %></p>
+    <p>解謎進度：<%= @solved_count %> / <%= @total_questions %></p>
+  </div>
+
+  <div class="text-center btn-group-vertical home-group">
+    <button class="btn btn-secondary" data-toggle="modal" data-target="#descModal">玩法說明</button>
+    <%= link_to "冒險隊伍", game_team_path, class: "btn btn-secondary" %>
+    <%= link_to "遊戲地圖", game_current_map_path, class: "btn btn-secondary" %>
+    <%# 積分紀錄／任務獎勵／登出遊戲: game/scores, game/rewards and
+        game/sessions#destroy all shipped in REFACTOR_PLAN.md's P4 batch. %>
+    <%= link_to "積分紀錄", game_score_path, class: "btn btn-secondary" %>
+    <%= link_to "任務獎勵", game_reward_path, class: "btn btn-secondary" %>
+    <%= button_to "登出遊戲", game_session_path, method: :delete, class: "btn btn-secondary",
+                   form: { data: { turbo_confirm: "確定要登出嗎？" } } %>
+  </div>
+
+  <div class="modal fade" id="descModal" tabindex="-1" role="dialog" aria-labelledby="descModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="descModalLabel">玩法說明</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <%= image_tag "description.png", class: "img-fluid" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

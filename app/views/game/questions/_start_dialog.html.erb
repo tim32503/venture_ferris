@@ -1,0 +1,20 @@
+<%# Shown before the team has started timing this question (legacy
+    wheel_question.php/wheel_puzzle.php/wheel_bear.php all gate their
+    content behind a confirm/cancel dialog once TIME_END == the "not
+    started" sentinel). Confirming POSTs to #timer and reloads back onto
+    this same page, which will then render the started state instead —
+    unlike the legacy inline JS toggle, no client-side "started" state is
+    ever duplicated here. %>
+<div class="dialog">
+  <p><%= question.content %></p>
+  <p>此題難度為【<%= question.level %>】，確定要開始解這道謎題嗎？點選「確認開始」後將開始計時。</p>
+</div>
+
+<div class="row text-center">
+  <div class="col">
+    <%= button_to "確認開始", timer_game_question_path(question.number),
+                   method: :post, class: "btn btn-secondary",
+                   form: { data: { turbo_confirm: "確定要開始計時嗎？" } } %>
+    <%= link_to "取消，返回地圖", game_current_map_path, class: "btn btn-secondary" %>
+  </div>
+</div>

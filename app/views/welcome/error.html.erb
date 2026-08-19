@@ -1,0 +1,15 @@
+<header class="container">
+</header>
+
+<main class="container">
+  <div class="dialog text-center" role="alert">
+    <h2>錯誤</h2>
+    <p>[#<%= @error_code %>] <%= @error_message %></p>
+  </div>
+
+  <div class="text-center">
+    <% if @error_code == '01001' || @error_code == '01004' %>
+      <%= link_to "帳號轉移", game_login_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</main>

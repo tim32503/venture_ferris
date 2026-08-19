@@ -1,0 +1,69 @@
+<% content_for :title, @question.title %>
+
+<% content_for :head do %>
+  <%# The legacy jigsaw page (wheel_puzzle.php:57-78) keeps this CSS page-local
+      rather than in the shared site.css, since only the two puzzle questions
+      need it — kept the same way here rather than editing the P0 stylesheet. %>
+  <style>
+    .snappuzzle-wrap { position: relative; display: block; }
+    .snappuzzle-pile { position: relative; min-height: 120px; }
+    .snappuzzle-piece { cursor: move; }
+    .snappuzzle-slot { position: absolute; background: rgba(255, 255, 255, 0.3); }
+    .snappuzzle-slot-hover { background: rgba(255, 255, 255, 0.6); }
+    #puzzle-solved-banner { display: none; }
+  </style>
+<% end %>
+
+<header class="text-center">
+  <h2><%= @question.title %></h2>
+</header>
+
+<main class="container-fluid">
+  <div class="container-fluid">
+    <% if flash[:alert] %>
+      <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
+    <% end %>
+    <% if flash[:notice] %>
+      <div class="alert alert-success text-center" role="alert"><%= flash[:notice] %></div>
+    <% end %>
+  </div>
+
+  <% if @attempt.started_at.blank? %>
+    <%= render "game/questions/start_dialog", question: @question %>
+  <% else %>
+    <div class="dialog"><%= @question.content %></div>
+
+    <div class="row"
+         data-controller="puzzle"
+         data-puzzle-rows-value="<%= @question.puzzle_rows %>"
+         data-puzzle-columns-value="<%= @question.puzzle_cols %>">
+      <div class="col-md-6">
+        <%= image_tag question_image_filename(@question), class: "img-fluid",
+                       id: "source_image", alt: @question.title, data: { puzzle_target: "image" } %>
+      </div>
+      <div class="col-md-6">
+        <div data-puzzle-target="pile" style="min-height: 200px;"></div>
+        <p id="puzzle-solved-banner" data-puzzle-target="solvedBanner" class="dialog text-center">
+          恭喜完成拼圖！請在照片中找出答案並於下方輸入。
+        </p>
+      </div>
+    </div>
+
+    <%= render "game/questions/hint_panel", question: @question, attempt: @attempt %>
+
+    <%= form_with url: answer_game_question_path(@question.number), method: :post, local: true, class: "dialog" do |f| %>
+      <div class="input-group mb-3">
+        <%= f.text_field :answer, class: "form-control", placeholder: "拼圖完成後，請輸入你找到的答案", required: true %>
+        <div class="input-group-append">
+          <%= f.submit "確認送出", class: "btn btn-primary", disabled: true, data: { puzzle_target: "submit" } %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+
+  <div class="row text-center">
+    <div class="col">
+      <%= link_to "《返回遊戲地圖》", game_current_map_path, class: "btn btn-link" %>
+    </div>
+  </div>
+</main>

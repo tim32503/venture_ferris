@@ -1,0 +1,52 @@
+<% content_for :title, @question.title %>
+
+<% content_for :head do %>
+  <style>
+    /* Page-scoped (legacy wheel_bear.php also kept its interaction CSS
+       page-local rather than in the shared site.css) — see bear_controller.js. */
+    .bear-zoomed { transform: scale(1.4); transition: transform .2s ease; cursor: zoom-out; }
+    [data-controller~="bear"] img { cursor: zoom-in; }
+  </style>
+<% end %>
+
+<header class="text-center">
+  <h2><%= @question.title %></h2>
+</header>
+
+<main class="container-fluid">
+  <div class="container-fluid">
+    <% if flash[:alert] %>
+      <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
+    <% end %>
+    <% if flash[:notice] %>
+      <div class="alert alert-success text-center" role="alert"><%= flash[:notice] %></div>
+    <% end %>
+  </div>
+
+  <% if @attempt.started_at.blank? %>
+    <%= render "game/questions/start_dialog", question: @question %>
+  <% else %>
+    <div data-controller="bear" class="text-center">
+      <%= image_tag question_image_filename(@question), class: "img-fluid",
+                     alt: @question.title, data: { bear_target: "image", action: "click->bear#toggleZoom" } %>
+    </div>
+    <div class="dialog"><%= @question.content %></div>
+
+    <%= render "game/questions/hint_panel", question: @question, attempt: @attempt %>
+
+    <%= form_with url: answer_game_question_path(@question.number), method: :post, local: true, class: "dialog" do |f| %>
+      <div class="input-group mb-3">
+        <%= f.text_field :answer, class: "form-control", placeholder: "請輸入答案", required: true, autofocus: true %>
+        <div class="input-group-append">
+          <%= f.submit "確認送出", class: "btn btn-primary" %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+
+  <div class="row text-center">
+    <div class="col">
+      <%= link_to "《返回遊戲地圖》", game_current_map_path, class: "btn btn-link" %>
+    </div>
+  </div>
+</main>

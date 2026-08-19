@@ -1,0 +1,23 @@
+<%# Renders nothing at all when hints are disabled (question 6) — no hint
+    button, no hint text, matching REFACTOR_PLAN.md P3's "第 6 題不顯示提示按鈕".
+    Legacy equivalent: wheel_question.php:169-171 disables (but still shows)
+    the hint button for qno 6; this hides it outright since there is
+    nothing it could ever do. %>
+<% if question.hints_enabled? %>
+  <div class="dialog">
+    <p>情報筆記（已使用 <%= attempt.hint_count %> / <%= Game::QuestionsController::HINT_LIMIT %> 次提示）</p>
+
+    <% if attempt.hint_count >= 1 %>
+      <p>(1) <%= question.hint1 %></p>
+    <% end %>
+    <% if attempt.hint_count >= 2 %>
+      <p>(2) <%= question.hint2 %></p>
+    <% end %>
+
+    <% if attempt.hint_count < Game::QuestionsController::HINT_LIMIT %>
+      <%= button_to "使用提示", hints_game_question_path(question.number),
+                     method: :post, class: "btn btn-primary",
+                     form: { data: { turbo_confirm: "確認要使用提示嗎？使用後提示會顯示在情報筆記裡。" } } %>
+    <% end %>
+  </div>
+<% end %>

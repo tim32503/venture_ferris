@@ -1,0 +1,124 @@
+<% content_for :title, "勇闖摩天輪" %>
+<% content_for :head do %>
+  <style>
+    @import url(//fonts.googleapis.com/earlyaccess/notosanstc.css);
+    *{
+      font-family: 'Noto Sans TC'; 
+      color: white; text-shadow: 1px 0 5px black, 0 1px 5px black;
+    }
+
+    html{
+      height: 100%;
+    }
+
+    body{
+      background-image: url('<%= asset_path("loginBg.jpg") %>');
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-position: center top;
+      background-size: cover;
+    }
+    
+    header{
+      margin: 5rem;
+    }
+    
+    main{
+      background-color: #666;
+      margin: 3rem;
+      padding: 2rem;
+      border: .25rem solid white;
+      border-radius: .25rem;
+    }
+  </style>
+<% end %>
+
+<header>
+  <div class="text-center">
+    <%= image_tag "logo.png", class: "img-fluid" %>
+  </div>
+</header>
+
+<main>
+  <div class="text-center mb-3">
+    <%= button_to "▶ 直接體驗（Demo）", game_session_path, params: { demo: "1" }, class: "btn btn-lg btn-primary" %>
+    <p><small>Demo 模式：每次點擊都會建立一個全新的單人示範隊伍，Boss 難度已調降以便單人體驗</small></p>
+  </div>
+
+  <table class="table text-center">
+    <thead>
+      <tr class="table-secondary">
+        <th colspan="2">活動時間</th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr>
+        <td>10/20</td>
+        <td rowspan="2" class="align-middle">11:00 - 21:00</td>
+      </tr>
+      <tr>
+        <td>10/21</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table class="table text-center">
+    <thead>
+      <tr class="table-secondary">
+        <th>活動地點</th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr>
+        <td>大直美麗華旁植福路</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table class="table text-center">
+    <thead>
+      <tr class="table-secondary">
+        <th>主辦單位</th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr>
+        <td>臺北市商業處</td>
+      </tr>
+      <tr>
+        <td>臺北市商圈產業聯合會</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table class="table text-center">
+    <thead>
+      <tr class="table-secondary">
+        <th>指導單位</th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr>
+        <td>經濟部中小企業處</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table class="table text-center">
+    <thead>
+      <tr class="table-secondary">
+        <th>遊戲設計</th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr>
+        <td>Escapeholics密室逃脫</td>
+      </tr>
+    </tbody>
+  </table>
+</main>

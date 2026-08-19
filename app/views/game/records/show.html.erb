@@ -1,0 +1,38 @@
+<% content_for :title, "解謎紀錄" %>
+
+<header class="container">
+  <h2 class="text-center">解謎紀錄</h2>
+</header>
+
+<main class="container-fluid">
+  <% if @attempts.empty? %>
+    <p class="dialog text-center">目前尚無已完成的題目。</p>
+  <% else %>
+    <table class="table text-center">
+      <thead>
+        <tr class="table-secondary">
+          <th>題號</th>
+          <th>題目</th>
+          <th>耗時（秒）</th>
+          <th>提示使用次數</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @attempts.each do |attempt| %>
+          <tr>
+            <td><%= attempt.question.number %></td>
+            <td><%= attempt.question.title %></td>
+            <td><%= attempt.elapsed_seconds %></td>
+            <td><%= attempt.hint_count %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <div class="row text-center">
+    <div class="col">
+      <%= link_to "《返回遊戲選單》", game_root_path, class: "btn btn-link" %>
+    </div>
+  </div>
+</main>
