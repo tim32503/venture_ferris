@@ -1,0 +1,37 @@
+<% content_for :title, "登入" %>
+
+<header class="container">
+  <h2 class="text-center">勇闖摩天輪</h2>
+</header>
+
+<main class="container">
+  <div class="login-dialog">
+    <% if flash[:alert] %>
+      <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
+    <% end %>
+
+    <%= form_with url: game_session_path, method: :post, local: true, class: "dialog" do |f| %>
+      <div class="form-group">
+        <%= f.label :serial_no, "序號" %>
+        <%= f.text_field :serial_no, value: @serial_no, class: "form-control", maxlength: 16, required: true %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :role, "角色" %>
+        <%= f.select :role, [ [ "隊長", "leader" ], [ "隊員", "member" ] ], { selected: @role }, class: "form-control", required: true %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :email, "遊戲帳號（Email）" %>
+        <%= f.email_field :email, class: "form-control", required: true %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :gender, "性別" %>
+        <%= f.select :gender, [ [ "男", "male" ], [ "女", "female" ], [ "不透露", "unspecified" ] ], { selected: "unspecified" }, class: "form-control" %>
+      </div>
+
+      <%= f.submit "進入遊戲", class: "btn btn-primary btn-block" %>
+    <% end %>
+  </div>
+</main>

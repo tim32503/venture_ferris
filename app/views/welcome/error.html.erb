@@ -9,33 +9,7 @@
 
   <div class="text-center">
     <% if @error_code == '01001' || @error_code == '01004' %>
-      <button type='button' class='btn btn-primary' id='updateSno'>帳號轉移</button>
+      <%= link_to "帳號轉移", game_login_path, class: "btn btn-primary" %>
     <% end %>
   </div>
 </main>
-
-<% content_for :head do %>
-  <script>
-    $(document).ready(function(){
-      $('#back').hide();
-    });
-    
-    // TODO: 帳號轉移的網址皆需要再調整為 rails helper 寫法
-    $('#updateSno').click(function(){
-      $.ajax({
-        type: 'POST',
-        dataType: 'json',
-        url: 'https://taipeicooc2018.escapeholics.com/wheel/updateSNo',
-        
-        success: function (data) {
-          alert('帳號已轉移成功！稍後將重新導頁至登入頁面，請重新登入');
-          
-          window.setTimeout(function(){
-            window.location.href = 'https://taipeicooc2018.escapeholics.com/wheel/login/'+data.SERIAL_NO+'/'+data.CHAR_TYPE;
-          }, 3000);
-        },
-        error: function() { alert('轉移失敗！'); },
-      });
-    });
-  </script>
-<% end %>

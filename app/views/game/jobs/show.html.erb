@@ -1,0 +1,52 @@
+<% content_for :title, "選擇職業" %>
+
+<header class="text-center">
+  <h2>選擇職業</h2>
+</header>
+
+<main class="container-fluid"
+      data-controller="job-poll"
+      data-job-poll-url-value="<%= game_job_status_path %>"
+      data-job-poll-self-email-value="<%= current_player.email %>">
+
+  <% if flash[:alert] %>
+    <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
+  <% end %>
+
+  <% if current_player.job.present? %>
+    <div class="dialog text-center">
+      <p>您已選擇職業：<strong><%= job_label(current_player.job) %></strong></p>
+    </div>
+  <% else %>
+    <div id="carouselJob" class="carousel slide" data-ride="carousel">
+      <div class="carousel-inner">
+        <% Player.jobs.keys.each_with_index do |job, index| %>
+          <div class="carousel-item <%= "active" if index.zero? %>" data-job-poll-target="jobCard" data-job="<%= job %>">
+            <%= image_tag "#{job}.png", class: "d-block w-100", alt: job_label(job) %>
+            <div class="carousel-caption">
+              <h5><%= job_label(job) %></h5>
+              <%= form_with url: game_job_path, method: :patch, local: true do |f| %>
+                <%= f.hidden_field :job, value: job %>
+                <%= f.submit "選擇#{job_label(job)}", class: "btn btn-success" %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <a class="carousel-control-prev" href="#carouselJob" role="button" data-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="sr-only">前一個</span>
+      </a>
+      <a class="carousel-control-next" href="#carouselJob" role="button" data-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="sr-only">後一個</span>
+      </a>
+    </div>
+  <% end %>
+
+  <div class="row text-center">
+    <div class="col">
+      <%= link_to "《前往主選單》", game_root_path, class: "btn btn-link" %>
+    </div>
+  </div>
+</main>

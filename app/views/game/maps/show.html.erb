@@ -1,0 +1,39 @@
+<% content_for :title, "遊戲地圖" %>
+
+<%# Same active-question redirect as the home page (see game/home/show.html.erb
+    and active_question_poll_controller.js) — legacy wheel_map1/2/3.php all ran
+    the same questionIsStart()/BossIsStart() polls the home page did. %>
+<main data-controller="active-question-poll"
+      data-active-question-poll-url-value="<%= status_game_question_path(Question::FIRST_NUMBER) %>"
+      data-active-question-poll-question-base-path-value="<%= question_redirect_base_path %>"
+      data-active-question-poll-boss-base-path-value="<%= boss_redirect_base_path %>">
+  <div id="m<%= @map_id %>" style="position: relative;">
+    <%= image_tag @image, usemap: "#Map#{@map_id}", class: "img-fluid" %>
+    <map name="Map<%= @map_id %>" id="Map<%= @map_id %>">
+      <% @areas.each do |area| %>
+        <%
+          href = area[:to_map] ? game_map_path(area[:to_map]) : game_question_path(area[:number])
+          solved = area[:number].present? && @completed_numbers.include?(area[:number])
+        %>
+        <area alt="<%= area[:title] %>" title="<%= area[:title] %><%= " (已完成)" if solved %>"
+              href="<%= href %>" shape="<%= area[:shape] %>" coords="<%= area[:coords] %>">
+      <% end %>
+    </map>
+  </div>
+
+  <%# The legacy map views (wheel_map1/2/3.php) have no solved/unsolved styling
+      at all — that list only exists on wheel_record.php (P4 scope). This line is
+      a small UX addition built on Team#completed_question_numbers rather than a
+      port of existing legacy behavior. %>
+  <% if @completed_numbers.any? %>
+    <p class="text-center dialog">已完成關卡：第 <%= @completed_numbers.join("、") %> 題</p>
+  <% end %>
+
+  <% back_path = @map_id == 2 ? game_current_map_path : game_root_path %>
+  <div class="map-menu" id="menubar" onclick="window.location.href='<%= back_path %>'">
+    <span class="fa-stack fa-2x">
+      <i class="fas fa-square fa-stack-2x" style="color:#333"></i>
+      <i class="fas fa-home fa-stack-1x" style="color:white"></i>
+    </span>
+  </div>
+</main>

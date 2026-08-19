@@ -11,16 +11,13 @@ class WelcomeController < ApplicationController
 
   private
 
+  # Game session error codes (01002/01003/01004, see
+  # docs/REFACTOR_PLAN.md §1.1 and Game::SessionsController) and HTTP-style
+  # codes (404/500/403) are all looked up from config/locales/zh-TW.yml;
+  # anything not found there falls back to the generic "unknown error" key.
   def error_message_for(code)
-    case code
-    when "404"
-      "頁面不存在"
-    when "500"
-      "系統錯誤"
-    when "403"
-      "權限不足"
-    else
-      "未知錯誤"
-    end
+    I18n.t("errors.game.#{code}", locale: :"zh-TW", default: nil) ||
+      I18n.t("errors.http.#{code}", locale: :"zh-TW", default: nil) ||
+      I18n.t("errors.unknown", locale: :"zh-TW")
   end
 end

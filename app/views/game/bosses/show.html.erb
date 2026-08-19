@@ -1,0 +1,73 @@
+<% content_for :title, "魔王戰：#{@question.title}" %>
+
+<%# boss.scss ships pre-built classes for this page (.boss-bg/.boss-grass/
+    .mon0N/#counter/#bossHP/.ripple) but isn't linked from the shared
+    layout (a P0 file this batch may not touch) — injecting it through
+    `yield :head` here is the sanctioned way to add a page-specific
+    stylesheet without editing app/views/layouts/. %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "boss" %>
+<% end %>
+
+<header class="text-center">
+  <h2>魔王戰：<%= @question.title %></h2>
+</header>
+
+<main class="container-fluid text-center"
+      data-controller="boss-poll"
+      data-boss-poll-url-value="<%= status_game_boss_path(@question.number) %>"
+      data-boss-poll-score-url-value="<%= game_score_path %>"
+      data-boss-poll-started-value="<%= @battle.started_at.present? %>"
+      data-boss-poll-time-limit-value="<%= @time_limit %>"
+      data-boss-poll-started-at-ms-value="<%= @battle.started_at.present? ? (@battle.started_at.to_f * 1000).to_i : 0 %>">
+
+  <% if flash[:alert] %>
+    <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
+  <% end %>
+  <% if flash[:notice] %>
+    <div class="alert alert-success text-center" role="alert"><%= flash[:notice] %></div>
+  <% end %>
+
+  <% if @battle.ended_at.present? %>
+    <div class="dialog">
+      <p>魔王已被擊敗！恭喜過關。</p>
+      <%= link_to "查看本題成績", game_score_path, class: "btn btn-primary" %>
+    </div>
+  <% elsif @battle.started_at.present? %>
+    <div class="boss-bg" style="position: relative;">
+      <%= image_tag "bossGrass.png", class: "boss-grass" %>
+      <% filename = boss_image_filename(@question.number) %>
+      <% if boss_asset_available?(filename) %>
+        <%= image_tag filename, class: "mon#{format('%02d', @question.number)} boss", alt: @question.title %>
+      <% else %>
+        <p class="boss dialog">（本題王的立繪素材缺失：<%= filename %>）</p>
+      <% end %>
+    </div>
+
+    <div class="progress" id="bossHP">
+      <div class="progress-bar bg-danger" role="progressbar" style="width: <%= @battle.hp_percent %>%;"
+           data-boss-poll-target="hpBar" aria-valuenow="<%= @battle.hp_percent %>" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <p class="dialog">
+      HP：<span data-boss-poll-target="hpText"><%= @battle.hp_percent %></span>%
+      攻擊次數：<span data-boss-poll-target="attackCount"><%= @battle.attack_count %></span>
+      剩餘時間：<span id="counter" data-boss-poll-target="counter"><%= @time_limit %></span> 秒
+    </p>
+
+    <%= button_to "攻擊！", attacks_game_boss_path(@question.number), method: :post, class: "btn btn-danger btn-lg" %>
+  <% else %>
+    <div class="dialog">
+      <p>時限 <%= @time_limit %> 秒，全員宣戰後即開始攻擊！</p>
+      <p>已宣戰：<span data-boss-poll-target="readyCount"><%= @battle.ready_count %></span>
+         / <span data-boss-poll-target="readyTotal"><%= current_team.players.count %></span></p>
+    </div>
+
+    <%= button_to "宣戰！準備攻擊", ready_game_boss_path(@question.number), method: :post, class: "btn btn-secondary btn-lg" %>
+  <% end %>
+
+  <div class="row text-center">
+    <div class="col">
+      <%= link_to "《返回遊戲地圖》", game_current_map_path, class: "btn btn-link" %>
+    </div>
+  </div>
+</main>

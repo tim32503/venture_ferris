@@ -1,0 +1,60 @@
+<% content_for :title, "任務獎勵" %>
+
+<header class="container">
+  <h2 class="text-center">任務獎勵</h2>
+</header>
+
+<main class="container-fluid">
+  <% if flash[:alert] %>
+    <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
+  <% end %>
+  <% if flash[:notice] %>
+    <div class="alert alert-success text-center" role="alert"><%= flash[:notice] %></div>
+  <% end %>
+
+  <div class="dialog">
+    <p>請填寫聯絡資訊，以便工作人員核發實體獎品：</p>
+    <%= form_with url: game_reward_contact_path, method: :patch, local: true do |f| %>
+      <div class="form-group">
+        <%= f.label :name, "姓名" %>
+        <%= f.text_field :name, value: current_player.name, class: "form-control" %>
+      </div>
+      <div class="form-group">
+        <%= f.label :gender, "性別" %>
+        <%= f.select :gender,
+              options_for_select([ [ "未填", "unspecified" ], [ "男", "male" ], [ "女", "female" ] ], current_player.gender),
+              {}, class: "form-control" %>
+      </div>
+      <div class="form-group">
+        <%= f.label :mobile, "手機號碼" %>
+        <%= f.text_field :mobile, value: current_player.mobile, class: "form-control" %>
+      </div>
+      <%= f.submit "儲存聯絡資訊", class: "btn btn-secondary" %>
+    <% end %>
+  </div>
+
+  <% if @codes.any? %>
+    <div class="dialog text-center">
+      <p>您的兌獎序號：</p>
+      <div class="row">
+        <% @codes.each do |code| %>
+          <div class="col-6">
+            <p><code><%= code.code %></code></p>
+            <%= reward_code_qr_svg(code) %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="dialog text-center">
+      <p>完成聯絡資訊後即可兌換獎品序號。</p>
+      <%= button_to "兌換獎品序號", game_reward_codes_path, method: :post, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+
+  <div class="row text-center">
+    <div class="col">
+      <%= link_to "《返回遊戲選單》", game_root_path, class: "btn btn-link" %>
+    </div>
+  </div>
+</main>

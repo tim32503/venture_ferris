@@ -40,6 +40,11 @@
 </header>
 
 <main>
+  <div class="text-center mb-3">
+    <%= button_to "▶ 直接體驗（Demo）", game_session_path, params: { demo: "1" }, class: "btn btn-lg btn-primary" %>
+    <p><small>Demo 模式：每次點擊都會建立一個全新的單人示範隊伍，Boss 難度已調降以便單人體驗</small></p>
+  </div>
+
   <table class="table text-center">
     <thead>
       <tr class="table-secondary">
