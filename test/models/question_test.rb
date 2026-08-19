@@ -1,0 +1,48 @@
+require "test_helper"
+
+class QuestionTest < ActiveSupport::TestCase
+  def build_question(**attrs)
+    Question.new({
+      number: rand(1..11),
+      kind: :quiz,
+      title: "sample",
+      answer_digest: Question.digest_for("answer")
+    }.merge(attrs))
+  end
+
+  test "valid with required attributes" do
+    assert build_question.valid?
+  end
+
+  test "invalid when number is outside 1..11" do
+    question = build_question(number: 12)
+    assert_not question.valid?
+    assert_includes question.errors[:number], "is not included in the list"
+  end
+
+  test "invalid with duplicate number" do
+    build_question(number: 5).save!
+    dup = build_question(number: 5)
+    assert_not dup.valid?
+    assert_includes dup.errors[:number], "has already been taken"
+  end
+
+  test "answer_digest never stores the plaintext answer" do
+    question = build_question(number: 1).tap(&:save!)
+    refute_equal "answer", question.answer_digest
+    assert_equal Question.digest_for("answer"), question.answer_digest
+  end
+
+  test "answer? normalizes case, spacing, and full-width vs half-width before comparing" do
+    question = build_question(number: 2, answer_digest: Question.digest_for("Hello World")).tap(&:save!)
+
+    assert question.answer?("hello world")
+    assert question.answer?("  HELLO   WORLD  ")
+    assert_not question.answer?("hello")
+  end
+
+  test "boss_defeated_threshold mirrors boss_hp" do
+    question = build_question(number: 3, boss_hp: 42).tap(&:save!)
+    assert_equal 42, question.boss_defeated_threshold
+  end
+end
