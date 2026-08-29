@@ -22,76 +22,43 @@ main{
 }
 
 .dialog{ font-size: 1.25rem; color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; padding: .75rem 1.25rem; border: 5px solid white; background-color: #999; box-shadow: 0.5px 0.5px 0 3px #999; margin: 1.5rem }
-.modal-header, .modal-body{
-	color: black;
-	text-shadow: 1px 0 5px white, 0 1px 5px white;
-}
 
 // Native <dialog> replacing Bootstrap 4's jQuery-backed Modal (home page's
-// "玩法說明" popup, see dialog_controller.js). Kept visually close to the
-// old .modal-content look: white content box, dark ::backdrop, centered.
+// "玩法說明" popup, see dialog_controller.js). Only the browser-default
+// reset + ::backdrop live here — colors/spacing/typography are Tailwind
+// utilities on the element itself (docs/UI_STYLE_GUIDE.md dark card recipe),
+// so this stays a thin structural shim instead of a second source of truth.
 .native-modal {
 	border: none;
-	border-radius: .3rem;
 	padding: 0;
-	max-width: 500px;
-	width: 90%;
-	color: black;
+	background: transparent;
 
 	&::backdrop {
-		background-color: rgba(0, 0, 0, .5);
+		background-color: rgba(0, 0, 0, .6);
 	}
-
-	&-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 1rem;
-		border-bottom: 1px solid #dee2e6;
-	}
-
-	&-title {
-		margin: 0;
-	}
-
-	&-body {
-		padding: 1rem;
-		text-align: center;
-	}
-}
-
-/*----- 客製設定-登入頁 -----*/
-.login{ position: relative; }
-.login-bg{ height: 100%; width: 100%; }
-.login-logo{ width: 80%; position: absolute; top:5rem; left:10%; }
-.login-dialog{ font-size: 1.25rem; color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; position: absolute; padding: .75rem 1.25rem; border: 5px solid white; background-color: #999; box-shadow: 0.5px 0.5px 0 3px #999; top: 23rem; left:10%; right: 10% }
-.login-grass{ width: 100%; position: absolute; bottom:-8rem; }
-
-/*----- 客製設定-首頁 -----*/
-.home-group{ 
-	padding-left: 5rem;
-    padding-right: 5rem;
-    width: 100%; 
 }
 
 /*----- 客製設定-地圖頁 -----*/
-.map-menu {
-	position: fixed;
-	top: 1rem;
-	left: 1rem;
-}
-
-.map-menu:hover {
-	cursor: pointer;
-}
-
 // Percentage-positioned overlay replacing the legacy <map>/<area> image-map
 // (its pixel coords didn't scale with the img-fluid image). The wrapping
 // `#m{n}` container is `position: relative` and sized exactly to the
 // rendered <img>, so a % box here lines up with the image at any width.
+// Positioning (left/top/width/height, set inline per-hotspot in the view)
+// and the container's max-width lock are the RWD-critical part and must
+// never move — only the hover/focus feedback below is new (U3b), and it is
+// an inset box-shadow + tint so it never grows outside the hotspot's own
+// box and never covers more of the map than the hotspot itself already does.
 .map-hotspot {
 	position: absolute;
 	display: block;
+	border-radius: .5rem;
+	transition: background-color .15s ease, box-shadow .15s ease;
+
+	&:hover, &:focus-visible {
+		background-color: rgba(251, 191, 36, .16);
+		box-shadow: 0 0 0 3px rgba(251, 191, 36, .85) inset;
+		outline: none;
+	}
 }
 
 /*----- 客製設定-遊戲頁 -----*/
@@ -104,11 +71,9 @@ main{
 // carousel/data-slide, see carousel_controller.js). One job card fills the
 // viewport at a time, same as the old .carousel-item, but scrolling itself
 // is native (mouse drag/trackpad/touch swipe all work with zero JS).
-#carouselJob{
-	margin: 0rem 3rem;
-	padding: 2rem;
-}
-
+// Positioning/behavior only — colors follow docs/UI_STYLE_GUIDE.md's dark
+// adventure theme (amber accent) so this still reads as one system with the
+// Tailwind-driven markup around it.
 .job-carousel {
 	position: relative;
 }
@@ -129,14 +94,16 @@ main{
 
 .job-carousel-caption {
 	position: absolute;
-	right: 15%;
+	right: 8%;
 	bottom: 1.25rem;
-	left: 15%;
-	padding-top: 1.25rem;
-	padding-bottom: 1.25rem;
-	color: #fff;
+	left: 8%;
+	padding: .75rem 1rem;
+	border-radius: .75rem;
+	color: #f1f5f9;
 	text-align: center;
 	text-shadow: 1px 0 5px black, 0 1px 5px black;
+	background-color: rgba(15, 23, 42, .55);
+	backdrop-filter: blur(4px);
 }
 
 .job-carousel-control {
@@ -148,15 +115,16 @@ main{
 	justify-content: center;
 	width: 15%;
 	padding: 0;
-	color: #fff;
+	color: #fbbf24;
 	text-align: center;
 	background: transparent;
 	border: 0;
 	opacity: .8;
 	font-size: 1.5rem;
+	transition: opacity .15s ease, color .15s ease;
 
-	&:hover, &:focus {
-		color: #fff;
+	&:hover, &:focus-visible {
+		color: #fcd34d;
 		opacity: 1;
 		cursor: pointer;
 	}
@@ -168,21 +136,24 @@ main{
 .job-carousel-indicators {
 	display: flex;
 	justify-content: center;
-	margin-top: .5rem;
+	gap: .5rem;
+	margin-top: .75rem;
 }
 
 .job-carousel-dot {
 	box-sizing: content-box;
-	width: .75rem;
-	height: .75rem;
-	margin: 0 .25rem;
+	width: .625rem;
+	height: .625rem;
+	margin: 0;
 	padding: 0;
-	border: 1px solid #999;
+	border: 1px solid rgba(251, 191, 36, .5);
 	border-radius: 50%;
 	background-color: transparent;
+	transition: background-color .15s ease, border-color .15s ease;
 
 	&.active {
-		background-color: #999;
+		background-color: #fbbf24;
+		border-color: #fbbf24;
 	}
 
 	&:hover {

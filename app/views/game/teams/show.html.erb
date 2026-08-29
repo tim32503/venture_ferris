@@ -1,19 +1,20 @@
 <% content_for :title, "冒險隊伍" %>
+<% content_for :body_class, "bg-gradient-to-b! from-slate-900 via-slate-900 to-slate-800 text-slate-100!" %>
 
-<header class="container">
-  <h2 class="text-center">冒險隊伍</h2>
+<header class="mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-12!">
+  <h2 class="text-2xl! font-bold! text-slate-100!">冒險隊伍</h2>
 </header>
 
-<div class="container-fluid">
+<div class="mx-auto! max-w-2xl! px-4!">
   <% if flash[:alert] %>
-    <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
+    <div class="mb-4! rounded-lg! bg-rose-500/10! px-4! py-3! text-center! text-sm! text-rose-300! ring-1! ring-rose-500/30!" role="alert"><%= flash[:alert] %></div>
   <% end %>
   <% if flash[:notice] %>
-    <div class="alert alert-success text-center" role="alert"><%= flash[:notice] %></div>
+    <div class="mb-4! rounded-lg! bg-emerald-500/10! px-4! py-3! text-center! text-sm! text-emerald-300! ring-1! ring-emerald-500/30!" role="alert"><%= flash[:notice] %></div>
   <% end %>
 </div>
 
-<main class="container-fluid"
+<main class="mx-auto! max-w-2xl! px-4! pb-12! pt-6! sm:pb-16!"
       data-controller="team-poll"
       data-team-poll-url-value="<%= game_team_status_path %>"
       data-team-poll-redirect-on-ready-value="<%= current_team.name.blank? %>"
@@ -21,66 +22,58 @@
 
   <% if current_team.name.blank? %>
     <% if current_player.leader? %>
-      <div class="dialog">
-        <p>團長，請先為您的冒險團取個響亮的團名吧！（2~10字以內，限中文、英文、數字）</p>
-        <%= form_with url: game_team_path, method: :patch, local: true do |f| %>
-          <div class="input-group mb-3">
-            <%= f.text_field :name, class: "form-control", placeholder: "請輸入團名", "aria-label": "請輸入團名", maxlength: 10 %>
-            <div class="input-group-append">
-              <%= f.submit "確認", class: "btn btn-dark" %>
-            </div>
-          </div>
+      <div class="rounded-xl! bg-slate-800/80! p-6! text-center! ring-1! ring-white/10! backdrop-blur! sm:p-8!">
+        <p class="mb-4! text-slate-200!">團長，請先為您的冒險團取個響亮的團名吧！（2~10字以內，限中文、英文、數字）</p>
+        <%= form_with url: game_team_path, method: :patch, local: true, class: "flex! gap-2!" do |f| %>
+          <%= f.text_field :name, placeholder: "請輸入團名", "aria-label": "請輸入團名", maxlength: 10,
+                class: "w-full! rounded-lg! border-0! bg-slate-900/60! px-3! py-2! text-slate-100! ring-1! ring-inset! ring-white/10! placeholder:text-slate-500! focus:ring-2! focus:ring-inset! focus:ring-amber-400!" %>
+          <%= f.submit "確認", class: "shrink-0! inline-flex! items-center! justify-center! rounded-lg! bg-amber-500! px-5! py-2.5! font-semibold! text-slate-900! transition! hover:bg-amber-400! focus-visible:outline! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-amber-400! cursor-pointer!" %>
         <% end %>
       </div>
     <% else %>
-      <p class="text-center">冒險者請留步，稍後將帶您前往新手村進行轉職！</p>
+      <p class="text-center! text-slate-300!">冒險者請留步，稍後將帶您前往新手村進行轉職！</p>
     <% end %>
   <% else %>
-    <table class="table text-center">
-      <thead>
-        <tr class="table-secondary"><th>冒險團名</th></tr>
-      </thead>
-      <tbody>
-        <tr><td data-team-poll-target="name"><%= current_team.name %></td></tr>
-      </tbody>
-    </table>
+    <div class="rounded-xl! bg-slate-800/80! p-6! text-center! ring-1! ring-white/10! backdrop-blur!">
+      <p class="text-sm! font-semibold! text-amber-400!">冒險團名</p>
+      <p class="mt-1! text-xl! font-bold! text-slate-100!" data-team-poll-target="name"><%= current_team.name %></p>
+    </div>
 
-    <div class="table-responsive">
-      <table class="table text-center">
-        <thead>
-          <tr class="table-secondary">
-            <th colspan="3">冒險團員（<span data-team-poll-target="count"><%= current_team.players.count %></span> 人）</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th>類型</th>
-            <th>職業</th>
-            <th>遊戲帳號</th>
-          </tr>
-          <% current_team.players.order(:role).each do |player| %>
+    <div class="mt-6! overflow-hidden! rounded-xl! bg-slate-800/80! ring-1! ring-white/10! backdrop-blur!">
+      <div class="border-b! border-white/10! px-4! py-3! text-center! text-sm! font-semibold! text-amber-400!">
+        冒險團員（<span data-team-poll-target="count"><%= current_team.players.count %></span> 人）
+      </div>
+      <div class="overflow-x-auto!">
+        <table class="min-w-full! divide-y! divide-white/10! text-sm!">
+          <thead class="bg-slate-900/60!">
             <tr>
-              <td><%= role_label(player.role) %></td>
-              <td><%= player.job.present? ? job_label(player.job) : "未選擇" %></td>
-              <td><%= player.email %></td>
+              <th class="whitespace-nowrap! px-4! py-3! text-left! font-semibold! text-slate-300!">類型</th>
+              <th class="whitespace-nowrap! px-4! py-3! text-left! font-semibold! text-slate-300!">職業</th>
+              <th class="whitespace-nowrap! px-4! py-3! text-left! font-semibold! text-slate-300!">遊戲帳號</th>
             </tr>
-          <% end %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y! divide-white/10!">
+            <% current_team.players.order(:role).each do |player| %>
+              <tr>
+                <td class="px-4! py-3! text-slate-200!"><%= role_label(player.role) %></td>
+                <td class="px-4! py-3! text-slate-200!"><%= player.job.present? ? job_label(player.job) : "未選擇" %></td>
+                <td class="px-4! py-3! text-slate-200!"><%= player.email %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
     </div>
   <% end %>
 
   <% if current_team.name.present? && current_player.job.blank? %>
-    <div class="row text-center mb-2">
-      <div class="col">
-        <%= link_to "《前往新手村轉職（選擇職業）》", game_job_path, class: "btn btn-dark" %>
-      </div>
+    <div class="mt-6! text-center!">
+      <%= link_to "《前往新手村轉職（選擇職業）》", game_job_path,
+            class: "inline-flex! items-center! justify-center! rounded-lg! bg-amber-500! px-5! py-2.5! font-semibold! text-slate-900! transition! hover:bg-amber-400! focus-visible:outline! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-amber-400!" %>
     </div>
   <% end %>
 
-  <div class="row text-center">
-    <div class="col">
-      <%= link_to "《返回遊戲選單》", game_root_path, class: "btn btn-link" %>
-    </div>
+  <div class="mt-6! text-center!">
+    <%= link_to "《返回遊戲選單》", game_root_path, class: "text-sm! font-semibold! text-slate-300! underline-offset-4! hover:text-slate-100! hover:underline!" %>
   </div>
 </main>

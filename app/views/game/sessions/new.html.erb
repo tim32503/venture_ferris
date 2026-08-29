@@ -1,37 +1,47 @@
 <% content_for :title, "登入" %>
+<% content_for :body_class, "bg-gradient-to-b! from-slate-900 via-slate-900 to-slate-800 text-slate-100!" %>
 
-<header class="container">
-  <h2 class="text-center">勇闖摩天輪</h2>
-</header>
+<div class="relative! isolate!">
+  <div class="absolute! inset-0! -z-20! bg-cover! bg-center! bg-no-repeat!" style="background-image:url('<%= asset_path("loginBg.jpg") %>');"></div>
+  <div class="absolute! inset-0! -z-10! bg-slate-900/60!"></div>
 
-<main class="container">
-  <div class="login-dialog">
-    <% if flash[:alert] %>
-      <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
-    <% end %>
+  <header class="[text-shadow:none]! mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-14!">
+    <h2 class="text-2xl! font-bold! text-slate-100!">勇闖摩天輪</h2>
+  </header>
 
-    <%= form_with url: game_session_path, method: :post, local: true, class: "dialog" do |f| %>
-      <div class="form-group">
-        <%= f.label :serial_no, "序號" %>
-        <%= f.text_field :serial_no, value: @serial_no, class: "form-control", maxlength: 16, required: true %>
-      </div>
+  <main class="[text-shadow:none]! mx-auto! max-w-2xl! px-4! pb-12! pt-6! sm:pb-16! sm:pt-8!">
+    <div class="rounded-xl! bg-slate-800/80! p-6! ring-1! ring-white/10! backdrop-blur! sm:p-8!">
+      <% if flash[:alert] %>
+        <div class="mb-4! rounded-lg! bg-rose-500/10! px-4! py-3! text-center! text-sm! text-rose-300! ring-1! ring-rose-500/30!" role="alert"><%= flash[:alert] %></div>
+      <% end %>
 
-      <div class="form-group">
-        <%= f.label :role, "角色" %>
-        <%= f.select :role, [ [ "隊長", "leader" ], [ "隊員", "member" ] ], { selected: @role }, class: "form-control", required: true %>
-      </div>
+      <%= form_with url: game_session_path, method: :post, local: true, class: "space-y-4!" do |f| %>
+        <div>
+          <%= f.label :serial_no, "序號", class: "mb-1! block! text-sm! font-medium! text-slate-300!" %>
+          <%= f.text_field :serial_no, value: @serial_no, maxlength: 16, required: true,
+                class: "w-full! rounded-lg! border-0! bg-slate-900/60! px-3! py-2! text-slate-100! ring-1! ring-inset! ring-white/10! placeholder:text-slate-500! focus:ring-2! focus:ring-inset! focus:ring-amber-400!" %>
+        </div>
 
-      <div class="form-group">
-        <%= f.label :email, "遊戲帳號（Email）" %>
-        <%= f.email_field :email, class: "form-control", required: true %>
-      </div>
+        <div>
+          <%= f.label :role, "角色", class: "mb-1! block! text-sm! font-medium! text-slate-300!" %>
+          <%= f.select :role, [ [ "隊長", "leader" ], [ "隊員", "member" ] ], { selected: @role }, required: true,
+                class: "w-full! rounded-lg! border-0! bg-slate-900/60! px-3! py-2! text-slate-100! ring-1! ring-inset! ring-white/10! focus:ring-2! focus:ring-inset! focus:ring-amber-400!" %>
+        </div>
 
-      <div class="form-group">
-        <%= f.label :gender, "性別" %>
-        <%= f.select :gender, [ [ "男", "male" ], [ "女", "female" ], [ "不透露", "unspecified" ] ], { selected: "unspecified" }, class: "form-control" %>
-      </div>
+        <div>
+          <%= f.label :email, "遊戲帳號（Email）", class: "mb-1! block! text-sm! font-medium! text-slate-300!" %>
+          <%= f.email_field :email, required: true,
+                class: "w-full! rounded-lg! border-0! bg-slate-900/60! px-3! py-2! text-slate-100! ring-1! ring-inset! ring-white/10! placeholder:text-slate-500! focus:ring-2! focus:ring-inset! focus:ring-amber-400!" %>
+        </div>
 
-      <%= f.submit "進入遊戲", class: "btn btn-primary btn-block" %>
-    <% end %>
-  </div>
-</main>
+        <div>
+          <%= f.label :gender, "性別", class: "mb-1! block! text-sm! font-medium! text-slate-300!" %>
+          <%= f.select :gender, [ [ "男", "male" ], [ "女", "female" ], [ "不透露", "unspecified" ] ], { selected: "unspecified" },
+                class: "w-full! rounded-lg! border-0! bg-slate-900/60! px-3! py-2! text-slate-100! ring-1! ring-inset! ring-white/10! focus:ring-2! focus:ring-inset! focus:ring-amber-400!" %>
+        </div>
+
+        <%= f.submit "進入遊戲", class: "w-full! inline-flex! items-center! justify-center! rounded-lg! bg-amber-500! px-5! py-2.5! font-semibold! text-slate-900! transition! hover:bg-amber-400! focus-visible:outline! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-amber-400! cursor-pointer!" %>
+      <% end %>
+    </div>
+  </main>
+</div>
