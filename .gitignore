@@ -36,3 +36,6 @@
 AP_WHEEL.sql
 .DS_Store
 .claude/launch.json
+
+/app/assets/builds/*
+!/app/assets/builds/.keep

@@ -1,52 +1,61 @@
-<div class="container mt-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">序號產生器</h1>
-    <%= link_to "回 Dashboard", admin_root_path, class: "btn btn-outline-secondary btn-sm" %>
+<% content_for :title, "序號產生器" %>
+<% content_for :body_class, "bg-slate-50! bg-none! text-slate-800!" %>
+<% content_for :footer_class, "text-slate-400!" %>
+
+<main class="[text-shadow:none]! mx-auto! max-w-4xl! px-4! py-8! sm:py-12!">
+  <div class="mb-6! flex! items-center! justify-between!">
+    <h1 class="text-xl! font-bold! text-slate-800!">序號產生器</h1>
+    <%= link_to "回 Dashboard", admin_root_path,
+          class: "rounded-lg! bg-white! px-4! py-2! text-sm! font-semibold! text-slate-700! ring-1! ring-slate-300! transition! hover:bg-slate-50!" %>
   </div>
 
   <% if flash[:notice] %>
-    <div class="alert alert-success"><%= flash[:notice] %></div>
+    <div class="mb-6! rounded-lg! bg-emerald-50! px-4! py-3! text-sm! text-emerald-800! ring-1! ring-emerald-200!"><%= flash[:notice] %></div>
   <% end %>
 
-  <div class="card mb-4">
-    <div class="card-body">
-      <h2 class="h5">批量產生</h2>
-      <%= form_with url: admin_serial_codes_path, method: :post, local: true, class: "form-inline" do |f| %>
-        <div class="form-group mr-3">
-          <%= f.label :count, "產生筆數", class: "mr-2" %>
-          <%= f.number_field :count, value: Admin::SerialCodesController::DEFAULT_COUNT,
-                                      min: 1, max: Admin::SerialCodesController::MAX_COUNT,
-                                      class: "form-control", style: "width: 8rem;" %>
-        </div>
+  <div class="mb-8! rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+    <h2 class="text-base! font-semibold! text-slate-800!">批量產生</h2>
 
-        <div class="form-check mr-3">
-          <%= f.check_box :test_mode, class: "form-check-input" %>
-          <%= f.label :test_mode, "測試模式 (test_mode)", class: "form-check-label" %>
-        </div>
+    <%= form_with url: admin_serial_codes_path, method: :post, local: true, class: "mt-4! flex! flex-wrap! items-end! gap-4!" do |f| %>
+      <div>
+        <%= f.label :count, "產生筆數", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+        <%= f.number_field :count, value: Admin::SerialCodesController::DEFAULT_COUNT,
+              min: 1, max: Admin::SerialCodesController::MAX_COUNT,
+              class: "w-32! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+      </div>
 
-        <%= f.submit "產生序號", class: "btn btn-primary" %>
-      <% end %>
-    </div>
+      <div class="flex! items-center! gap-2! pb-2!">
+        <%= f.check_box :test_mode, class: "h-4! w-4! rounded! border-slate-300! text-indigo-600! focus:ring-indigo-500!" %>
+        <%= f.label :test_mode, "測試模式 (test_mode)", class: "text-sm! font-medium! text-slate-700!" %>
+      </div>
+
+      <%= f.submit "產生序號",
+            class: "cursor-pointer! rounded-lg! bg-indigo-600! px-4! py-2! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!" %>
+    <% end %>
   </div>
 
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>序號 (serial_no)</th>
-        <th>test_mode</th>
-        <th>建立時間</th>
-        <th>QR Code</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @teams.each do |team| %>
+  <div class="overflow-x-auto! rounded-xl! bg-white! ring-1! ring-slate-200!">
+    <table class="min-w-full! divide-y! divide-slate-200! text-sm!">
+      <thead class="bg-slate-50!">
         <tr>
-          <td><code><%= team.serial_no %></code></td>
-          <td><%= team.test_mode? ? "是" : "否" %></td>
-          <td><%= team.created_at.strftime("%Y-%m-%d %H:%M") %></td>
-          <td><%= serial_code_qr_svg(team) %></td>
+          <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">序號 (serial_no)</th>
+          <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">test_mode</th>
+          <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">建立時間</th>
+          <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">QR Code</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
-</div>
+      </thead>
+      <tbody class="divide-y! divide-slate-100!">
+        <% @teams.each do |team| %>
+          <tr>
+            <td class="px-4! py-3!"><code class="text-slate-700!"><%= team.serial_no %></code></td>
+            <td class="px-4! py-3! text-slate-700!"><%= team.test_mode? ? "是" : "否" %></td>
+            <td class="px-4! py-3! text-slate-700!"><%= team.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+            <td class="px-4! py-3!">
+              <div class="h-16! w-16! [&_svg]:h-full! [&_svg]:w-full!"><%= serial_code_qr_svg(team) %></div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</main>
