@@ -12,8 +12,32 @@ module GameHelper
     "member" => "隊員"
   }.freeze
 
+  # Passive effect (always on) + active Boss-fight skill (docs/JOB_SKILLS_DESIGN.md,
+  # once per battle via Game::BossesController#skill) for each job. Shared by
+  # the job-selection carousel (so picking a job is an informed choice) and
+  # the Boss page's skill card (so the card's copy and the server's actual
+  # behavior never drift apart from being maintained in two places).
+  JOB_SKILLS = {
+    "uncle" => { passive: "被動：王戰時限 +10 秒", skill_name: "倚老賣老", skill_description: "本場王戰時限再 +10 秒" },
+    "senior" => { passive: "被動：提示不扣分", skill_name: "醍醐灌頂", skill_description: "下一次攻擊必定爆擊，且不受節流限制" },
+    "netizen" => { passive: "被動：每次攻擊 +2", skill_name: "肉搜公審", skill_description: "立即造成 5 點傷害" },
+    "celebrity" => { passive: "被動：結算加 100 職業分", skill_name: "聚光燈", skill_description: "立即召喚弱點，5 秒內爆擊不受節流限制" }
+  }.freeze
+
   def job_label(job)
     JOB_LABELS.fetch(job.to_s, job.to_s)
+  end
+
+  def job_passive_description(job)
+    JOB_SKILLS.dig(job.to_s, :passive) || ""
+  end
+
+  def job_skill_name(job)
+    JOB_SKILLS.dig(job.to_s, :skill_name) || ""
+  end
+
+  def job_skill_description(job)
+    JOB_SKILLS.dig(job.to_s, :skill_description) || ""
   end
 
   def role_label(role)

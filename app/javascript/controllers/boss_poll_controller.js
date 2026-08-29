@@ -24,14 +24,25 @@ import PollController from "controllers/poll_controller"
 // server-side win/loss and scoring logic is untouched — this only changes
 // the transport, not what gets decided where.
 export default class extends PollController {
-  static targets = [ "readyCount", "readyTotal", "hpBar", "hpText", "attackCount", "counter", "stage", "monster", "fx", "combo" ]
+  static targets = [
+    "readyCount", "readyTotal", "hpBar", "hpText", "attackCount", "counter", "stage", "monster", "fx", "combo",
+    "skillCard", "skillButton", "skillButtonLabel"
+  ]
   static values = {
     started: Boolean,
     scoreUrl: String,
     timeLimit: Number,
     startedAtMs: Number,
     attacksUrl: String,
-    isNetizen: Boolean
+    isNetizen: Boolean,
+    // Job-skill wiring (docs/JOB_SKILLS_DESIGN.md). `skillUrl` is blank and
+    // `job` empty for a player with no job — `activateSkill` no-ops in that
+    // case, matching the view only rendering the skill card at all when
+    // `current_player.job.present?`.
+    skillUrl: String,
+    job: String,
+    skillAvailable: Boolean,
+    spotlightActive: Boolean
   }
 
   // Presentational tuning for the weak-point spot: how long it stays
@@ -54,9 +65,12 @@ export default class extends PollController {
     this.comboCount = 0
     this.weakPointEl = null
     this.defeating = false
+    this.seniorCharged = false
+    this.skillPending = false
 
     if (this.hasHpBarTarget) this.updateHpColor()
     if (this.hasStageTarget && this.hasFxTarget) this.scheduleWeakPoint()
+    if (this.hasStageTarget) this.setSpotlightVisual(this.spotlightActiveValue)
   }
 
   disconnect() {
@@ -65,6 +79,7 @@ export default class extends PollController {
     if (this.weakPointSpawnTimer) clearTimeout(this.weakPointSpawnTimer)
     if (this.weakPointHideTimer) clearTimeout(this.weakPointHideTimer)
     if (this.comboResetTimer) clearTimeout(this.comboResetTimer)
+    if (this.spotlightEndTimer) clearTimeout(this.spotlightEndTimer)
   }
 
   onData(data) {
@@ -84,6 +99,18 @@ export default class extends PollController {
     if (this.hasHpTextTarget) this.hpTextTarget.textContent = data.hp_percent
     if (this.hasAttackCountTarget) this.attackCountTarget.textContent = data.attack_count
     this.updateHpColor(data.hp_percent)
+
+    // Server truth wins over any client memory of "did I already use my
+    // skill" (docs/JOB_SKILLS_DESIGN.md — never trust the client for this).
+    // Also picks up a teammate's own skill use (e.g. 罔美's spotlight) even
+    // on a device that never clicked anything itself.
+    if (this.hasSkillButtonTarget && typeof data.skill_available === "boolean") {
+      this.skillButtonTarget.disabled = !data.skill_available
+      if (this.hasSkillButtonLabelTarget && !this.skillPending) {
+        this.skillButtonLabelTarget.textContent = data.skill_available ? "發動技能" : "已使用"
+      }
+    }
+    if (typeof data.spotlight_active === "boolean") this.setSpotlightVisual(data.spotlight_active)
   }
 
   // Click/keyboard(Enter/Space, native to <button>) handler for the monster
@@ -94,7 +121,14 @@ export default class extends PollController {
   // server, which alone decides the actual damage/victory.
   attack(event) {
     const weakPointHit = event.target.closest && event.target.closest(".weak-point")
-    const isCritical = !!weakPointHit
+    // 鞋姊 (senior)'s 醍醐灌頂 forces this attack to critical server-side
+    // regardless of whether it landed on a weak point (Game::BossesController
+    // #attacks' `pending_senior_skill_use`) — mirror that locally so the hit
+    // feedback (doubled damage number) matches what the server is about to
+    // record, and consume the local "charged" flag/visual the same way the
+    // server consumes the pending BossSkillUse row.
+    const seniorForcedCritical = this.seniorCharged
+    const isCritical = !!weakPointHit || seniorForcedCritical
 
     // Order matters: `ripple` reads `event.currentTarget.getBoundingClientRect()`,
     // which returns an all-zero rect once the element is detached — so every
@@ -106,6 +140,7 @@ export default class extends PollController {
     this.bumpCombo()
 
     if (weakPointHit) this.despawnWeakPoint({ reschedule: true })
+    if (seniorForcedCritical) this.clearSkillCharge()
 
     this.sendAttack(isCritical)
   }
@@ -149,6 +184,15 @@ export default class extends PollController {
     const y = event.clientY - rect.top
     const base = this.isNetizenValue ? 2 : 1
     const amount = isCritical ? base * 2 : base
+
+    this.renderDamageNumber(x, y, amount, isCritical)
+  }
+
+  // Shared by the click-driven `spawnDamageNumber` above and 鄉民 (netizen)'s
+  // 肉搜公審 skill effect (`playNetizenSkillEffect` below), which has no
+  // click event to read a position from.
+  renderDamageNumber(x, y, amount, isCritical) {
+    if (!this.hasFxTarget) return
 
     const span = document.createElement("span")
     span.className = isCritical ? "dmg-number crit" : "dmg-number"
@@ -331,5 +375,143 @@ export default class extends PollController {
   csrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]')
     return meta ? meta.content : null
+  }
+
+  // ---- job active skill (docs/JOB_SKILLS_DESIGN.md) ----
+  //
+  // POST /game/bosses/:number/skill, click-triggered from the skill card
+  // (`data-action="click->boss-poll#activateSkill"`). Unlike `sendAttack`
+  // this reads the JSON response body — the four job effects need their
+  // concrete numbers (the new time limit, the actual damage dealt, whether
+  // it defeated the boss) to animate correctly, and there's no dedicated
+  // poll tick for "did my own click just land" the way there is for a plain
+  // attack. Server-decided end to end: this never guesses which job the
+  // player has or what the effect does, it only plays back what `#skill`
+  // reports.
+  async activateSkill() {
+    if (!this.hasSkillUrlValue || !this.skillUrlValue || this.skillPending) return
+
+    this.skillPending = true
+    if (this.hasSkillButtonTarget) this.skillButtonTarget.disabled = true
+
+    try {
+      const response = await fetch(this.skillUrlValue, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "X-CSRF-Token": this.csrfToken(),
+          "Accept": "application/json"
+        }
+      })
+      const data = await response.json()
+
+      if (data.ok) {
+        this.setSkillButtonLabel("已使用")
+        this.playSkillEffect(data.skill, data.effect || {})
+      } else {
+        // Rejected (already used elsewhere, battle ended, etc. — see
+        // Game::BossesController#skill). The next poll tick's
+        // `skill_available` is the actual source of truth for whether the
+        // button re-enables; this label is just an immediate explanation.
+        this.setSkillButtonLabel(this.skillErrorLabel(data.error))
+      }
+    } catch (error) {
+      console.error("skill activation failed", error)
+      if (this.hasSkillButtonTarget) this.skillButtonTarget.disabled = false
+    } finally {
+      this.skillPending = false
+    }
+  }
+
+  setSkillButtonLabel(text) {
+    if (this.hasSkillButtonLabelTarget) this.skillButtonLabelTarget.textContent = text
+  }
+
+  skillErrorLabel(error) {
+    const labels = {
+      already_used: "已使用",
+      battle_not_active: "尚未開戰",
+      no_job: "尚未選擇職業"
+    }
+    return labels[error] || "無法使用"
+  }
+
+  playSkillEffect(job, effect) {
+    switch (job) {
+      case "uncle": return this.playUncleSkillEffect(effect)
+      case "netizen": return this.playNetizenSkillEffect(effect)
+      case "senior": return this.playSeniorSkillEffect(effect)
+      case "celebrity": return this.playCelebritySkillEffect(effect)
+    }
+  }
+
+  // 阿北 倚老賣老: the countdown jumps up by the reported new limit — the
+  // running countdown (`startCountdown` above) reads `timeLimitValue` on
+  // every tick, so updating it here is enough for the jump to show on the
+  // very next 500ms tick without waiting for a poll round trip.
+  playUncleSkillEffect(effect) {
+    if (typeof effect.time_limit === "number") this.timeLimitValue = effect.time_limit
+
+    if (this.hasCounterTarget) {
+      this.counterTarget.classList.remove("counter-bump")
+      void this.counterTarget.offsetWidth
+      this.counterTarget.classList.add("counter-bump")
+    }
+  }
+
+  // 鄉民 肉搜公審: an immediate 5-damage hit with no click of its own to hang
+  // feedback off of, so the damage number spawns at the stage's center and
+  // the HP bar/attack count are set straight from the server's numbers
+  // (optimistic update — the next poll tick would reconcile these anyway).
+  playNetizenSkillEffect(effect) {
+    this.playHitFlash()
+
+    if (this.hasFxTarget) {
+      const rect = this.fxTarget.getBoundingClientRect()
+      this.renderDamageNumber(rect.width / 2, rect.height / 2, effect.damage, true)
+    }
+
+    if (this.hasAttackCountTarget && typeof effect.attack_count === "number") {
+      this.attackCountTarget.textContent = effect.attack_count
+    }
+    if (typeof effect.hp_percent === "number") {
+      if (this.hasHpBarTarget) this.hpBarTarget.style.width = `${effect.hp_percent}%`
+      if (this.hasHpTextTarget) this.hpTextTarget.textContent = effect.hp_percent
+      this.updateHpColor(effect.hp_percent)
+    }
+
+    if (effect.defeated) this.playDefeatSequence(() => { window.location.href = this.scoreUrlValue })
+  }
+
+  // 鞋姊 醍醐灌頂: nothing changes on the boss itself yet — this only arms
+  // `this.seniorCharged`, consumed by the player's next `attack()` click
+  // (see there), and shows a "charged" glow on the monster in the meantime
+  // so the player can see the buff is live.
+  playSeniorSkillEffect() {
+    this.seniorCharged = true
+    if (this.hasMonsterTarget) this.monsterTarget.classList.add("skill-charged")
+  }
+
+  clearSkillCharge() {
+    this.seniorCharged = false
+    if (this.hasMonsterTarget) this.monsterTarget.classList.remove("skill-charged")
+  }
+
+  // 罔美 聚光燈: reveals a weak point immediately (jumping the natural
+  // schedule the same way `forceWeakPointForTest` does) and lights up the
+  // stage for the reported window — `setSpotlightVisual` also runs off
+  // every poll tick's `spotlight_active`, so a teammate who didn't click
+  // anything still sees the window (and its close) on their own screen.
+  playCelebritySkillEffect(effect) {
+    this.spawnWeakPoint()
+    this.setSpotlightVisual(true)
+
+    if (this.spotlightEndTimer) clearTimeout(this.spotlightEndTimer)
+    const seconds = typeof effect.spotlight_seconds === "number" ? effect.spotlight_seconds : 5
+    this.spotlightEndTimer = setTimeout(() => this.setSpotlightVisual(false), seconds * 1000)
+  }
+
+  setSpotlightVisual(active) {
+    if (this.hasStageTarget) this.stageTarget.classList.toggle("spotlight-active", !!active)
   }
 }

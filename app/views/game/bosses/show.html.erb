@@ -25,7 +25,11 @@
       data-boss-poll-time-limit-value="<%= @time_limit %>"
       data-boss-poll-started-at-ms-value="<%= @battle.started_at.present? ? (@battle.started_at.to_f * 1000).to_i : 0 %>"
       data-boss-poll-attacks-url-value="<%= attacks_game_boss_path(@question.number) %>"
-      data-boss-poll-is-netizen-value="<%= current_player.netizen? %>">
+      data-boss-poll-is-netizen-value="<%= current_player.netizen? %>"
+      data-boss-poll-skill-url-value="<%= skill_game_boss_path(@question.number) %>"
+      data-boss-poll-job-value="<%= current_player.job %>"
+      data-boss-poll-skill-available-value="<%= boss_skill_available?(@battle, current_player) %>"
+      data-boss-poll-spotlight-active-value="<%= @battle.spotlight_active? %>">
 
   <% if flash[:alert] %>
     <div class="mb-4! rounded-lg! bg-rose-500/10! px-4! py-3! text-center! text-sm! text-rose-300! ring-1! ring-rose-500/30!" role="alert"><%= flash[:alert] %></div>
@@ -69,6 +73,21 @@
     </p>
 
     <p class="mt-6! text-sm! text-slate-300!">點擊怪物發動攻擊！弱點浮現時點中會爆擊。</p>
+
+    <% if current_player.job.present? %>
+      <div class="skill-card mt-6! rounded-xl! bg-slate-800/80! p-4! ring-1! ring-white/10! backdrop-blur!"
+           data-boss-poll-target="skillCard">
+        <h3 class="text-sm! font-bold! text-amber-400!"><%= job_label(current_player.job) %>・<%= job_skill_name(current_player.job) %></h3>
+        <p class="mt-1! text-xs! text-slate-300!"><%= job_skill_description(current_player.job) %></p>
+        <button type="button"
+                class="skill-button mt-3! inline-flex! items-center! justify-center! rounded-lg! bg-amber-500! px-4! py-2! text-sm! font-semibold! text-slate-900! transition! hover:bg-amber-400! disabled:cursor-not-allowed! disabled:bg-slate-600! disabled:text-slate-400! cursor-pointer!"
+                data-boss-poll-target="skillButton"
+                data-action="click->boss-poll#activateSkill"
+                <%= "disabled" unless boss_skill_available?(@battle, current_player) %>>
+          <span data-boss-poll-target="skillButtonLabel"><%= boss_skill_available?(@battle, current_player) ? "發動技能" : "已使用" %></span>
+        </button>
+      </div>
+    <% end %>
   <% else %>
     <div class="rounded-xl! bg-slate-800/80! p-6! text-slate-100! ring-1! ring-white/10! backdrop-blur!">
       <p>時限 <%= @time_limit %> 秒，全員宣戰後即開始攻擊！</p>

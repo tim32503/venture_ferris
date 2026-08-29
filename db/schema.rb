@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_08_30_101400) do
+ActiveRecord::Schema[7.2].define(version: 2026_08_30_110100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -32,6 +32,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_08_30_101400) do
     t.datetime "updated_at", null: false
     t.datetime "last_critical_at"
     t.bigint "question_id", null: false
+    t.integer "bonus_time_seconds", default: 0, null: false
+    t.datetime "spotlight_until"
     t.index ["question_id"], name: "index_boss_battles_on_question_id"
     t.index ["team_id", "question_id"], name: "index_boss_battles_on_team_id_and_question_id", unique: true
     t.index ["team_id"], name: "index_boss_battles_on_team_id"
@@ -45,6 +47,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_08_30_101400) do
     t.index ["boss_battle_id", "player_id"], name: "index_boss_readies_on_battle_and_player", unique: true
     t.index ["boss_battle_id"], name: "index_boss_readies_on_boss_battle_id"
     t.index ["player_id"], name: "index_boss_readies_on_player_id"
+  end
+
+  create_table "boss_skill_uses", force: :cascade do |t|
+    t.bigint "boss_battle_id", null: false
+    t.bigint "player_id", null: false
+    t.string "skill", null: false
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["boss_battle_id", "player_id"], name: "index_boss_skill_uses_on_battle_and_player", unique: true
+    t.index ["boss_battle_id"], name: "index_boss_skill_uses_on_boss_battle_id"
+    t.index ["player_id"], name: "index_boss_skill_uses_on_player_id"
   end
 
   create_table "bosses", force: :cascade do |t|
@@ -154,6 +168,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_08_30_101400) do
   add_foreign_key "boss_battles", "teams"
   add_foreign_key "boss_readies", "boss_battles"
   add_foreign_key "boss_readies", "players"
+  add_foreign_key "boss_skill_uses", "boss_battles"
+  add_foreign_key "boss_skill_uses", "players"
   add_foreign_key "players", "teams"
   add_foreign_key "question_attempts", "questions"
   add_foreign_key "question_attempts", "teams"

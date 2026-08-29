@@ -102,4 +102,35 @@ class GameBossPageTest < ApplicationSystemTestCase
     find("[data-boss-poll-target='monster']").native.send_keys(:enter)
     assert_selector "[data-boss-poll-target='attackCount']", text: "1"
   end
+
+  test "the skill card shows the player's job skill and disables after one use" do
+    team = Team.create!(serial_no: SecureRandom.alphanumeric(16), test_mode: true)
+    question = Question.create!(
+      number: 4, kind: :quiz, title: "示範魔王戰四", content: "示範內容", level: "1",
+      explanation: "示範解說", boss_hp: 100, boss_time_limit: 60,
+      boss: seed_boss_for(4),
+      answer_digest: Question.digest_for("answer4")
+    )
+
+    visit game_login_path(sno: team.serial_no, role: "leader")
+    fill_in "email", with: "leader@example.com"
+    click_on "進入遊戲"
+    assert_current_path game_team_path
+
+    team.players.find_by!(email: "leader@example.com").update!(job: :uncle)
+
+    visit game_boss_path(question.number)
+    click_on "宣戰！準備攻擊"
+    assert_selector "[data-boss-poll-target='attackCount']", text: "0"
+
+    assert_selector "[data-boss-poll-target='skillCard']", text: "倚老賣老"
+    skill_button = find("[data-boss-poll-target='skillButton']")
+    assert_not skill_button.disabled?
+    assert_selector "[data-boss-poll-target='skillButtonLabel']", text: "發動技能"
+
+    skill_button.click
+
+    assert_selector "[data-boss-poll-target='skillButtonLabel']", text: "已使用"
+    assert find("[data-boss-poll-target='skillButton']").disabled?
+  end
 end

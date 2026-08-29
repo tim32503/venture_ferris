@@ -50,6 +50,7 @@ Rails.application.routes.draw do
       member do
         post :attacks
         post :ready
+        post :skill
         get :status, defaults: { format: :json }
       end
     end

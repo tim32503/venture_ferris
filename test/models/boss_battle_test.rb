@@ -70,6 +70,29 @@ class BossBattleTest < ActiveSupport::TestCase
     assert battle.critical_ready?
   end
 
+  test "bonus_time_seconds defaults to 0" do
+    battle = BossBattle.create!(team: build_team, question: build_question, hp: 10)
+    assert_equal 0, battle.bonus_time_seconds
+  end
+
+  test "spotlight_active? is false with no spotlight_until" do
+    battle = BossBattle.create!(team: build_team, question: build_question, hp: 10)
+    assert_not battle.spotlight_active?
+  end
+
+  test "spotlight_active? is true before spotlight_until and false after" do
+    battle = BossBattle.create!(team: build_team, question: build_question, hp: 10,
+                                spotlight_until: Time.current + 5.seconds)
+    assert battle.spotlight_active?(Time.current)
+    assert_not battle.spotlight_active?(Time.current + 6.seconds)
+  end
+
+  test "critical_ready? bypasses the throttle while a spotlight window is open" do
+    battle = BossBattle.create!(team: build_team, question: build_question, hp: 10,
+                                last_critical_at: Time.current, spotlight_until: Time.current + 5.seconds)
+    assert battle.critical_ready?(Time.current + 1.second)
+  end
+
   test "ready_count derives from boss_readies rows, not a raw counter" do
     team = build_team
     battle = BossBattle.create!(team: team, question: build_question)
