@@ -53,13 +53,25 @@ module Game
     # attacks, everyone else +1 (server-decided from `current_player.job`,
     # never trusted from the client). Rejected outright if the fight hasn't
     # started yet or is already over.
+    #
+    # `critical` (boss_poll_controller.js's weak-point hit) doubles that
+    # delta, but the client's claim is only trusted once every
+    # BossBattle::CRITICAL_THROTTLE_SECONDS (BossBattle#critical_ready?) —
+    # a claim inside the throttle window is silently scored as a normal
+    # attack instead of being rejected, so a spammed/faked client never
+    # loses the underlying attack, just the crit bonus.
     def attacks
       if @battle.started_at.blank? || @battle.ended_at.present?
         return redirect_to game_boss_path(@question.number), alert: "尚未開戰或戰鬥已結束"
       end
 
-      delta = current_player.netizen? ? 2 : 1
-      @battle.attack_count += delta
+      now = Time.current
+      claims_critical = ActiveModel::Type::Boolean.new.cast(params[:critical])
+      critical = claims_critical && @battle.critical_ready?(now)
+
+      base_delta = current_player.netizen? ? 2 : 1
+      @battle.attack_count += critical ? base_delta * 2 : base_delta
+      @battle.last_critical_at = now if critical
       @battle.ended_at = Time.current if @battle.defeated?
       @battle.save!
 

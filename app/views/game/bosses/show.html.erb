@@ -20,7 +20,9 @@
       data-boss-poll-score-url-value="<%= game_score_path %>"
       data-boss-poll-started-value="<%= @battle.started_at.present? %>"
       data-boss-poll-time-limit-value="<%= @time_limit %>"
-      data-boss-poll-started-at-ms-value="<%= @battle.started_at.present? ? (@battle.started_at.to_f * 1000).to_i : 0 %>">
+      data-boss-poll-started-at-ms-value="<%= @battle.started_at.present? ? (@battle.started_at.to_f * 1000).to_i : 0 %>"
+      data-boss-poll-attacks-url-value="<%= attacks_game_boss_path(@question.number) %>"
+      data-boss-poll-is-netizen-value="<%= current_player.netizen? %>">
 
   <% if flash[:alert] %>
     <div class="mb-4! rounded-lg! bg-rose-500/10! px-4! py-3! text-center! text-sm! text-rose-300! ring-1! ring-rose-500/30!" role="alert"><%= flash[:alert] %></div>
@@ -35,18 +37,26 @@
       <%= link_to "查看本題成績", game_score_path, class: "mt-4! inline-flex! items-center! justify-center! rounded-lg! bg-amber-500! px-5! py-2.5! font-semibold! text-slate-900! transition! hover:bg-amber-400!" %>
     </div>
   <% elsif @battle.started_at.present? %>
-    <div class="boss-bg" style="position: relative;">
+    <div class="boss-bg" style="position: relative;" data-boss-poll-target="stage">
       <%= image_tag "bossGrass.png", class: "boss-grass" %>
       <% filename = boss_image_filename(@question.number) %>
-      <% if boss_asset_available?(filename) %>
-        <%= image_tag filename, class: "mon#{format('%02d', @question.number)} boss", alt: @question.title %>
-      <% else %>
-        <p class="boss rounded-lg! bg-slate-800/90! px-4! py-2! text-sm! text-slate-100! ring-1! ring-white/10!">（本題王的立繪素材缺失：<%= filename %>）</p>
-      <% end %>
+      <button type="button"
+              class="boss-hit mon<%= format('%02d', @question.number) %> boss"
+              data-boss-poll-target="monster"
+              data-action="click->boss-poll#attack"
+              aria-label="攻擊<%= @question.title %>">
+        <% if boss_asset_available?(filename) %>
+          <%= image_tag filename, class: "boss-sprite", alt: @question.title %>
+        <% else %>
+          <span class="boss-sprite-fallback rounded-lg! bg-slate-800/90! px-4! py-2! text-sm! text-slate-100! ring-1! ring-white/10!">（本題王的立繪素材缺失：<%= filename %>）</span>
+        <% end %>
+      </button>
+      <div class="boss-fx-layer" data-boss-poll-target="fx"></div>
+      <div class="combo-counter" data-boss-poll-target="combo"></div>
     </div>
 
     <div id="bossHP" class="mx-auto! mt-4! h-4! w-full! max-w-md! overflow-hidden! rounded-full! bg-slate-700!">
-      <div class="h-4! rounded-full! bg-rose-500! transition-all!" role="progressbar" style="width: <%= @battle.hp_percent %>%;"
+      <div class="h-4! rounded-full! bg-emerald-500! transition-all!" role="progressbar" style="width: <%= @battle.hp_percent %>%;"
            data-boss-poll-target="hpBar" aria-valuenow="<%= @battle.hp_percent %>" aria-valuemin="0" aria-valuemax="100"></div>
     </div>
     <p class="mt-4! text-slate-100!">
@@ -55,9 +65,7 @@
       剩餘時間：<span id="counter" data-boss-poll-target="counter"><%= @time_limit %></span> 秒
     </p>
 
-    <%= button_to "攻擊！", attacks_game_boss_path(@question.number), method: :post,
-          class: "attack-btn mt-6! inline-flex! items-center! justify-center! rounded-lg! bg-rose-500! px-6! py-3! text-lg! font-semibold! text-slate-900! transition! hover:bg-rose-400! cursor-pointer!",
-          data: { action: "click->boss-poll#ripple" } %>
+    <p class="mt-6! text-sm! text-slate-300!">點擊怪物發動攻擊！弱點浮現時點中會爆擊。</p>
   <% else %>
     <div class="rounded-xl! bg-slate-800/80! p-6! text-slate-100! ring-1! ring-white/10! backdrop-blur!">
       <p>時限 <%= @time_limit %> 秒，全員宣戰後即開始攻擊！</p>

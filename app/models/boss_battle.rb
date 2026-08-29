@@ -5,6 +5,17 @@ class BossBattle < ApplicationRecord
   belongs_to :team
   has_many :boss_readies, dependent: :destroy
 
+  # Anti-cheat throttle for the client-claimed `critical` attack param
+  # (Game::BossesController#attacks). The client decides *when* a weak-point
+  # target is on screen and reports whether a given click landed on one, so
+  # the server cannot trust that claim outright — it only honors one
+  # critical per this many seconds, matched to the front end's own weak-point
+  # reappearance cadence (boss_poll_controller.js). A claimed critical inside
+  # the throttle window is scored as a normal attack instead of rejected
+  # outright, so a spammed/faked client never loses attacks, just the bonus
+  # damage.
+  CRITICAL_THROTTLE_SECONDS = 2
+
   validates :boss_no, presence: true, uniqueness: { scope: :team_id }
   validates :attack_count, numericality: { greater_than_or_equal_to: 0 }
   validates :hp, numericality: { greater_than: 0 }
@@ -14,6 +25,13 @@ class BossBattle < ApplicationRecord
 
   def defeated?
     attack_count >= hp
+  end
+
+  # Whether a critical claimed `at` would be accepted right now (does not
+  # mutate `last_critical_at` — the caller applies that once it decides to
+  # honor the critical).
+  def critical_ready?(at = Time.current)
+    last_critical_at.blank? || at - last_critical_at >= CRITICAL_THROTTLE_SECONDS
   end
 
   def ready_count

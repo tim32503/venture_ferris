@@ -33,6 +33,21 @@ class BossBattleTest < ActiveSupport::TestCase
     assert_raises(ActiveRecord::RecordInvalid) { dup.save! }
   end
 
+  test "critical_ready? is true when no critical has ever been accepted" do
+    battle = BossBattle.create!(team: build_team, boss_no: 1, hp: 10)
+    assert battle.critical_ready?
+  end
+
+  test "critical_ready? is false within the throttle window" do
+    battle = BossBattle.create!(team: build_team, boss_no: 1, hp: 10, last_critical_at: Time.current)
+    assert_not battle.critical_ready?(Time.current + 1.second)
+  end
+
+  test "critical_ready? is true once the throttle window has elapsed" do
+    battle = BossBattle.create!(team: build_team, boss_no: 1, hp: 10, last_critical_at: 3.seconds.ago)
+    assert battle.critical_ready?
+  end
+
   test "ready_count derives from boss_readies rows, not a raw counter" do
     team = build_team
     battle = BossBattle.create!(team: team, boss_no: 1)
