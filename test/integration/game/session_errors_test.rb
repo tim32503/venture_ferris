@@ -53,13 +53,15 @@ module Game
       assert_match "隊長", response.body
     end
 
-    test "a fourth member for the same team redirects to the 01004 error page" do
+    test "a fourth member for the same team redirects to the 01005 error page" do
       team = create_team
       3.times { |n| team.players.create!(role: :member, email: "member#{n}@example.com") }
 
       post game_session_path, params: { serial_no: team.serial_no, role: "member", email: "member-overflow@example.com", gender: "male" }
 
-      assert_redirected_to error_page_path(error_code: "01004")
+      assert_redirected_to error_page_path(error_code: "01005")
+      follow_redirect!
+      assert_match "隊員名額已滿", response.body
     end
 
     test "visiting the team page without a session redirects to root" do

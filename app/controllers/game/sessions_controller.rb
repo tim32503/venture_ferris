@@ -11,7 +11,11 @@ module Game
 
     ERROR_INVALID_SERIAL = "01002"
     ERROR_INVALID_EMAIL = "01003"
-    ERROR_TEAM_FULL = "01004"
+    # 01004 is the legacy code/message (leader slot taken). 01005 is a
+    # refactor-added refinement: the legacy site reused 01004 for a full
+    # member roster, showing the leader-specific message to members.
+    ERROR_LEADER_FULL = "01004"
+    ERROR_MEMBER_FULL = "01005"
 
     # GET /game/login?sno=&role= — legacy just pre-filled these two params
     # into the page; the actual sign-in form (email/gender) never had a
@@ -57,7 +61,7 @@ module Game
         return redirect_to game_team_path, notice: "登入成功"
       end
 
-      return redirect_error(ERROR_TEAM_FULL) if team.players.where(role: role).count >= capacity_for(role)
+      return redirect_error(capacity_error_for(role)) if team.players.where(role: role).count >= capacity_for(role)
 
       player = team.players.new(role: role, email: email, gender: gender)
 
@@ -68,7 +72,7 @@ module Game
         # The only realistic reason `save` fails here (given the checks
         # above already passed) is a capacity/uniqueness race against a
         # concurrent request for the same team+role.
-        redirect_error(ERROR_TEAM_FULL)
+        redirect_error(capacity_error_for(role))
       end
     end
 
@@ -90,7 +94,7 @@ module Game
       if current_player.save
         redirect_to game_team_path, notice: "帳號已轉移"
       else
-        redirect_error(ERROR_TEAM_FULL)
+        redirect_error(capacity_error_for(new_role))
       end
     end
 
@@ -142,6 +146,10 @@ module Game
 
     def capacity_for(role)
       role == "leader" ? Player::MAX_LEADERS : Player::MAX_MEMBERS
+    end
+
+    def capacity_error_for(role)
+      role == "leader" ? ERROR_LEADER_FULL : ERROR_MEMBER_FULL
     end
 
     def normalize_gender(raw)
