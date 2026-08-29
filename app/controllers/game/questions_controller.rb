@@ -11,10 +11,6 @@ module Game
   # only `#status` is JSON, since it is the one polled without a full page
   # load.
   class QuestionsController < BaseController
-    # Matches the legacy `getHintCount`/`GetHintCount()` cutoff
-    # (`wheel_question.php:404`: disable the hint button once count >= 2).
-    HINT_LIMIT = 2
-
     before_action :set_question
 
     def show
@@ -62,17 +58,19 @@ module Game
     end
 
     # POST /game/questions/:number/hints — legacy `setHintCount`. Question 6
-    # has `hints_enabled: false` and must refuse outright; every other
-    # question caps out at HINT_LIMIT. The disabled-question path is a bare
-    # 403 (not a redirect+flash like the other guards below) because the
-    # hint button is never rendered when `hints_enabled?` is false — this
-    # only fires against a direct POST that bypassed the UI.
+    # has no hint rows at all and must refuse outright; every other question
+    # caps out at its own number of hints. The no-hints path is a bare 403
+    # (not a redirect+flash like the guard below) because the hint button is
+    # never rendered for a question without hints — this only fires against a
+    # direct POST that bypassed the UI. **The two branches must stay in this
+    # order**: folding them together would turn question 6's 403 into a
+    # 302 + "已達提示使用上限" (docs/SCHEMA_REDESIGN.md §2-4).
     def hints
-      return head :forbidden unless @question.hints_enabled?
+      return head :forbidden if @question.hints.none?
 
       attempt = attempt_record
 
-      if attempt.hint_count >= HINT_LIMIT
+      if attempt.hint_count >= @question.hints.size
         return redirect_to game_question_path(@question.number), alert: "已達提示使用上限"
       end
 
@@ -102,7 +100,7 @@ module Game
         solved: attempt&.completed? || false,
         hint_count: attempt&.hint_count || 0,
         active_question_number: active_attempt&.question&.number,
-        active_boss_number: active_boss&.boss_no
+        active_boss_number: active_boss&.question&.number
       }
     end
 

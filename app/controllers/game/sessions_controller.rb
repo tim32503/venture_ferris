@@ -16,6 +16,13 @@ module Game
     # member roster, showing the leader-specific message to members.
     ERROR_LEADER_FULL = "01004"
     ERROR_MEMBER_FULL = "01005"
+    # 01006 is new with docs/SCHEMA_REDESIGN.md §2-7d: the `[team_id, email]`
+    # unique index means one email is one seat on a team, so re-registering
+    # the same address under the other role is now refused instead of quietly
+    # consuming a second slot. It is its own code because "this address is
+    # already on this team" is not "this team is full" — and the error page's
+    # 帳號轉移 button is the actual fix for it.
+    ERROR_EMAIL_TAKEN = "01006"
 
     # GET /game/login?sno=&role= — legacy just pre-filled these two params
     # into the page; the actual sign-in form (email/gender) never had a
@@ -61,17 +68,33 @@ module Game
         return redirect_to game_team_path, notice: "登入成功"
       end
 
+      # Checked *before* capacity (docs/SCHEMA_REDESIGN.md §7): an address
+      # that is already on this team under the other role is a duplicate
+      # identity, not a full roster, and reporting it as 01004/01005 would
+      # send the player looking for a seat that is not the problem.
+      return redirect_error(ERROR_EMAIL_TAKEN) if team.players.exists?(email: email)
+
       return redirect_error(capacity_error_for(role)) if team.players.where(role: role).count >= capacity_for(role)
 
       player = team.players.new(role: role, email: email, gender: gender)
 
-      if player.save
+      begin
+        saved = player.save
+      rescue ActiveRecord::RecordNotUnique
+        # Lost a race for the same team+email against a concurrent request:
+        # the `[team_id, email]` index is the only one a brand-new player can
+        # violate here (its job is still nil), so this is the same situation
+        # as the guard above, just decided by PostgreSQL instead.
+        return redirect_error(ERROR_EMAIL_TAKEN)
+      end
+
+      if saved
         session[:player_id] = player.id
         redirect_to game_team_path, notice: "登入成功"
       else
         # The only realistic reason `save` fails here (given the checks
-        # above already passed) is a capacity/uniqueness race against a
-        # concurrent request for the same team+role.
+        # above already passed) is a capacity race against a concurrent
+        # request for the same team+role.
         redirect_error(capacity_error_for(role))
       end
     end
@@ -88,10 +111,28 @@ module Game
       return redirect_error(ERROR_INVALID_SERIAL) if new_team.nil?
       return redirect_error(ERROR_INVALID_SERIAL) unless Player.roles.key?(new_role)
 
+      # 7d: transferring onto a team that already knows this address would
+      # need a second row for one person on one team, which the
+      # `[team_id, email]` index forbids.
+      if new_team.id != current_player.team_id && new_team.players.exists?(email: current_player.email)
+        return redirect_error(ERROR_EMAIL_TAKEN)
+      end
+
       current_player.team = new_team
       current_player.role = new_role
 
-      if current_player.save
+      begin
+        saved = current_player.save
+      rescue ActiveRecord::RecordNotUnique
+        # Two indexes can reject a transfer that got past the checks above:
+        # `[team_id, email]` on a race, and 7b's `[team_id, job]` when this
+        # player's job is already held on the destination team. Both fall
+        # through to the same "transfer refused" page the pre-existing
+        # validation-failure branch used.
+        saved = false
+      end
+
+      if saved
         redirect_to game_team_path, notice: "帳號已轉移"
       else
         redirect_error(capacity_error_for(new_role))

@@ -2,10 +2,13 @@ require "test_helper"
 
 class QuestionTest < ActiveSupport::TestCase
   def build_question(**attrs)
+    number = attrs.fetch(:number, rand(1..11))
+
     Question.new({
-      number: rand(1..11),
+      number: number,
       kind: :quiz,
       title: "sample",
+      boss: seed_boss_for(number),
       answer_digest: Question.digest_for("answer")
     }.merge(attrs))
   end

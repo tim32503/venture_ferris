@@ -42,7 +42,11 @@ module Game
       assert_includes emails, "member1@example.com"
       assert body["players"].all? { |p| p["job"].nil? }
 
-      team.players.each { |player| player.update!(job: "uncle") }
+      # Distinct jobs: two teammates may not hold the same one
+      # (docs/SCHEMA_REDESIGN.md §2-7b's `[team_id, job]` unique index). What
+      # this test is about is `all_selected` flipping once nobody's job is
+      # nil, which is unaffected by *which* jobs they picked.
+      team.players.order(:id).zip(%w[uncle senior]).each { |player, job| player.update!(job: job) }
 
       get game_job_status_path
       body = JSON.parse(response.body)

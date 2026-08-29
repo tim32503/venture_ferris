@@ -14,6 +14,7 @@ module Game
       Question.create!({
         number: number, kind: :quiz, title: "第 #{number} 題", content: "內容 #{number}",
         level: "1", explanation: "解說 #{number}", boss_hp: 2, boss_time_limit: 30,
+        boss: seed_boss_for(number),
         answer_digest: Question.digest_for("answer#{number}")
       }.merge(attrs))
     end
@@ -83,7 +84,7 @@ module Game
 
       get status_game_boss_path(1)
       assert_equal true, JSON.parse(response.body)["defeated"]
-      assert demo_team.boss_battles.find_by!(boss_no: 1).ended_at.present?
+      assert demo_team.boss_battles.find_by!(question: Question.find_by!(number: 1)).ended_at.present?
 
       post game_score_path
       assert_redirected_to game_score_path

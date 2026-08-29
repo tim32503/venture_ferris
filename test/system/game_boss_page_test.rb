@@ -14,6 +14,7 @@ class GameBossPageTest < ApplicationSystemTestCase
     question = Question.create!(
       number: 1, kind: :quiz, title: "示範魔王戰", content: "示範內容", level: "1",
       explanation: "示範解說", boss_hp: 3, boss_time_limit: 60,
+      boss: seed_boss_for(1),
       answer_digest: Question.digest_for("answer1")
     )
 
@@ -42,6 +43,7 @@ class GameBossPageTest < ApplicationSystemTestCase
     question = Question.create!(
       number: 2, kind: :quiz, title: "示範魔王戰二", content: "示範內容", level: "1",
       explanation: "示範解說", boss_hp: 10, boss_time_limit: 60,
+      boss: seed_boss_for(2),
       answer_digest: Question.digest_for("answer2")
     )
 
@@ -78,6 +80,7 @@ class GameBossPageTest < ApplicationSystemTestCase
     question = Question.create!(
       number: 3, kind: :quiz, title: "示範魔王戰三", content: "示範內容", level: "1",
       explanation: "示範解說", boss_hp: 5, boss_time_limit: 60,
+      boss: seed_boss_for(3),
       answer_digest: Question.digest_for("answer3")
     )
 

@@ -1,8 +1,15 @@
-# One boss fight per question (`boss_no` shares numbering with
-# `Question#number` — REFACTOR_PLAN.md §8-3). `ended_at` NULL means the fight
-# is still in progress. Victory threshold is `attack_count >= hp`.
+# One boss fight per question, via a declared `question_id` foreign key
+# (docs/SCHEMA_REDESIGN.md §2-1 replaced the old bare `boss_no` integer, which
+# shared numbering with `Question#number` but had nothing enforcing it).
+# `ended_at` NULL means the fight is still in progress. Victory threshold is
+# `attack_count >= hp`.
+#
+# Keyed on the question rather than on the monster on purpose: questions 10
+# and 11 are two fights against the same `Boss`, so a team has two rows here
+# pointing at one `bosses` row.
 class BossBattle < ApplicationRecord
   belongs_to :team
+  belongs_to :question
   has_many :boss_readies, dependent: :destroy
 
   # Anti-cheat throttle for the client-claimed `critical` attack param
@@ -16,7 +23,7 @@ class BossBattle < ApplicationRecord
   # damage.
   CRITICAL_THROTTLE_SECONDS = 2
 
-  validates :boss_no, presence: true, uniqueness: { scope: :team_id }
+  validates :question_id, uniqueness: { scope: :team_id }
   validates :attack_count, numericality: { greater_than_or_equal_to: 0 }
   validates :hp, numericality: { greater_than: 0 }
 

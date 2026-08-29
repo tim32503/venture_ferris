@@ -6,7 +6,9 @@ class ScoreCalculatorTest < ActiveSupport::TestCase
   end
 
   def build_question(base_score: 1000)
-    Question.create!(number: rand(1..11), kind: :quiz, title: "q", answer_digest: Question.digest_for("a"), base_score: base_score)
+    number = rand(1..11)
+    Question.create!(number: number, kind: :quiz, title: "q", boss: seed_boss_for(number),
+                     answer_digest: Question.digest_for("a"), base_score: base_score)
   end
 
   def build_attempt(team, question, hint_count: 0, elapsed: 60)

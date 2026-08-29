@@ -26,7 +26,18 @@ module Game
         return redirect_to game_job_path, alert: "這個職業已經被隊友選走了"
       end
 
-      if current_player.update(job: job)
+      begin
+        updated = current_player.update(job: job)
+      rescue ActiveRecord::RecordNotUnique
+        # 7b (docs/SCHEMA_REDESIGN.md §2-7b): the check above is a
+        # read-then-write, so two teammates submitting the same job at the
+        # same moment both pass it and the `[team_id, job]` partial unique
+        # index decides the winner. The loser lands here and must see exactly
+        # what the non-racing loser sees a few lines up.
+        return redirect_to game_job_path, alert: "這個職業已經被隊友選走了"
+      end
+
+      if updated
         redirect_to game_job_path, notice: "職業選擇成功"
       else
         redirect_to game_job_path, alert: current_player.errors.full_messages.to_sentence

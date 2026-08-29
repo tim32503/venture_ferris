@@ -12,7 +12,7 @@
 
 <header class="mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-12!">
   <h2 class="text-2xl! font-bold! text-slate-100!">魔王戰：<%= @question.title %></h2>
-  <% if (phase_label = boss_phase_label(@question.number)) %>
+  <% if (phase_label = boss_phase_label(@question)) %>
     <p class="mt-1! text-sm! font-semibold! text-amber-400!"><%= phase_label %></p>
   <% end %>
 </header>
@@ -42,9 +42,9 @@
   <% elsif @battle.started_at.present? %>
     <div class="boss-bg" style="position: relative;" data-boss-poll-target="stage">
       <%= image_tag "bossGrass.png", class: "boss-grass" %>
-      <% filename = boss_image_filename(@question.number) %>
+      <% filename = boss_image_filename(@question) %>
       <button type="button"
-              class="boss-hit <%= boss_sprite_css_classes(@question.number) %> boss"
+              class="boss-hit <%= boss_sprite_css_classes(@question) %> boss"
               data-boss-poll-target="monster"
               data-action="click->boss-poll#attack"
               aria-label="攻擊<%= @question.title %>">

@@ -64,6 +64,37 @@ module Game
       assert_match "隊員名額已滿", response.body
     end
 
+    # docs/SCHEMA_REDESIGN.md §2-7d — the one deliberate behavior change in
+    # the schema-normalization batch. Before it, this registration succeeded
+    # and left one person occupying two of the team's four seats.
+    test "an email already registered on the team under another role redirects to the 01006 error page" do
+      team = create_team
+      team.players.create!(role: :leader, email: "both@example.com")
+
+      post game_session_path,
+           params: { serial_no: team.serial_no, role: "member", email: "both@example.com", gender: "male" }
+
+      assert_redirected_to error_page_path(error_code: "01006")
+      follow_redirect!
+      assert_match "已在此隊伍以其他身分註冊", response.body
+      # The error page offers account transfer for this code, which is the
+      # actual way out of the situation.
+      assert_select "a[href=?]", game_login_path, text: "帳號轉移"
+      assert_equal 1, team.players.count
+    end
+
+    test "re-registering with the same role and email is still an idempotent re-login, not 01006" do
+      team = create_team
+      leader = team.players.create!(role: :leader, email: "leader@example.com")
+
+      post game_session_path,
+           params: { serial_no: team.serial_no, role: "leader", email: "leader@example.com", gender: "male" }
+
+      assert_redirected_to game_team_path
+      assert_equal 1, team.players.count
+      assert_equal leader.id, session[:player_id]
+    end
+
     test "visiting the team page without a session redirects to root" do
       get game_team_path
 

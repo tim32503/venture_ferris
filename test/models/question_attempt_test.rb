@@ -6,7 +6,8 @@ class QuestionAttemptTest < ActiveSupport::TestCase
   end
 
   def build_question(number)
-    Question.create!(number: number, kind: :quiz, title: "q#{number}", answer_digest: Question.digest_for("a"))
+    Question.create!(number: number, kind: :quiz, title: "q#{number}",
+                     boss: seed_boss_for(number), answer_digest: Question.digest_for("a"))
   end
 
   test "ended_at nil means still in progress (replaces legacy 9999-12-31 sentinel)" do

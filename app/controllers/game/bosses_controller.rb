@@ -96,11 +96,13 @@ module Game
     private
 
     def set_question
-      @question = Question.find_by!(number: params[:number])
+      # `includes(:boss)` because the battle screen renders the monster's
+      # sprite/positioning class straight off the association.
+      @question = Question.includes(:boss).find_by!(number: params[:number])
     end
 
     def set_battle
-      @battle = current_team.boss_battles.find_or_create_by!(boss_no: @question.number) do |battle|
+      @battle = current_team.boss_battles.find_or_create_by!(question: @question) do |battle|
         battle.hp = @question.boss_hp
       end
     end

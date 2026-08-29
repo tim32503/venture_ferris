@@ -659,7 +659,7 @@ helpers 5）＋ **9 個 system 測試**。以 `grep -c 'test "'` 逐目錄核對
 1. `app/models/player.rb:16` 驗證 scope 同步改為 `:team_id`（否則 7d 下 `save` 過 Ruby 驗證、PG 炸 RecordNotUnique → 500）。
 2. `sessions#create`（:68-76）與 `sessions#update`（:91-98）都要 `rescue ActiveRecord::RecordNotUnique` 並對映錯誤碼；`#update` 要處理 7b（job 衝突）與 7d（email 衝突）。
 3. 7d 分支順序定案：`find_by(role:, email:)` 未命中後、名額檢查**之前**，先查 `team.players.exists?(email:)` → 命中回**新錯誤碼 01006**「此 Email 已在此隊伍以其他身分註冊，請使用帳號轉移」（補 `zh-TW.yml` 鍵；錯誤頁既有的「帳號轉移」按鈕適用此碼）。
-4. `test/integration/game/status_json_test.rb:45` 兩名玩家改指定不同 job。
+4. `test/integration/game/status_json_test.rb:49` 兩名玩家改指定不同 job。
 5. `test/integration/game/settlement_flow_test.rb` 的 `seed_question(11)` 需建 2 則 hint 子列以維持 `hint_score < 0` 斷言。
 6. 測試盤點實為 **14 處 `Question.create!`／11 檔**；`bosses` 在測試 DB（schema:load）不存在，migration 內 INSERT 靠不住——**bosses 種子資料必須進 `db/seeds.rb`，測試 helper 各自 `Boss.find_or_create_by!(sprite:)`**。
 7. M1 用 `remove_columns`（非 remove_column 多欄位誤用）；M1-M4 寫 `def up`/`def down`（down 直接 raise IrreversibleMigration）。
@@ -668,3 +668,84 @@ helpers 5）＋ **9 個 system 測試**。以 `grep -c 'test "'` 逐目錄核對
 10. **`boss_battles` 唯一鍵維持 `[team_id, question_id]`——戰鬥單位是 question 不是 boss**（Q10/Q11 是兩場戰鬥打同一隻怪）；`bosses.sprite` 存裸值（`mon11`），view 端補 `.gif`。
 11. `HINT_LIMIT`→`hints.size` 僅在「每題 0 或 2 則」時與現況等價，seeds 加註記錄此依賴。
 12. 文件勘誤：§2-7a 的 `insert_all!` 舉證不成立（teams 無 enum 欄位）；§4「`player_test.rb:59-65` 需重寫」為假陽性（收緊後斷言仍成立）；§2-4/§4 的 `hints` vs `question_hints` 命名統一為 `has_many :hints, class_name: "QuestionHint"`。
+
+---
+
+## §8 實作附錄（2026-08-30 完成，分支 `feat/schema-normalization`）
+
+實際落地的範圍與 §7 裁決一致：**M0 ＋ M1～M4 ＋ 7b ＋ 7d**。
+7a／7c／7e／7f／7g／7i、`boss_asset_available?` 的刪除、worktree 清理均未執行。
+
+### 8.1 M0 黃金值：字面量與結果
+
+`test/integration/game/scoring_golden_test.rb`。整條鏈（timer → 提示×2 → answer →
+ready → attack 擊敗 → score）跑在兩個凍結時刻上：`FROZEN_START = 2026-03-01T04:00:00Z`
+與 `FROZEN_START + 90s`，因此 `elapsed_seconds` 恆為 90。題目 `base_score: 1000`、
+`boss_hp: 3`、`boss_time_limit: 600`、2 則提示；單人隊伍（ready 1/1 立即開戰）。
+
+| 變體 | question_score | time_score | hint_score | boss_score | job_score | total_score |
+|---|---|---|---|---|---|---|
+| 無職業 | 1000 | -90 | -100 | 666 | 0 | **1476** |
+| senior 在隊上 | 1000 | -90 | 0 | 666 | 0 | **1576** |
+| celebrity 在隊上 | 1000 | -90 | -100 | 666 | 100 | **1576** |
+
+這 18 個字面量在**重構前**（M1 之前，仍是 `hint1`/`hint2`/`boss_no`/`question_number`
+的舊 schema）先跑綠，重構後**逐位元相同**，全程沒有調整任何一個期望值。
+唯一改的是建構測試資料的方式（`hint1:`/`hint2:` → `question.hints.create!`、
+補 `boss:` 關聯），這正是 §4 所說「設定方式改變、期望值不變」的可驗證形式。
+
+### 8.2 Migration 清單
+
+| 檔案 | 內容 |
+|---|---|
+| `20260830101000_create_question_hints.rb` | 建 `question_hints`；`row_number()` 稠密 backfill（跳過空字串）；`remove_columns` 三欄 |
+| `20260830101100_create_bosses.rb` | 建 `bosses`＋10 列；`questions.boss_id` FK ＋ `boss_phase`；backfill 後 NOT NULL |
+| `20260830101200_add_question_ref_to_boss_battles.rb` | `question_id` FK；孤兒清理**先刪 `boss_readies` 再刪 `boss_battles`**；換唯一索引；刪 `boss_no` |
+| `20260830101300_add_question_ref_to_score_entries.rb` | 同上形狀，對 `score_entries.question_number` |
+| `20260830101400_tighten_player_uniqueness.rb` | 7b `[team_id, job] WHERE job IS NOT NULL`；7d `[team_id, role, email]` → `[team_id, email]` |
+
+五個都寫 `def up` / `def down`（`down` 直接 `raise IrreversibleMigration`），
+backfill 一律 raw SQL 不引用 model class。既有的 `20260819*` 批次未修改。
+
+### 8.3 §7「實作必補」12 點的落點
+
+1. `app/models/player.rb:25` 驗證 scope 改為 `:team_id`（與新索引一致）。
+2. `sessions#create`（`sessions_controller.rb:51-100`）與 `#update`（`:107-140`）都補了 `rescue ActiveRecord::RecordNotUnique`；`#update` 另有 7d 前置檢查，job 衝突走既有的 `capacity_error_for` 分支。
+3. 7d 分支順序：`find_by(role:, email:)` 未命中 → `team.players.exists?(email:)` → **01006** → 才做名額檢查。`config/locales/zh-TW.yml:13` 補鍵，`app/views/welcome/error.html.erb:12` 把 01006 併入「帳號轉移」按鈕的顯示條件。
+4. `test/integration/game/status_json_test.rb:49` 兩名玩家改指定不同 job。
+5. `test/integration/game/settlement_flow_test.rb:22` 的 `seed_question` 預設建 2 則 hint 子列，維持 `hint_score < 0`。
+6. 14 處 `Question.create!` 全部補 `boss:`；共用 helper `seed_boss_for` 放在 `test/test_helper.rb:21`（測試 DB 走 `schema:load`，migration 的 INSERT 不會執行）。`bosses` 種子資料在 `db/seeds.rb` 的 `BOSS_ASSIGNMENTS`。
+7. M1 用 `remove_columns`；M1-M5 都是 `up`/`down`。
+8. M3 孤兒清理順序如上表。
+9. M1 backfill 用 `row_number() OVER (PARTITION BY question_id ORDER BY source_position)`。
+10. `boss_battles` 唯一鍵維持 `[team_id, question_id]`；`bosses.sprite` 存裸值 `mon11`，view 端 `"#{sprite}.gif"`。
+11. `db/seeds.rb` 的 question 迴圈註記了「每題 0 或 2 則」這個等價前提。
+12. 文件勘誤採納：`player_test.rb` 的舊測試斷言確實仍成立（只改了測試名稱以對齊新索引，並新增三個 7b/7d 專屬測試）；`has_many :hints, class_name: "QuestionHint"` 統一命名。
+
+### 8.4 §4 受影響面 vs 實際 `git diff` 的差異
+
+實際動到 38 個既有檔案 + 7 個新檔。與 §4 盤點的差異：
+
+**多動的**（§4 未列，但必要）：
+
+- `app/views/welcome/error.html.erb`、`config/locales/zh-TW.yml` — 7d 選定「新增 01006」（§7 第 3 點），§4 寫的時候 7d 還未裁決。
+- `test/integration/game/session_errors_test.rb` — 新增 01006 與「同 role 同 email 仍是冪等重登入」兩個測試。
+- `test/models/question_test.rb`、`test/models/question_attempt_test.rb`、`test/models/team_test.rb`、`test/models/score_calculator_test.rb`、`test/system/game_puzzle_page_test.rb`、`test/system/game_home_poll_redirect_test.rb`、`test/test_helper.rb` — `boss_id` NOT NULL 的連帶；§4 只數到 `game_boss_page_test.rb` 3 處，§7 第 6 點已修正為 14 處／11 檔。
+- `test/integration/game/scoring_golden_test.rb`（新檔）— M0。
+- `README.md` — 驗收條件要求同步 Models 表與 ERD。
+
+**少動的**（§4 有列但未執行，皆為 §7 明確踢出本次的）：
+
+- `app/helpers/game/bosses_helper.rb:60-70` 的 `boss_asset_available?` **保留未刪**（§7：NOT NULL 字串與 asset 存在無關）；`app/views/game/bosses/show.html.erb:51-55` 的 fallback 分支也保留，只把參數來源從題號換成 sprite。
+- `app/controllers/game/bosses_controller.rb:118` 的 `last_critical_at` 未清除 bug **未修**（7i，§7 踢出：那是行為修正，混進來會破壞敘事）。
+- `app/controllers/admin/serial_codes_controller.rb` 未動（7a 整批踢出）。
+
+### 8.5 驗收實跑結果
+
+- `bin/rails test`：**133 runs, 530 assertions, 0 failures**（baseline 123，+10：M0 黃金值 3、`session_errors` 01006 相關 2、`player_test` 7b/7d 3、`boss_battle_test` 雙型態 1、`bosses_helper_test` 「Q10/Q11 指向同一列」1）。
+- `bin/rails test:system`：**9 runs, 39 assertions, 0 failures**。
+- `bin/rails db:drop` → `db:prepare` → `db:seed` ×2：成功且冪等（兩次都是 `11 questions, 10 bosses, 12 question hints, 21 teams, 0 players, 100 reward codes, 1 admins`）。
+  **注意**：`bin/rails db:drop db:prepare` 串成一行會炸（`PG::UndefinedTable`）——這是**既有問題不是本次造成的**，在未修改的 HEAD 上同樣會炸（只是錯在 `questions` 而不是 `bosses`）。分開下兩個指令即正常。
+- `bin/rubocop app config db lib test`：101 files, **0 offenses**。
+- `bundle exec brakeman -q`：**0 security warnings**（1 個既有的 ignored warning，未變）。
+- 行為抽查（dev server + curl）：demo 全鏈走通（提示面板顯示「已使用 1 / 2 次提示」與子表提示文字；boss 3 顯示 `mon03`；結算表 `3 1000 -11 -50 666 0 1605`）；boss 10 = `mon11 boss-phase-1` ＋「魔王・第一型態」、boss 11 = `mon11` ＋「魔王・最終型態」；7d 同隊同 email 換 role → 302 `/error/01006` 且頁面顯示新訊息與「帳號轉移」按鈕；`sessions#update` 轉移到已有該 email 的隊伍同樣 → 01006，轉移到空隊伍成功；7b 第二人選同職業被擋，維持既有 alert「這個職業已經被隊友選走了」且該玩家 job 仍為 null。

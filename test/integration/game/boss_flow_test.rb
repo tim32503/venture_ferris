@@ -20,6 +20,7 @@ module Game
       Question.create!({
         number: number, kind: :quiz, title: "第 #{number} 題", content: "內容 #{number}",
         level: "1", explanation: "解說 #{number}", boss_hp: 4, boss_time_limit: 30,
+        boss: seed_boss_for(number),
         answer_digest: Question.digest_for("answer#{number}")
       }.merge(attrs))
     end
@@ -81,7 +82,7 @@ module Game
       sign_in(team, role: "member", email: "netizen@example.com", job: :netizen)
       post ready_game_boss_path(4) # last player readies -> fight starts
 
-      battle = team.boss_battles.find_by!(boss_no: 4)
+      battle = team.boss_battles.find_by!(question: Question.find_by!(number: 4))
       assert battle.started_at.present?
 
       post attacks_game_boss_path(4) # current session: netizen -> +2
@@ -104,7 +105,7 @@ module Game
       sign_in(team, role: "leader", email: "leader@example.com")
       seed_question(7, boss_hp: 100)
       post ready_game_boss_path(7)
-      battle = team.boss_battles.find_by!(boss_no: 7)
+      battle = team.boss_battles.find_by!(question: Question.find_by!(number: 7))
 
       post attacks_game_boss_path(7)
       assert_equal 1, battle.reload.attack_count
@@ -120,7 +121,7 @@ module Game
       sign_in(team2, role: "leader", email: "netizen@example.com", job: :netizen)
       seed_question(8, boss_hp: 100)
       post ready_game_boss_path(8)
-      battle2 = team2.boss_battles.find_by!(boss_no: 8)
+      battle2 = team2.boss_battles.find_by!(question: Question.find_by!(number: 8))
 
       post attacks_game_boss_path(8)
       assert_equal 2, battle2.reload.attack_count
@@ -137,7 +138,7 @@ module Game
       sign_in(team, role: "leader", email: "leader@example.com")
       seed_question(9, boss_hp: 100)
       post ready_game_boss_path(9)
-      battle = team.boss_battles.find_by!(boss_no: 9)
+      battle = team.boss_battles.find_by!(question: Question.find_by!(number: 9))
 
       post attacks_game_boss_path(9), params: { critical: "1" } # accepted: +2
       assert_equal 2, battle.reload.attack_count
@@ -164,7 +165,7 @@ module Game
 
       post attacks_game_boss_path(10), params: { critical: "1" }
       assert_redirected_to game_boss_path(10)
-      battle = team.boss_battles.find_by!(boss_no: 10)
+      battle = team.boss_battles.find_by!(question: Question.find_by!(number: 10))
       assert_equal 0, battle.attack_count
       assert_nil battle.last_critical_at
     end
@@ -176,7 +177,7 @@ module Game
 
       post attacks_game_boss_path(5)
       assert_redirected_to game_boss_path(5)
-      assert_equal 0, team.boss_battles.find_by!(boss_no: 5).attack_count
+      assert_equal 0, team.boss_battles.find_by!(question: Question.find_by!(number: 5)).attack_count
     end
 
     test "attacking an already-defeated boss is rejected and does not add more attacks" do
@@ -186,7 +187,7 @@ module Game
       post ready_game_boss_path(6)
       post attacks_game_boss_path(6) # 1 attack defeats hp=1
 
-      battle = team.boss_battles.find_by!(boss_no: 6)
+      battle = team.boss_battles.find_by!(question: Question.find_by!(number: 6))
       assert battle.ended_at.present?
 
       post attacks_game_boss_path(6)

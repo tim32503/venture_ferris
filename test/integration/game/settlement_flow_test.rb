@@ -15,12 +15,21 @@ module Game
       team.players.find_by!(email: email)
     end
 
-    def seed_question(number, **attrs)
-      Question.create!({
+    # `hints:` defaults to two rows so the hint cap here matches db/seeds.rb's
+    # hinted questions (docs/SCHEMA_REDESIGN.md §2-4): the "negative
+    # components" test below spends two hints and asserts `hint_score < 0`,
+    # which is only reachable when the question actually has hint rows.
+    def seed_question(number, hints: [ "提示一", "提示二" ], **attrs)
+      question = Question.create!({
         number: number, kind: :quiz, title: "第 #{number} 題", content: "內容 #{number}",
         level: "1", explanation: "解說 #{number}", boss_hp: 2, boss_time_limit: 30,
+        boss: seed_boss_for(number),
         answer_digest: Question.digest_for("answer#{number}")
       }.merge(attrs))
+
+      hints.each_with_index { |content, index| question.hints.create!(position: index + 1, content: content) }
+
+      question
     end
 
     def seed_reward_pool(count: 4, test_mode: true)
@@ -55,11 +64,11 @@ module Game
       post ready_game_boss_path(10)
       post attacks_game_boss_path(10)
       post attacks_game_boss_path(10) # hp=2 -> defeated
-      assert team.boss_battles.find_by!(boss_no: 10).ended_at.present?
+      assert team.boss_battles.find_by!(question: Question.find_by!(number: 10)).ended_at.present?
 
       get game_score_path
       assert_response :success
-      entry = team.score_entries.find_by!(question_number: 10)
+      entry = team.score_entries.find_by!(question: Question.find_by!(number: 10))
       assert_equal ScoreCalculator::BOSS_DEFEATED_BONUS, entry.boss_score
       assert_operator entry.time_score, :<=, 0
       assert_operator entry.total_score, :>=, 0
@@ -112,7 +121,7 @@ module Game
       post attacks_game_boss_path(11) # hp=1 -> defeated
 
       post game_score_path
-      entry = team.score_entries.find_by!(question_number: 11)
+      entry = team.score_entries.find_by!(question: Question.find_by!(number: 11))
 
       assert_operator entry.time_score, :<, 0
       assert_operator entry.hint_score, :<, 0

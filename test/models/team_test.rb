@@ -10,6 +10,7 @@ class TeamTest < ActiveSupport::TestCase
       number: number,
       kind: :quiz,
       title: "q#{number}",
+      boss: seed_boss_for(number),
       answer_digest: Question.digest_for("a#{number}")
     }.merge(attrs))
   end
