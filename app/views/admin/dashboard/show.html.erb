@@ -2,36 +2,70 @@
 <% content_for :body_class, "bg-slate-50! bg-none! text-slate-800!" %>
 <% content_for :footer_class, "text-slate-400!" %>
 
-<main class="[text-shadow:none]! mx-auto! max-w-4xl! px-4! py-8! sm:py-12!">
-  <div class="mb-6! flex! items-center! justify-between!">
-    <h1 class="text-xl! font-bold! text-slate-800!">後台 Dashboard</h1>
-    <%= button_to "登出", admin_session_path, method: :delete,
-          class: "cursor-pointer! rounded-lg! bg-white! px-4! py-2! text-sm! font-semibold! text-slate-700! ring-1! ring-slate-300! transition! hover:bg-slate-50!" %>
-  </div>
+<main class="[text-shadow:none]! mx-auto! max-w-6xl! px-4! py-8! sm:py-12! flex! flex-col! gap-6! sm:flex-row!">
+  <%= render "admin/nav" %>
 
-  <% if flash[:notice] %>
-    <div class="mb-6! rounded-lg! bg-emerald-50! px-4! py-3! text-sm! text-emerald-800! ring-1! ring-emerald-200!"><%= flash[:notice] %></div>
-  <% end %>
+  <div class="min-w-0! flex-1!">
+    <%= render "admin/header", title: "後台 Dashboard" %>
 
-  <div class="grid! grid-cols-1! gap-4! sm:grid-cols-3!">
-    <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
-      <h2 class="text-4xl! font-bold! text-slate-800!"><%= @team_count %></h2>
-      <p class="mt-1! text-sm! text-slate-500!">隊伍數</p>
+    <div class="grid! grid-cols-1! gap-4! sm:grid-cols-3!">
+      <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-4xl! font-bold! text-slate-800!"><%= @team_count %></h2>
+        <p class="mt-1! text-sm! text-slate-500!">隊伍數</p>
+      </div>
+
+      <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-4xl! font-bold! text-slate-800!"><%= @player_count %></h2>
+        <p class="mt-1! text-sm! text-slate-500!">玩家數</p>
+      </div>
+
+      <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-4xl! font-bold! text-slate-800!"><%= @claimed_reward_code_count %></h2>
+        <p class="mt-1! text-sm! text-slate-500!">已配發獎品序號數</p>
+      </div>
     </div>
 
-    <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
-      <h2 class="text-4xl! font-bold! text-slate-800!"><%= @player_count %></h2>
-      <p class="mt-1! text-sm! text-slate-500!">玩家數</p>
+    <div class="mt-4! grid! grid-cols-1! gap-4! sm:grid-cols-2!">
+      <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-4xl! font-bold! text-slate-800!"><%= @active_battle_count %></h2>
+        <p class="mt-1! text-sm! text-slate-500!">進行中戰鬥數</p>
+      </div>
+
+      <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-4xl! font-bold! text-slate-800!"><%= @settled_team_count %></h2>
+        <p class="mt-1! text-sm! text-slate-500!">已結算隊伍數</p>
+      </div>
     </div>
 
-    <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
-      <h2 class="text-4xl! font-bold! text-slate-800!"><%= @claimed_reward_code_count %></h2>
-      <p class="mt-1! text-sm! text-slate-500!">已配發獎品序號數</p>
+    <div class="mt-8! rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+      <h2 class="text-base! font-semibold! text-slate-800!">各題完成隊數</h2>
+      <div class="mt-4! space-y-3!">
+        <% max_count = [ @question_progress.map { |p| p[:completed_count] }.max || 0, 1 ].max %>
+        <% @question_progress.each do |progress| %>
+          <% percent = (progress[:completed_count] / max_count.to_f * 100).round(1) %>
+          <div class="flex! items-center! gap-3!">
+            <span class="w-24! shrink-0! text-sm! text-slate-600!">第 <%= progress[:question].number %> 題</span>
+            <div class="h-3! flex-1! overflow-hidden! rounded-full! bg-slate-100!">
+              <div class="h-full! rounded-full! bg-indigo-500!" style="width: <%= percent %>%;"></div>
+            </div>
+            <span class="w-12! shrink-0! text-right! text-sm! font-semibold! text-slate-700!"><%= progress[:completed_count] %></span>
+          </div>
+        <% end %>
+      </div>
     </div>
-  </div>
 
-  <div class="mt-8!">
-    <%= link_to "序號產生器", admin_serial_codes_path,
-          class: "inline-flex! items-center! justify-center! rounded-lg! bg-indigo-600! px-4! py-2! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!" %>
+    <div class="mt-8! rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+      <h2 class="text-base! font-semibold! text-slate-800!">兌獎序號池餘量</h2>
+      <div class="mt-4! grid! grid-cols-1! gap-4! sm:grid-cols-2!">
+        <div>
+          <p class="text-sm! font-medium! text-slate-600!">正式</p>
+          <p class="mt-1! text-sm! text-slate-500!">未配發 <span class="font-semibold! text-slate-800!"><%= @reward_pool[:real_available] %></span> ／已配發 <span class="font-semibold! text-slate-800!"><%= @reward_pool[:real_claimed] %></span></p>
+        </div>
+        <div>
+          <p class="text-sm! font-medium! text-slate-600!">測試</p>
+          <p class="mt-1! text-sm! text-slate-500!">未配發 <span class="font-semibold! text-slate-800!"><%= @reward_pool[:test_available] %></span> ／已配發 <span class="font-semibold! text-slate-800!"><%= @reward_pool[:test_claimed] %></span></p>
+        </div>
+      </div>
+    </div>
   </div>
 </main>

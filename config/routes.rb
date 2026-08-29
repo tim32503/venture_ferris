@@ -72,5 +72,8 @@ Rails.application.routes.draw do
     delete "session", to: "sessions#destroy"
     root "dashboard#show"
     resources :serial_codes, only: [ :index, :create ]
+    resources :teams, only: [ :index, :show, :destroy ]
+    resources :questions, only: [ :index, :edit, :update ]
+    resources :reward_codes, only: [ :index, :create ]
   end
 end

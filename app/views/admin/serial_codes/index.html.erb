@@ -2,16 +2,11 @@
 <% content_for :body_class, "bg-slate-50! bg-none! text-slate-800!" %>
 <% content_for :footer_class, "text-slate-400!" %>
 
-<main class="[text-shadow:none]! mx-auto! max-w-4xl! px-4! py-8! sm:py-12!">
-  <div class="mb-6! flex! items-center! justify-between!">
-    <h1 class="text-xl! font-bold! text-slate-800!">序號產生器</h1>
-    <%= link_to "回 Dashboard", admin_root_path,
-          class: "rounded-lg! bg-white! px-4! py-2! text-sm! font-semibold! text-slate-700! ring-1! ring-slate-300! transition! hover:bg-slate-50!" %>
-  </div>
+<main class="[text-shadow:none]! mx-auto! max-w-6xl! px-4! py-8! sm:py-12! flex! flex-col! gap-6! sm:flex-row!">
+  <%= render "admin/nav" %>
 
-  <% if flash[:notice] %>
-    <div class="mb-6! rounded-lg! bg-emerald-50! px-4! py-3! text-sm! text-emerald-800! ring-1! ring-emerald-200!"><%= flash[:notice] %></div>
-  <% end %>
+  <div class="min-w-0! flex-1!">
+  <%= render "admin/header", title: "隊伍序號產生器" %>
 
   <div class="mb-8! rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
     <h2 class="text-base! font-semibold! text-slate-800!">批量產生</h2>
@@ -57,5 +52,6 @@
         <% end %>
       </tbody>
     </table>
+  </div>
   </div>
 </main>

@@ -1,0 +1,78 @@
+<% content_for :title, "兌獎序號管理" %>
+<% content_for :body_class, "bg-slate-50! bg-none! text-slate-800!" %>
+<% content_for :footer_class, "text-slate-400!" %>
+
+<main class="[text-shadow:none]! mx-auto! max-w-6xl! px-4! py-8! sm:py-12! flex! flex-col! gap-6! sm:flex-row!">
+  <%= render "admin/nav" %>
+
+  <div class="min-w-0! flex-1!">
+    <%= render "admin/header", title: "兌獎序號管理" %>
+
+    <div class="mb-8! grid! grid-cols-1! gap-4! sm:grid-cols-2!">
+      <div class="rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-sm! font-semibold! text-slate-600!">正式序號池</h2>
+        <p class="mt-2! text-sm! text-slate-500!">未配發 <span class="text-2xl! font-bold! text-slate-800!"><%= @real_available_count %></span></p>
+        <p class="mt-1! text-sm! text-slate-500!">已配發 <span class="text-2xl! font-bold! text-slate-800!"><%= @real_claimed_count %></span></p>
+      </div>
+      <div class="rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-sm! font-semibold! text-slate-600!">測試序號池</h2>
+        <p class="mt-2! text-sm! text-slate-500!">未配發 <span class="text-2xl! font-bold! text-slate-800!"><%= @test_available_count %></span></p>
+        <p class="mt-1! text-sm! text-slate-500!">已配發 <span class="text-2xl! font-bold! text-slate-800!"><%= @test_claimed_count %></span></p>
+      </div>
+    </div>
+
+    <div class="mb-8! rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+      <h2 class="text-base! font-semibold! text-slate-800!">批次產生</h2>
+
+      <%= form_with url: admin_reward_codes_path, method: :post, local: true, class: "mt-4! flex! flex-wrap! items-end! gap-4!" do |f| %>
+        <div>
+          <%= f.label :count, "產生筆數", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+          <%= f.number_field :count, value: Admin::RewardCodesController::DEFAULT_COUNT,
+                min: 1, max: Admin::RewardCodesController::MAX_COUNT,
+                class: "w-32! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+        </div>
+
+        <div class="flex! items-center! gap-2! pb-2!">
+          <%= f.check_box :test_mode, class: "h-4! w-4! rounded! border-slate-300! text-indigo-600! focus:ring-indigo-500!" %>
+          <%= f.label :test_mode, "測試模式 (test_mode)", class: "text-sm! font-medium! text-slate-700!" %>
+        </div>
+
+        <%= f.submit "產生序號",
+              class: "cursor-pointer! rounded-lg! bg-indigo-600! px-4! py-2! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!" %>
+      <% end %>
+    </div>
+
+    <%= form_with url: admin_reward_codes_path, method: :get, local: true, class: "mb-6! flex! flex-wrap! items-end! gap-4!" do %>
+      <div>
+        <label class="mb-1! block! text-sm! font-medium! text-slate-700!">依 email 查詢</label>
+        <input type="text" name="email" value="<%= params[:email] %>" placeholder="玩家 email"
+               class="w-64! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! placeholder:text-slate-400! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!">
+      </div>
+      <button type="submit" class="cursor-pointer! rounded-lg! bg-indigo-600! px-4! py-2! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!">查詢</button>
+      <%= link_to "清除", admin_reward_codes_path, class: "rounded-lg! bg-white! px-4! py-2! text-sm! font-semibold! text-slate-700! ring-1! ring-slate-300! transition! hover:bg-slate-50!" %>
+    <% end %>
+
+    <div class="overflow-x-auto! rounded-xl! bg-white! ring-1! ring-slate-200!">
+      <table class="min-w-full! divide-y! divide-slate-200! text-sm!">
+        <thead class="bg-slate-50!">
+          <tr>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">序號</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">test_mode</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">配發對象</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">配發時間</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y! divide-slate-100!">
+          <% @reward_codes.each do |reward_code| %>
+            <tr>
+              <td class="px-4! py-3!"><code class="text-slate-700!"><%= reward_code.code %></code></td>
+              <td class="px-4! py-3! text-slate-700!"><%= reward_code.test_mode? ? "是" : "否" %></td>
+              <td class="px-4! py-3! text-slate-700!"><%= reward_code.player_email.present? ? mask_email(reward_code.player_email) : "—" %></td>
+              <td class="px-4! py-3! text-slate-700!"><%= reward_code.claimed_at&.strftime("%Y-%m-%d %H:%M") || "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>

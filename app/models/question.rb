@@ -24,6 +24,14 @@ class Question < ApplicationRecord
   has_many :hints, -> { order(:position) },
             class_name: "QuestionHint", inverse_of: :question, dependent: :destroy
 
+  # Backs the admin hint editor's simple add/edit/delete/reorder form
+  # (docs/ADMIN_CONSOLE_PLAN.md A4 — "提示子表的新增/修改/刪除/排序，取簡單
+  # 實作"). A blank *new* row (no `id`, no `content`) is silently dropped so
+  # the form's always-present empty "add a hint" row never creates a
+  # spurious blank hint.
+  accepts_nested_attributes_for :hints, allow_destroy: true,
+    reject_if: ->(attrs) { attrs["id"].blank? && attrs["content"].blank? }
+
   enum :kind, { puzzle: 0, quiz: 1, bear: 2 }, validate: true
 
   validates :number, presence: true,

@@ -1,0 +1,77 @@
+<% content_for :title, "隊伍管理" %>
+<% content_for :body_class, "bg-slate-50! bg-none! text-slate-800!" %>
+<% content_for :footer_class, "text-slate-400!" %>
+
+<main class="[text-shadow:none]! mx-auto! max-w-6xl! px-4! py-8! sm:py-12! flex! flex-col! gap-6! sm:flex-row!">
+  <%= render "admin/nav" %>
+
+  <div class="min-w-0! flex-1!">
+    <%= render "admin/header", title: "隊伍管理" %>
+
+    <%= form_with url: admin_teams_path, method: :get, local: true, class: "mb-6! flex! flex-wrap! items-end! gap-4!" do %>
+      <div>
+        <label class="mb-1! block! text-sm! font-medium! text-slate-700!">序號／隊名搜尋</label>
+        <input type="text" name="q" value="<%= params[:q] %>" placeholder="搜尋序號或隊名"
+               class="w-56! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! placeholder:text-slate-400! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!">
+      </div>
+
+      <div>
+        <label class="mb-1! block! text-sm! font-medium! text-slate-700!">test_mode</label>
+        <select name="test_mode" class="rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!">
+          <option value="">全部</option>
+          <option value="true" <%= "selected" if params[:test_mode] == "true" %>>測試</option>
+          <option value="false" <%= "selected" if params[:test_mode] == "false" %>>正式</option>
+        </select>
+      </div>
+
+      <button type="submit" class="cursor-pointer! rounded-lg! bg-indigo-600! px-4! py-2! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!">搜尋</button>
+      <%= link_to "清除篩選", admin_teams_path, class: "rounded-lg! bg-white! px-4! py-2! text-sm! font-semibold! text-slate-700! ring-1! ring-slate-300! transition! hover:bg-slate-50!" %>
+    <% end %>
+
+    <div class="overflow-x-auto! rounded-xl! bg-white! ring-1! ring-slate-200!">
+      <table class="min-w-full! divide-y! divide-slate-200! text-sm!">
+        <thead class="bg-slate-50!">
+          <tr>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">序號</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">隊名</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">人數</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">test_mode</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">解題進度</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">建立時間</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">操作</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y! divide-slate-100!">
+          <% @teams.each do |team| %>
+            <tr>
+              <td class="px-4! py-3!"><code class="text-slate-700!"><%= team.serial_no %></code></td>
+              <td class="px-4! py-3! text-slate-700!"><%= team.name.presence || "（未命名）" %></td>
+              <td class="px-4! py-3! text-slate-700!"><%= team.players.count %></td>
+              <td class="px-4! py-3! text-slate-700!"><%= team.test_mode? ? "是" : "否" %></td>
+              <td class="px-4! py-3! text-slate-700!"><%= team.solved_count %> / <%= Question::LAST_NUMBER %></td>
+              <td class="px-4! py-3! text-slate-700!"><%= team.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+              <td class="px-4! py-3!">
+                <%= link_to "查看", admin_team_path(team),
+                      class: "rounded-lg! bg-white! px-3! py-1.5! text-sm! font-semibold! text-slate-700! ring-1! ring-slate-300! transition! hover:bg-slate-50!" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4! flex! items-center! justify-between! text-sm! text-slate-500!">
+      <span>共 <%= @total_count %> 隊，第 <%= @page %> / <%= @total_pages %> 頁</span>
+      <div class="flex! gap-2!">
+        <% if @page > 1 %>
+          <%= link_to "上一頁", admin_teams_path(page: @page - 1, q: params[:q], test_mode: params[:test_mode]),
+                class: "rounded-lg! bg-white! px-3! py-1.5! font-semibold! text-slate-700! ring-1! ring-slate-300! hover:bg-slate-50!" %>
+        <% end %>
+        <% if @page < @total_pages %>
+          <%= link_to "下一頁", admin_teams_path(page: @page + 1, q: params[:q], test_mode: params[:test_mode]),
+                class: "rounded-lg! bg-white! px-3! py-1.5! font-semibold! text-slate-700! ring-1! ring-slate-300! hover:bg-slate-50!" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</main>

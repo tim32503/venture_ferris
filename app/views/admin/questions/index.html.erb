@@ -1,0 +1,43 @@
+<% content_for :title, "題目管理" %>
+<% content_for :body_class, "bg-slate-50! bg-none! text-slate-800!" %>
+<% content_for :footer_class, "text-slate-400!" %>
+
+<main class="[text-shadow:none]! mx-auto! max-w-6xl! px-4! py-8! sm:py-12! flex! flex-col! gap-6! sm:flex-row!">
+  <%= render "admin/nav" %>
+
+  <div class="min-w-0! flex-1!">
+    <%= render "admin/header", title: "題目管理" %>
+
+    <div class="overflow-x-auto! rounded-xl! bg-white! ring-1! ring-slate-200!">
+      <table class="min-w-full! divide-y! divide-slate-200! text-sm!">
+        <thead class="bg-slate-50!">
+          <tr>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">編號</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">標題</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">題型</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">難度</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">魔王</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">提示數</th>
+            <th class="px-4! py-3! text-left! font-semibold! text-slate-600!">操作</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y! divide-slate-100!">
+          <% @questions.each do |question| %>
+            <tr>
+              <td class="px-4! py-3! text-slate-700!">第 <%= question.number %> 題</td>
+              <td class="px-4! py-3! text-slate-700!"><%= question.title %></td>
+              <td class="px-4! py-3! text-slate-700!"><%= question.kind.humanize %></td>
+              <td class="px-4! py-3! text-slate-700!"><%= question.level %></td>
+              <td class="px-4! py-3! text-slate-700!"><%= question.boss.sprite %></td>
+              <td class="px-4! py-3! text-slate-700!"><%= question.hints.size %></td>
+              <td class="px-4! py-3!">
+                <%= link_to "編輯", edit_admin_question_path(question),
+                      class: "rounded-lg! bg-white! px-3! py-1.5! text-sm! font-semibold! text-slate-700! ring-1! ring-slate-300! transition! hover:bg-slate-50!" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
