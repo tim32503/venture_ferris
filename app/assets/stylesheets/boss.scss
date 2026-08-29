@@ -24,55 +24,101 @@ main{
 h2{	color: white; text-shadow: 0px 0 black, 0 1.5px black, 1.5px 0 black, 0 0px black; }
 p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
 
-/*----- 客製設定-魔王頁 -----*/
-.boss-bg{ height: 100%; width: 100%; }
-.boss-grass{ width: 100%; position: absolute; bottom: -2rem; left: 0; z-index: 100; }
-
-// Monster overlay positioning. `.boss-bg` renders at height:0 (its children
-// are all position:absolute, so it never gains real height), which means
-// `bottom`/`top` percentages have nothing to resolve against here. Percentage
-// `margin-left`/`margin-bottom` are the escape hatch: per the CSS box model
-// spec, ALL margin percentages (including vertical ones) resolve against the
-// *width* of the containing block, not its height. That happens to be exactly
-// what we want: `.boss-bg` width already tracks the viewport (Bootstrap
-// `container-fluid`), so expressing both axes as % of that same width keeps
-// every monster's position and size scaling together as the screen narrows,
-// instead of the old fixed-rem offsets drifting out of ratio on mobile.
+/*----- 客製設定-魔王戰舞台 -----*/
 //
-// Each mon0N block below is the legacy rem/px offset (see git history)
-// converted to % of the 1250px reference container width measured on a
-// 1280px-wide desktop viewport — desktop pixels are unchanged, only the
-// scaling behavior on narrower screens is new.
+// `.boss-bg` used to be `height: 100%` with no sized parent, so it collapsed
+// to 0 height (all its children are position:absolute, which never
+// contribute to a parent's height) — every absolutely-positioned child
+// (background art, grass, monster) lost the box it was supposed to be
+// positioned against, and the boss art rendered up near the title instead of
+// inside the stage. Fix: give `.boss-bg` a real, intrinsic height via
+// `aspect-ratio`, locked to bossBg.png's own pixel ratio (509x720, measured
+// with `sips -g pixelWidth -g pixelHeight`) so the stage is never taller or
+// shorter than the art it's framing, and scales as one unit as the
+// container's width changes at any breakpoint. With a real height in place,
+// `bottom`/`left` percentages resolve the normal, intuitive way (against the
+// box's own height/width), so the monster offsets below no longer need the
+// percentage-margin workaround from the pre-fix version (see git history for
+// that approach) — plain `bottom`/`left` is enough now.
+//
+// `isolation: isolate` gives `.boss-bg` its own stacking context, so the
+// z-index values used *inside* it (background < monster < grass) are
+// self-contained and can never leak out to fight over paint order with
+// sibling UI outside the stage (the HP bar, attack button, etc.).
+.boss-bg{
+	position: relative;
+	isolation: isolate;
+	width: 100%;
+	aspect-ratio: 509 / 720;
+	background-image: asset-url("bossBg.png");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: cover;
+}
+
+.boss-grass{
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	z-index: 20; // in front of the monster — grass foreground hides its feet
+}
+
+// Each mon0N block sets the monster's size/position as a % of `.boss-bg`'s
+// own box (now that the box has real dimensions). `--mon-y` is a uniform 28%
+// of the stage height for every monster: the grass foreground (see above)
+// covers roughly the bottom third of the stage, and 28% keeps each
+// monster's feet tucked just behind that grass line regardless of the
+// monster's own height, while its body stays fully visible above the grass
+// and (checked per-monster below) below the title text at the top of the
+// stage. `--mon-w`/`--mon-x` were recalibrated per monster from each GIF's
+// intrinsic size (`sips -g pixelWidth -g pixelHeight`) so every monster
+// renders at a comparable visual height (~60% of stage height) and stays
+// horizontally centered — except mon08/mon11, which are wide/short sprites
+// capped at 95% width (any wider would spill past the stage's left/right
+// edge) rather than stretched tall.
+//
+// The `var(--mon-*, fallback)` defaults below are for boss #10, which has no
+// CSS block of its own (see `Game::BossesHelper#boss_asset_available?` —
+// mon10.gif isn't in this repo's recovered asset set, so the view renders a
+// plain-text fallback with the same `.boss` class instead of an `image_tag`)
+// so that fallback still lands inside the stage instead of computing to
+// `auto`/`0` and drifting to the box's top-left corner.
 .boss{
 	position: absolute;
 	z-index: 10;
-	left: 0;
-	bottom: 0;
-	width: var(--mon-w);
-	margin-left: var(--mon-x);
-	margin-bottom: var(--mon-y);
+	left: var(--mon-x, 35%);
+	bottom: var(--mon-y, 28%);
+	width: var(--mon-w, 30%);
 }
-.mon01{ --mon-w: 80%;  --mon-x: 3.84%;  --mon-y: 19.2%; }
-.mon02{ --mon-w: 90%;  --mon-x: 1.92%;  --mon-y: 12.8%; }
-.mon03{ --mon-w: 70%;  --mon-x: 4.48%;  --mon-y: 12.8%; }
-.mon04{ --mon-w: 40%;  --mon-x: 10.24%; --mon-y: 6.4%; }
-.mon05{ --mon-w: 80%;  --mon-x: 3.2%;   --mon-y: 12.8%; }
-.mon06{ --mon-w: 70%;  --mon-x: 5.12%;  --mon-y: 19.2%; }
-.mon07{ --mon-w: 60%;  --mon-x: 6.4%;   --mon-y: 10.24%; }
-.mon08{ --mon-w: 100%; --mon-x: 0.64%;  --mon-y: 12.8%; }
-.mon09{ --mon-w: 80%;  --mon-x: 2.56%;  --mon-y: 12.8%; }
-.mon11{ --mon-w: 150%; --mon-x: -7.68%; --mon-y: 16.64%; }
+.mon01{ --mon-w: 93%; --mon-x: 3.5%;  --mon-y: 28%; }
+.mon02{ --mon-w: 92%; --mon-x: 4%;    --mon-y: 28%; }
+.mon03{ --mon-w: 88%; --mon-x: 6%;    --mon-y: 28%; }
+.mon04{ --mon-w: 57%; --mon-x: 21.5%; --mon-y: 28%; }
+.mon05{ --mon-w: 86%; --mon-x: 7%;    --mon-y: 28%; }
+.mon06{ --mon-w: 89%; --mon-x: 5.5%;  --mon-y: 28%; }
+.mon07{ --mon-w: 41%; --mon-x: 29.5%; --mon-y: 28%; }
+.mon08{ --mon-w: 95%; --mon-x: 2.5%;  --mon-y: 28%; }
+.mon09{ --mon-w: 94%; --mon-x: 3%;    --mon-y: 28%; }
+.mon11{ --mon-w: 95%; --mon-x: 2.5%;  --mon-y: 28%; }
 
 
 #counter {
     font-size: 3rem;
     color: #ffc107;
     text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black;
-	
+
 }
 
+// Positioned (not just a high z-index) so it actually participates in paint
+// order — a non-positioned element's z-index is ignored outright, which was
+// the root cause of the HP bar sometimes disappearing behind the boss stage:
+// `.boss-bg` above is `position: relative`, and *any* positioned box paints
+// over a same-level non-positioned one regardless of z-index or DOM order.
+// Once `#bossHP` is positioned too, its higher z-index reliably wins.
 #bossHP{
-	z-index: 200;
+	position: relative;
+	z-index: 30;
 	margin: .5rem;
 }
 
