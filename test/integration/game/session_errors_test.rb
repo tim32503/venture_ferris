@@ -50,7 +50,7 @@ module Game
 
       assert_redirected_to error_page_path(error_code: "01004")
       follow_redirect!
-      assert_match "已滿", response.body
+      assert_match "隊長", response.body
     end
 
     test "a fourth member for the same team redirects to the 01004 error page" do
