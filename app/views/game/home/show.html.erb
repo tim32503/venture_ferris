@@ -21,7 +21,7 @@
     field and the controller's `bossBasePath` value, rather than a second
     data-controller. %>
 <main class="container-fluid"
-      data-controller="active-question-poll"
+      data-controller="active-question-poll dialog"
       data-active-question-poll-url-value="<%= status_game_question_path(Question::FIRST_NUMBER) %>"
       data-active-question-poll-question-base-path-value="<%= question_redirect_base_path %>"
       data-active-question-poll-boss-base-path-value="<%= boss_redirect_base_path %>">
@@ -36,7 +36,7 @@
   </div>
 
   <div class="text-center btn-group-vertical home-group">
-    <button class="btn btn-secondary" data-toggle="modal" data-target="#descModal">玩法說明</button>
+    <button class="btn btn-secondary" data-action="dialog#open">玩法說明</button>
     <%= link_to "冒險隊伍", game_team_path, class: "btn btn-secondary" %>
     <%= link_to "遊戲地圖", game_current_map_path, class: "btn btn-secondary" %>
     <%# 積分紀錄／任務獎勵／登出遊戲: game/scores, game/rewards and
@@ -47,20 +47,16 @@
                    form: { data: { turbo_confirm: "確定要登出嗎？" } } %>
   </div>
 
-  <div class="modal fade" id="descModal" tabindex="-1" role="dialog" aria-labelledby="descModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="descModalLabel">玩法說明</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <%= image_tag "description.png", class: "img-fluid" %>
-        </div>
-      </div>
+  <dialog class="native-modal" data-dialog-target="dialog" data-action="click->dialog#closeOnBackdrop" aria-labelledby="descModalLabel">
+    <div class="native-modal-header">
+      <h5 class="native-modal-title" id="descModalLabel">玩法說明</h5>
+      <button type="button" class="close" data-action="dialog#close" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
     </div>
-  </div>
+
+    <div class="native-modal-body">
+      <%= image_tag "description.png", class: "img-fluid" %>
+    </div>
+  </dialog>
 </main>

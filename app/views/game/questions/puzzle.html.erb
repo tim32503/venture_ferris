@@ -3,13 +3,18 @@
 <% content_for :head do %>
   <%# The legacy jigsaw page (wheel_puzzle.php:57-78) keeps this CSS page-local
       rather than in the shared site.css, since only the two puzzle questions
-      need it — kept the same way here rather than editing the P0 stylesheet. %>
+      need it — kept the same way here rather than editing the P0 stylesheet.
+      Classes below back the native Pointer Events engine in
+      puzzle_controller.js (docs/UI_MODERNIZATION_PLAN.md decision 2),
+      replacing the old jQuery `.snappuzzle-*` plugin classes. %>
   <style>
-    .snappuzzle-wrap { position: relative; display: block; }
-    .snappuzzle-pile { position: relative; min-height: 120px; }
-    .snappuzzle-piece { cursor: move; }
-    .snappuzzle-slot { position: absolute; background: rgba(255, 255, 255, 0.3); }
-    .snappuzzle-slot-hover { background: rgba(255, 255, 255, 0.6); }
+    .puzzle-board { position: relative; width: 100%; overflow: hidden; background: rgba(0, 0, 0, 0.15); touch-action: none; }
+    .puzzle-source-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; }
+    .puzzle-slot { position: absolute; box-sizing: border-box; border: 1px dashed rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.15); }
+    .puzzle-pile { position: relative; min-height: 200px; background: rgba(0, 0, 0, 0.08); touch-action: none; }
+    .puzzle-piece { position: absolute; box-sizing: border-box; background-repeat: no-repeat; cursor: grab; border: 1px solid rgba(255, 255, 255, 0.4); }
+    .puzzle-piece.is-dragging { cursor: grabbing; }
+    .puzzle-piece.is-locked { cursor: default; border-color: transparent; }
     #puzzle-solved-banner { display: none; }
   </style>
 <% end %>
@@ -33,32 +38,42 @@
   <% else %>
     <div class="dialog"><%= @question.content %></div>
 
-    <div class="row"
-         data-controller="puzzle"
+    <%# `data-controller="puzzle"` has to wrap the answer form too, not just
+        the board/pile row — Stimulus only recognizes a `data-*-target`
+        element as belonging to a controller if it's a DOM descendant of the
+        element carrying `data-controller`. The submit button below lives in
+        a separate `form_with` block, so scoping the controller to just the
+        `.row` (as the legacy jQuery-plugin version did) leaves
+        `hasSubmitTarget` false and the button silently never unlocks. %>
+    <div data-controller="puzzle"
          data-puzzle-rows-value="<%= @question.puzzle_rows %>"
          data-puzzle-columns-value="<%= @question.puzzle_cols %>">
-      <div class="col-md-6">
-        <%= image_tag question_image_filename(@question), class: "img-fluid",
-                       id: "source_image", alt: @question.title, data: { puzzle_target: "image" } %>
-      </div>
-      <div class="col-md-6">
-        <div data-puzzle-target="pile" style="min-height: 200px;"></div>
-        <p id="puzzle-solved-banner" data-puzzle-target="solvedBanner" class="dialog text-center">
-          恭喜完成拼圖！請在照片中找出答案並於下方輸入。
-        </p>
-      </div>
-    </div>
-
-    <%= render "game/questions/hint_panel", question: @question, attempt: @attempt %>
-
-    <%= form_with url: answer_game_question_path(@question.number), method: :post, local: true, class: "dialog" do |f| %>
-      <div class="input-group mb-3">
-        <%= f.text_field :answer, class: "form-control", placeholder: "拼圖完成後，請輸入你找到的答案", required: true %>
-        <div class="input-group-append">
-          <%= f.submit "確認送出", class: "btn btn-primary", disabled: true, data: { puzzle_target: "submit" } %>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="puzzle-board" data-puzzle-target="board">
+            <%= image_tag question_image_filename(@question), class: "puzzle-source-image",
+                           id: "source_image", alt: @question.title, data: { puzzle_target: "image" } %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="puzzle-pile" data-puzzle-target="pile"></div>
+          <p id="puzzle-solved-banner" data-puzzle-target="solvedBanner" class="dialog text-center">
+            恭喜完成拼圖！請在照片中找出答案並於下方輸入。
+          </p>
         </div>
       </div>
-    <% end %>
+
+      <%= render "game/questions/hint_panel", question: @question, attempt: @attempt %>
+
+      <%= form_with url: answer_game_question_path(@question.number), method: :post, local: true, class: "dialog" do |f| %>
+        <div class="input-group mb-3">
+          <%= f.text_field :answer, class: "form-control", placeholder: "拼圖完成後，請輸入你找到的答案", required: true %>
+          <div class="input-group-append">
+            <%= f.submit "確認送出", class: "btn btn-primary", disabled: true, data: { puzzle_target: "submit" } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
   <% end %>
 
   <div class="row text-center">

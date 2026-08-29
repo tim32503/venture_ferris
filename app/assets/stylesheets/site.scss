@@ -27,6 +27,39 @@ main{
 	text-shadow: 1px 0 5px white, 0 1px 5px white;
 }
 
+// Native <dialog> replacing Bootstrap 4's jQuery-backed Modal (home page's
+// "玩法說明" popup, see dialog_controller.js). Kept visually close to the
+// old .modal-content look: white content box, dark ::backdrop, centered.
+.native-modal {
+	border: none;
+	border-radius: .3rem;
+	padding: 0;
+	max-width: 500px;
+	width: 90%;
+	color: black;
+
+	&::backdrop {
+		background-color: rgba(0, 0, 0, .5);
+	}
+
+	&-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1rem;
+		border-bottom: 1px solid #dee2e6;
+	}
+
+	&-title {
+		margin: 0;
+	}
+
+	&-body {
+		padding: 1rem;
+		text-align: center;
+	}
+}
+
 /*----- 客製設定-登入頁 -----*/
 .login{ position: relative; }
 .login-bg{ height: 100%; width: 100%; }
@@ -67,9 +100,94 @@ main{
 .alertText{ text-shadow: 1px 0 5px white, 0 1px 5px white; }
 
 /*----- 客製設定-職業頁 -----*/
+// CSS scroll-snap replacing Bootstrap 4's jQuery-backed Carousel (data-ride
+// carousel/data-slide, see carousel_controller.js). One job card fills the
+// viewport at a time, same as the old .carousel-item, but scrolling itself
+// is native (mouse drag/trackpad/touch swipe all work with zero JS).
 #carouselJob{
 	margin: 0rem 3rem;
 	padding: 2rem;
+}
+
+.job-carousel {
+	position: relative;
+}
+
+.job-carousel-track {
+	display: flex;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	scroll-behavior: smooth;
+	-webkit-overflow-scrolling: touch;
+}
+
+.job-carousel-slide {
+	position: relative;
+	flex: 0 0 100%;
+	scroll-snap-align: center;
+}
+
+.job-carousel-caption {
+	position: absolute;
+	right: 15%;
+	bottom: 1.25rem;
+	left: 15%;
+	padding-top: 1.25rem;
+	padding-bottom: 1.25rem;
+	color: #fff;
+	text-align: center;
+	text-shadow: 1px 0 5px black, 0 1px 5px black;
+}
+
+.job-carousel-control {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 15%;
+	padding: 0;
+	color: #fff;
+	text-align: center;
+	background: transparent;
+	border: 0;
+	opacity: .8;
+	font-size: 1.5rem;
+
+	&:hover, &:focus {
+		color: #fff;
+		opacity: 1;
+		cursor: pointer;
+	}
+
+	&.prev { left: 0; }
+	&.next { right: 0; }
+}
+
+.job-carousel-indicators {
+	display: flex;
+	justify-content: center;
+	margin-top: .5rem;
+}
+
+.job-carousel-dot {
+	box-sizing: content-box;
+	width: .75rem;
+	height: .75rem;
+	margin: 0 .25rem;
+	padding: 0;
+	border: 1px solid #999;
+	border-radius: 50%;
+	background-color: transparent;
+
+	&.active {
+		background-color: #999;
+	}
+
+	&:hover {
+		cursor: pointer;
+	}
 }
 
 /*----- 客製設定-熊檢頁 -----*/

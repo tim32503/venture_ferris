@@ -18,12 +18,12 @@
       <p>您已選擇職業：<strong><%= job_label(current_player.job) %></strong></p>
     </div>
   <% else %>
-    <div id="carouselJob" class="carousel slide" data-ride="carousel">
-      <div class="carousel-inner">
-        <% Player.jobs.keys.each_with_index do |job, index| %>
-          <div class="carousel-item <%= "active" if index.zero? %>" data-job-poll-target="jobCard" data-job="<%= job %>">
+    <div id="carouselJob" class="job-carousel" data-controller="carousel">
+      <div class="job-carousel-track" data-carousel-target="track">
+        <% Player.jobs.keys.each do |job| %>
+          <div class="job-carousel-slide" data-carousel-target="slide" data-job-poll-target="jobCard" data-job="<%= job %>">
             <%= image_tag "#{job}.png", class: "d-block w-100", alt: job_label(job) %>
-            <div class="carousel-caption">
+            <div class="job-carousel-caption">
               <h5><%= job_label(job) %></h5>
               <%= form_with url: game_job_path, method: :patch, local: true do |f| %>
                 <%= f.hidden_field :job, value: job %>
@@ -33,14 +33,21 @@
           </div>
         <% end %>
       </div>
-      <a class="carousel-control-prev" href="#carouselJob" role="button" data-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="sr-only">前一個</span>
-      </a>
-      <a class="carousel-control-next" href="#carouselJob" role="button" data-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="sr-only">後一個</span>
-      </a>
+
+      <button type="button" class="job-carousel-control prev" data-action="carousel#previous" aria-label="前一個">
+        <span aria-hidden="true">&#10094;</span>
+      </button>
+      <button type="button" class="job-carousel-control next" data-action="carousel#next" aria-label="後一個">
+        <span aria-hidden="true">&#10095;</span>
+      </button>
+
+      <div class="job-carousel-indicators">
+        <% Player.jobs.keys.each_with_index do |job, index| %>
+          <button type="button" class="job-carousel-dot <%= "active" if index.zero? %>"
+                  data-carousel-target="indicator" data-action="carousel#goTo"
+                  aria-label="<%= job_label(job) %>"></button>
+        <% end %>
+      </div>
     </div>
   <% end %>
 
