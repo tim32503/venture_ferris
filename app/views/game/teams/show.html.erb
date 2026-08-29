@@ -68,6 +68,14 @@
     </table>
   <% end %>
 
+  <% if current_team.name.present? && current_player.job.blank? %>
+    <div class="row text-center mb-2">
+      <div class="col">
+        <%= link_to "《前往新手村轉職（選擇職業）》", game_job_path, class: "btn btn-dark" %>
+      </div>
+    </div>
+  <% end %>
+
   <div class="row text-center">
     <div class="col">
       <%= link_to "《返回遊戲選單》", game_root_path, class: "btn btn-link" %>

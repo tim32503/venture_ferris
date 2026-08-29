@@ -101,5 +101,25 @@ module Game
       assert_response :success
       codes.each { |code| assert_match code, response.body }
     end
+
+    test "a demo team starts unnamed so the leader gets the naming form (which is the only path onward to job selection)" do
+      post game_session_path, params: { demo: "1" }
+
+      demo_team = Player.order(:id).last.team
+      assert demo_team.name.blank?
+
+      get game_team_path
+      assert_response :success
+      assert_match "取個響亮的團名", response.body
+    end
+
+    test "a jobless player on an already-named team still gets a link to job selection" do
+      post game_session_path, params: { demo: "1" }
+      patch game_team_path, params: { name: "測試冒險團" }
+
+      get game_team_path
+      assert_response :success
+      assert_match game_job_path, response.body
+    end
   end
 end

@@ -116,10 +116,12 @@ module Game
     # only to satisfy `Team#serial_no`'s presence/length/uniqueness
     # validations, since a demo player never types one in.
     def create_demo!
+      # Name is intentionally left blank so the demo leader goes through the
+      # normal naming step (the team page only renders the naming form — and
+      # its redirect onward to job selection — while the name is blank).
       team = Team.create!(
         test_mode: true,
         serial_no: unique_demo_serial_no,
-        name: "Demo 體驗隊",
       )
       player = team.players.create!(role: :leader, email: demo_email)
 
