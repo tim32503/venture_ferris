@@ -1,5 +1,5 @@
 /*----- 字型設定 -----*/
-@import url(//fonts.googleapis.com/earlyaccess/notosanstc.css);
+@import url(https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap);
 *{ font-family: 'Noto Sans TC'; }
 
 /*----- 基本設定 -----*/
@@ -25,25 +25,44 @@ h2{	color: white; text-shadow: 0px 0 black, 0 1.5px black, 1.5px 0 black, 0 0px 
 p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
 .dialog{ font-size: 1.25rem; color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; padding: .75rem 1.25rem; border: 5px solid white; background-color: #999; box-shadow: 0.5px 0.5px 0 3px #999; margin: 1.5rem }
 
-/*----- 客製設定-打字機效果 -----*/
-@keyframes blink { from, to{ color: transparent; text-shadow: -1.5px 0 transparent, 0 1.5px transparent, 1.5px 0 transparent, 0 -1.5px transparent; } 50% { color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; } }
-@-webkit-keyframes blink { from, to{ color: transparent; text-shadow: -1.5px 0 transparent, 0 1.5px transparent, 1.5px 0 transparent, 0 -1.5px transparent; } 50% { color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; } }
-.cursor-blink{ animation: blink 1s step-end infinite; }
-
 /*----- 客製設定-魔王頁 -----*/
 .boss-bg{ height: 100%; width: 100%; }
 .boss-grass{ width: 100%; position: absolute; bottom: -2rem; left: 0; z-index: 100; }
-.boss{ z-index: 10; }
-.mon01{ width: 80%; position: absolute; bottom: 15rem; left: 3rem; z-index: 10; }
-.mon02{ width: 90%; position: absolute; bottom: 10rem; left: 1.5rem; z-index: 10; }
-.mon03{ width: 70%; position: absolute; bottom: 10rem; left: 3.5rem; z-index: 10; }
-.mon04{ width: 40%; position: absolute; bottom: 5rem; left: 8rem; z-index: 10; }
-.mon05{ width: 80%; position: absolute; bottom: 10rem; left: 2.5rem; z-index: 10; }
-.mon06{ width: 70%; position: absolute; bottom: 15rem; left: 4rem; z-index: 10; }
-.mon07{ width: 60%; position: absolute; bottom: 8rem; left: 5rem; z-index: 10; }
-.mon08{ width: 100%; position: absolute; bottom: 10rem; left: 0.5rem; z-index: 10; }
-.mon09{ width: 80%; position: absolute; bottom: 10rem; left: 2rem; z-index: 10; }
-.mon11{ width: 150%; position: absolute; bottom: 13rem; left: -6rem; z-index: 10; }
+
+// Monster overlay positioning. `.boss-bg` renders at height:0 (its children
+// are all position:absolute, so it never gains real height), which means
+// `bottom`/`top` percentages have nothing to resolve against here. Percentage
+// `margin-left`/`margin-bottom` are the escape hatch: per the CSS box model
+// spec, ALL margin percentages (including vertical ones) resolve against the
+// *width* of the containing block, not its height. That happens to be exactly
+// what we want: `.boss-bg` width already tracks the viewport (Bootstrap
+// `container-fluid`), so expressing both axes as % of that same width keeps
+// every monster's position and size scaling together as the screen narrows,
+// instead of the old fixed-rem offsets drifting out of ratio on mobile.
+//
+// Each mon0N block below is the legacy rem/px offset (see git history)
+// converted to % of the 1250px reference container width measured on a
+// 1280px-wide desktop viewport — desktop pixels are unchanged, only the
+// scaling behavior on narrower screens is new.
+.boss{
+	position: absolute;
+	z-index: 10;
+	left: 0;
+	bottom: 0;
+	width: var(--mon-w);
+	margin-left: var(--mon-x);
+	margin-bottom: var(--mon-y);
+}
+.mon01{ --mon-w: 80%;  --mon-x: 3.84%;  --mon-y: 19.2%; }
+.mon02{ --mon-w: 90%;  --mon-x: 1.92%;  --mon-y: 12.8%; }
+.mon03{ --mon-w: 70%;  --mon-x: 4.48%;  --mon-y: 12.8%; }
+.mon04{ --mon-w: 40%;  --mon-x: 10.24%; --mon-y: 6.4%; }
+.mon05{ --mon-w: 80%;  --mon-x: 3.2%;   --mon-y: 12.8%; }
+.mon06{ --mon-w: 70%;  --mon-x: 5.12%;  --mon-y: 19.2%; }
+.mon07{ --mon-w: 60%;  --mon-x: 6.4%;   --mon-y: 10.24%; }
+.mon08{ --mon-w: 100%; --mon-x: 0.64%;  --mon-y: 12.8%; }
+.mon09{ --mon-w: 80%;  --mon-x: 2.56%;  --mon-y: 12.8%; }
+.mon11{ --mon-w: 150%; --mon-x: -7.68%; --mon-y: 16.64%; }
 
 
 #counter {
@@ -60,6 +79,13 @@ p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
 
 
 
+// Click feedback for the "攻擊！" button (see boss_poll_controller.js#ripple,
+// which creates the .ripple.rippleEffect span at the click point).
+.attack-btn {
+  position: relative;
+  overflow: hidden;
+}
+
 .ripple {
   width: 0;
   height: 0;
@@ -68,6 +94,7 @@ p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
   transform: scale(0);
   position: absolute;
   opacity: 1;
+  pointer-events: none;
 }
 
 .rippleEffect {

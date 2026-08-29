@@ -23,30 +23,6 @@
     <%= stylesheet_link_tag "site" %>
     <%= javascript_importmap_tags %>
 
-    <script type="text/javascript">
-      //JS-打字機效果
-      function type(text, field){
-        if($('#cursor_blink').length >= 1){
-          $('#cursor_blink').remove();
-        }
-        
-        field = field || "teletype";
-        var cursor = "<span class='cursor-blink' id='cursor_blink'>_</span>";
-        var telecopy = text;
-        var counter = 0;
-        $('#'+field).html(cursor);
-        $('#'+field).removeAttr("hidden");
-        var timer = setInterval(function(){
-          $('#'+field).html(telecopy.substr(0, counter) + cursor);
-          counter++;
-          
-          if(counter === telecopy.length +1){
-            clearInterval(timer);
-          }
-        }, 100);
-      }
-    </script>
-
     <%= yield :head %>
   </head>
 

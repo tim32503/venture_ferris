@@ -1,8 +1,8 @@
 <% content_for :head do %>
   <style>
-    @import url(//fonts.googleapis.com/earlyaccess/notosanstc.css);
+    @import url(https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap);
     *{
-      font-family: 'Noto Sans TC'; 
+      font-family: 'Noto Sans TC';
       color: white; text-shadow: 1px 0 5px black, 0 1px 5px black;
     }
 
@@ -17,17 +17,31 @@
       background-position: center top;
       background-size: cover;
     }
-    
+
     header{
       margin: 5rem;
     }
-    
+
     main{
       background-color: #666;
       margin: 3rem;
       padding: 2rem;
       border: .25rem solid white;
       border-radius: .25rem;
+    }
+
+    /* Small screens: the desktop 5rem/3rem margins eat most of the
+       viewport width — shrink them below the Bootstrap `sm` breakpoint
+       instead of redesigning the layout (docs/UI_AUDIT.md). */
+    @media (max-width: 575.98px) {
+      header{
+        margin: 1.5rem;
+      }
+
+      main{
+        margin: 1rem;
+        padding: 1rem;
+      }
     }
   </style>
 <% end %>

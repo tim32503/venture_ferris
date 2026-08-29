@@ -54,7 +54,8 @@
       剩餘時間：<span id="counter" data-boss-poll-target="counter"><%= @time_limit %></span> 秒
     </p>
 
-    <%= button_to "攻擊！", attacks_game_boss_path(@question.number), method: :post, class: "btn btn-danger btn-lg" %>
+    <%= button_to "攻擊！", attacks_game_boss_path(@question.number), method: :post,
+          class: "btn btn-danger btn-lg attack-btn", data: { action: "click->boss-poll#ripple" } %>
   <% else %>
     <div class="dialog">
       <p>時限 <%= @time_limit %> 秒，全員宣戰後即開始攻擊！</p>

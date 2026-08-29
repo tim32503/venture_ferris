@@ -82,9 +82,9 @@ module Game
 
       get game_map_path(1)
       assert_response :success
-      assert_select "map#Map1 area", count: 5
-      assert_select "map#Map1 area[href=?]", game_map_path(2)
-      assert_select "map#Map1 area[href=?]", game_question_path(1)
+      assert_select "#m1 a.map-hotspot", count: 5
+      assert_select "#m1 a.map-hotspot[href=?]", game_map_path(2)
+      assert_select "#m1 a.map-hotspot[href=?]", game_question_path(1)
     end
 
     test "quiz question renders the quiz template and never leaks the answer" do

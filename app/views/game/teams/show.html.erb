@@ -45,27 +45,29 @@
       </tbody>
     </table>
 
-    <table class="table text-center">
-      <thead>
-        <tr class="table-secondary">
-          <th colspan="3">冒險團員（<span data-team-poll-target="count"><%= current_team.players.count %></span> 人）</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>類型</th>
-          <th>職業</th>
-          <th>遊戲帳號</th>
-        </tr>
-        <% current_team.players.order(:role).each do |player| %>
-          <tr>
-            <td><%= role_label(player.role) %></td>
-            <td><%= player.job.present? ? job_label(player.job) : "未選擇" %></td>
-            <td><%= player.email %></td>
+    <div class="table-responsive">
+      <table class="table text-center">
+        <thead>
+          <tr class="table-secondary">
+            <th colspan="3">冒險團員（<span data-team-poll-target="count"><%= current_team.players.count %></span> 人）</th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <tr>
+            <th>類型</th>
+            <th>職業</th>
+            <th>遊戲帳號</th>
+          </tr>
+          <% current_team.players.order(:role).each do |player| %>
+            <tr>
+              <td><%= role_label(player.role) %></td>
+              <td><%= player.job.present? ? job_label(player.job) : "未選擇" %></td>
+              <td><%= player.email %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   <% end %>
 
   <% if current_team.name.present? && current_player.job.blank? %>

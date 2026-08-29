@@ -7,18 +7,18 @@
       data-active-question-poll-url-value="<%= status_game_question_path(Question::FIRST_NUMBER) %>"
       data-active-question-poll-question-base-path-value="<%= question_redirect_base_path %>"
       data-active-question-poll-boss-base-path-value="<%= boss_redirect_base_path %>">
-  <div id="m<%= @map_id %>" style="position: relative;">
-    <%= image_tag @image, usemap: "#Map#{@map_id}", class: "img-fluid" %>
-    <map name="Map<%= @map_id %>" id="Map<%= @map_id %>">
-      <% @areas.each do |area| %>
-        <%
-          href = area[:to_map] ? game_map_path(area[:to_map]) : game_question_path(area[:number])
-          solved = area[:number].present? && @completed_numbers.include?(area[:number])
-        %>
-        <area alt="<%= area[:title] %>" title="<%= area[:title] %><%= " (已完成)" if solved %>"
-              href="<%= href %>" shape="<%= area[:shape] %>" coords="<%= area[:coords] %>">
-      <% end %>
-    </map>
+  <div id="m<%= @map_id %>" style="position: relative; max-width: <%= @natural_width %>px;">
+    <%= image_tag @image, class: "w-100 d-block" %>
+    <% @areas.each do |area| %>
+      <%
+        href = area[:to_map] ? game_map_path(area[:to_map]) : game_question_path(area[:number])
+        solved = area[:number].present? && @completed_numbers.include?(area[:number])
+        label = "#{area[:title]}#{" (已完成)" if solved}"
+      %>
+      <%= link_to "", href, class: "map-hotspot",
+            style: "left: #{area[:left]}%; top: #{area[:top]}%; width: #{area[:width]}%; height: #{area[:height]}%;",
+            title: label, "aria-label": label %>
+    <% end %>
   </div>
 
   <%# The legacy map views (wheel_map1/2/3.php) have no solved/unsolved styling
@@ -30,10 +30,10 @@
   <% end %>
 
   <% back_path = @map_id == 2 ? game_current_map_path : game_root_path %>
-  <div class="map-menu" id="menubar" onclick="window.location.href='<%= back_path %>'">
+  <%= link_to back_path, class: "map-menu", id: "menubar" do %>
     <span class="fa-stack fa-2x">
       <i class="fas fa-square fa-stack-2x" style="color:#333"></i>
       <i class="fas fa-home fa-stack-1x" style="color:white"></i>
     </span>
-  </div>
+  <% end %>
 </main>

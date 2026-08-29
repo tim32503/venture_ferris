@@ -53,6 +53,26 @@ export default class extends PollController {
     if (this.hasAttackCountTarget) this.attackCountTarget.textContent = data.attack_count
   }
 
+  // Click feedback for the "攻擊！" button — purely presentational, wired up
+  // to the `.ripple`/`.rippleEffect` keyframes that shipped in boss.scss
+  // unused until now (see docs/UI_AUDIT.md). Creates a short-lived ripple
+  // span at the click point and lets the CSS animation size/fade it, then
+  // removes the span once the animation ends so repeated clicks don't pile
+  // up detached nodes.
+  ripple(event) {
+    const button = event.currentTarget
+    const rect = button.getBoundingClientRect()
+    const size = Math.max(rect.width, rect.height)
+    const span = document.createElement("span")
+    span.className = "ripple rippleEffect"
+    span.style.width = `${size}px`
+    span.style.height = `${size}px`
+    span.style.left = `${event.clientX - rect.left - size / 2}px`
+    span.style.top = `${event.clientY - rect.top - size / 2}px`
+    span.addEventListener("animationend", () => span.remove())
+    button.appendChild(span)
+  }
+
   // Presentational only — the server independently resets a timed-out
   // fight the next time any boss endpoint is hit (BossesController
   // #expire_if_timed_out!), so a clock drift here never lets a fight run

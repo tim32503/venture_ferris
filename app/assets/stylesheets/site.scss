@@ -1,5 +1,5 @@
 /*----- 字型設定 -----*/
-@import url(//fonts.googleapis.com/earlyaccess/notosanstc.css);
+@import url(https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap);
 *{ font-family: 'Noto Sans TC'; }
 
 /*----- 基本設定 -----*/
@@ -23,15 +23,10 @@ main{
 
 .dialog{ font-size: 1.25rem; color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; padding: .75rem 1.25rem; border: 5px solid white; background-color: #999; box-shadow: 0.5px 0.5px 0 3px #999; margin: 1.5rem }
 .modal-header, .modal-body{
-	color: black; 
+	color: black;
 	text-shadow: 1px 0 5px white, 0 1px 5px white;
 }
 
-/*----- 客製設定-打字機效果 -----*/
-@keyframes blink { from, to{ color: transparent; text-shadow: -1.5px 0 transparent, 0 1.5px transparent, 1.5px 0 transparent, 0 -1.5px transparent; } 50% { color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; } }
-@-webkit-keyframes blink { from, to{ color: transparent; text-shadow: -1.5px 0 transparent, 0 1.5px transparent, 1.5px 0 transparent, 0 -1.5px transparent; } 50% { color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; } }
-.cursor-blink{ animation: blink 1s step-end infinite; }
- 
 /*----- 客製設定-登入頁 -----*/
 .login{ position: relative; }
 .login-bg{ height: 100%; width: 100%; }
@@ -55,6 +50,15 @@ main{
 
 .map-menu:hover {
 	cursor: pointer;
+}
+
+// Percentage-positioned overlay replacing the legacy <map>/<area> image-map
+// (its pixel coords didn't scale with the img-fluid image). The wrapping
+// `#m{n}` container is `position: relative` and sized exactly to the
+// rendered <img>, so a % box here lines up with the image at any width.
+.map-hotspot {
+	position: absolute;
+	display: block;
 }
 
 /*----- 客製設定-遊戲頁 -----*/
