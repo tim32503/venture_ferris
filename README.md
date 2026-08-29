@@ -125,7 +125,7 @@ bundle install
 #    預設用本機 socket + 目前系統使用者，一般本機開發不用另外設帳密）
 bin/rails db:prepare
 
-# 3. 灌入示範資料（11 題示範題目、demo 隊伍、20 組正式序號、100 組兌獎序號、
+# 3. 灌入資料（11 題已還原原文的題目、demo 隊伍、20 組正式序號、100 組兌獎序號、
 #    後台帳號；見 db/seeds.rb）
 bin/rails db:seed
 
@@ -184,10 +184,13 @@ CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加
 
 ## 已知限制
 
-- **題目原文已遺失。** 原站沒有留下 SQL dump，11 道謎題的題目內容、答案、
-  提示已經無法復原，`db/seeds.rb` 裡的題目內容是重構時另行編寫的示範內容
-  （sample data），用來讓完整遊戲流程可以被實際玩過一輪，不是原活動的真實
-  題目。
+- **題目原文已還原。** 原始 SQL dump 已於 2026-08-29 尋回，`db/seeds.rb` 的
+  11 題標題／題目敘述／難度／提示／解說已改為 `QUEST_MAIN` 的原文。其中第 1、
+  2、9 題（拼圖／熊讚特殊題）在原始資料庫的 `QUESTION_PASSWORD` 欄位本身就是
+  空字串，代表當年的正解判斷不是靠這個欄位（推測寫死在已遺失的舊站前端
+  程式碼中），因此這三題仍沿用重構時另行編寫的示範答案。答案依既有設計
+  仍只存 SHA-256 digest（`Question.digest_for`，見 `app/models/question.rb`），
+  不會明文寫回任何檔案。
 - **`mon10.gif` 遺失。** 原始素材備份裡怪物圖檔只有 10 個檔案（`mon01~09.gif`
   + `mon11.gif`），第 10 題的怪物圖檔在備份當時就已經不存在，並非本次重構
   遺漏；`app/helpers/game/bosses_helper.rb` 的 `boss_asset_available?` 會偵測

@@ -2,81 +2,88 @@
 # development, test). The code here should be idempotent so that it can be executed at any point in every environment.
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 #
-# NOTE: the original 2018 event's question content was lost (no SQL dump survived — see
-# docs/legacy/ANALYSIS.md / docs/REFACTOR_PLAN.md §0). Everything below is sample/demo
-# content written for this portfolio rebuild, not a recovery of the real answers.
+# NOTE: the original 2018 event's SQL dump was recovered on 2026-08-29 and the
+# question content below (title/content/level/hint1/hint2/explanation) is
+# restored verbatim from its `QUEST_MAIN` table. The plain-text answers are
+# never stored — only `Question.digest_for(answer)` is persisted, same as
+# before (see app/models/question.rb). Two exceptions: questions 1, 2 and 9
+# (the puzzle/bear kinds) had an EMPTY `QUESTION_PASSWORD` in the original
+# dump — the legacy game apparently checked those in the front-end/JS instead
+# of against this column, so no authentic answer text survives for them; they
+# keep their placeholder demo answers ("meifu"/"yakiniku"/"xiongzan").
 
 # ---------------------------------------------------------------------------
-# 1. Questions (11 stations, sample content)
+# 1. Questions (11 stations, restored from the 2018 QUEST_MAIN dump)
 # ---------------------------------------------------------------------------
 # kind mapping follows the legacy Wheel controller's `question($qno)` switch
 # (application/controllers/Wheel.php:143-172): qno 1-2 render the puzzle view,
 # qno 9 renders the "bear" view, everything else renders the plain quiz view.
 QUESTION_SEEDS = [
-  { number: 1, kind: :puzzle, title: "美福飯店（示範拼圖）", level: "1",
+  { number: 1, kind: :puzzle, title: "美福飯店", level: "★☆☆☆☆",
     puzzle_rows: 4, puzzle_cols: 4, answer: "meifu",
-    content: "示範內容：拼出美福飯店的正面照片，找出隱藏的字母組合。",
-    hint1: "示範提示一：注意拼圖邊角的顏色是否相鄰。",
-    hint2: "示範提示二：中央區塊拼好後答案就會浮現。",
-    explanation: "示範解說：答案為飯店招牌上的英文縮寫。" },
-  { number: 2, kind: :puzzle, title: "燒烤（示範拼圖）", level: "1",
+    content: "美福飯店中的房客非常喜歡門口屋簷天花上的圖樣，於是用畫紙記錄下來，因為圖樣太大而分成數張記錄下來，" \
+             "沒想到卻不小心打亂了，可以請你們幫他復原嗎？",
+    explanation: "" },
+  { number: 2, kind: :puzzle, title: "一鷺炭火燒鳥工房", level: "★☆☆☆☆",
     puzzle_rows: 1, puzzle_cols: 9, answer: "yakiniku",
-    content: "示範內容：把橫向切成 9 條的照片拼回原樣，讀出招牌上的店名。",
-    hint1: "示範提示一：先找出最左邊與最右邊的兩條。",
-    hint2: "示範提示二：店名是四個字的日文燒烤店。",
-    explanation: "示範解說：答案為招牌店名的羅馬拼音。" },
-  { number: 3, kind: :quiz, title: "美麗華Ａ－石牆（示範問答）", level: "2",
-    answer: "meilihua",
-    content: "示範內容：石牆上刻著一段文字，請找出其中的關鍵詞。",
-    hint1: "示範提示一：文字位於石牆左下角。",
-    hint2: "示範提示二：關鍵詞是這座摩天輪所在的商場名稱。",
-    explanation: "示範解說：答案為美麗華百樂園的簡稱。" },
-  { number: 4, kind: :quiz, title: "美麗華Ｂ－植栽（示範問答）", level: "2",
-    answer: "zhiwu",
-    content: "示範內容：數一數花圃裡某種植物的數量，作為答案。",
-    hint1: "示範提示一：只計算開花的植株。",
-    hint2: "示範提示二：答案是一個兩位數字。",
-    explanation: "示範解說：答案為花圃植株的示範計數。" },
-  { number: 5, kind: :quiz, title: "北投（示範問答）", level: "3",
-    answer: "beitou",
-    content: "示範內容：找出北投地熱谷告示牌上的溫度數值。",
-    hint1: "示範提示一：告示牌在入口右側。",
-    hint2: "示範提示二：答案是攝氏度數。",
-    explanation: "示範解說：答案為告示牌上的示範溫度。" },
-  { number: 6, kind: :quiz, title: "龍山寺（示範問答，不開放提示）", level: "3",
-    hints_enabled: false, answer: "longshan",
-    content: "示範內容：本題不提供提示，請仔細觀察龍山寺正殿的匾額文字。",
-    explanation: "示範解說：答案為匾額上的示範字詞。" },
-  { number: 7, kind: :quiz, title: "朝陽（示範問答）", level: "2",
-    answer: "zhaoyang",
-    content: "示範內容：朝陽市場招牌上寫著創立年份，請填入答案。",
-    hint1: "示範提示一：招牌在市場正門上方。",
-    hint2: "示範提示二：答案是四位數的西元年份。",
-    explanation: "示範解說：答案為示範創立年份。" },
-  { number: 8, kind: :quiz, title: "公館（示範問答）", level: "2",
-    answer: "gongguan",
-    content: "示範內容：公館河堤上的標語牌寫著一句口號，請找出關鍵字。",
-    hint1: "示範提示一：標語牌沿著河堤步道設置。",
-    hint2: "示範提示二：關鍵字與河川保護有關。",
-    explanation: "示範解說：答案為示範口號關鍵字。" },
-  { number: 9, kind: :bear, title: "熊讚（示範特殊題）", level: "4",
+    content: "日以繼夜的冒險讓勇者們身心俱疲，來到了聲名遠播的一鷺燒烤店歇腳，希望飽餐一頓後再重新踏上旅途，" \
+             "沒想到用餐居然有特定的順序，否則將會被趕出店門，究竟這順序為何呢？",
+    explanation: "" },
+  { number: 3, kind: :quiz, title: "美麗華A", level: "★★★☆☆",
+    answer: "STARWARS",
+    content: "離開了新手村後，你們來到了美麗華樂園，經過影城售票亭時，卻聽見了一陣微弱的喊叫聲，" \
+             "走近一看發現是一名老人，究竟他有何事求助於你們呢？",
+    hint1: "所謂兩館之間高聳的植栽，指的好像是海景大道中間的八顆棕櫚樹，而線索上的字母剛好也是八個，這其中會有什麼關聯嗎？",
+    hint2: "八顆棕梠樹的坐台上總共有1到8的數字，會不會是跟順序有關呢？如果按照這個順序把字母排列的話....",
+    explanation: "" },
+  { number: 4, kind: :quiz, title: "美麗華B", level: "★★★☆☆",
+    answer: "COIN",
+    content: "「據說美麗華兩館之間的走道中有一面神秘的石板...」「石板上的刻痕都不盡相同」" \
+             "「若是能參透下列線索中的奧秘」「就能夠解答出石板中所蘊藏的訊息」",
+    hint1: "網頁線索上的這些圖形，似乎都可以在石板上找出來相同的形狀。",
+    hint2: "從石板上找出了相同圖形，分別在不同的四個角落，線索中圖形之間的箭頭會是連線的意思嗎？",
+    explanation: "" },
+  { number: 5, kind: :quiz, title: "北投", level: "★★★★☆",
+    answer: "1896",
+    content: "嘉年華活動中，各個攤位都賣力地宣傳，忽然收到溫泉商店廣告單的你們，收到折扣吸引，決定去一探究竟。",
+    hint1: "仔細觀察現場立牌上的符號，似乎在手冊上的好幾頁中都有看到部分的圖形，依照立牌上的步驟，應該就可以組合出正確的符號。",
+    hint2: "組合出正確的符號後，依照立牌上的箭頭順序，才可以解出正確的密碼喔！",
+    explanation: "沒錯！答案就是1896，<br/>也就是北投開設第一家溫泉旅館的年份唷！" },
+  { number: 6, kind: :quiz, title: "龍山寺", level: "★★☆☆☆",
+    hints_enabled: false, answer: "224",
+    content: "好熱啊....快熱死了....村民一個個在抱怨，似乎因為怪物出沒的緣故，使的附近區域的氣溫不斷攀升，" \
+             "再不想辦法解決的話，還未到目的地就會因為酷暑而昏倒在半途中了。",
+    explanation: "沒錯！答案就是224，<br/>龍山寺商圈的青草巷就位在西昌街224巷，<br/>有空不妨可以去拜訪看看喔！" },
+  { number: 7, kind: :quiz, title: "朝陽", level: "★★☆☆☆",
+    answer: "3736",
+    content: "「一行人來到了新手村的裝備屋」「佈告欄上貼了一道大大的題目」「據說解開題目就可以獲得免費的裝備」" \
+             "「究竟下列算式的答案為何？」「據說新手村中的朝陽商店，有相關的線索唷！」",
+    hint1: "這些數字中的圖示好像是鈕扣的造型、跟商店現場的立牌會不會有什麼關聯呢？",
+    hint2: "原來題目中的鈕扣圖示，都可以從立牌上找出來、但是又好像有點不同的地方...立牌上的鈕扣多了縫線，會是解題的關鍵嗎？",
+    explanation: "" },
+  { number: 8, kind: :quiz, title: "公館", level: "★★★★☆",
+    answer: "WILLIAM",
+    content: "由於旅途勞累，大夥兒希望在公館商店買上一杯知名的調飲紓解身心，沒想到商家卻面色凝重的擺上暫停販售，" \
+             "究竟是怎麼一回事呢？",
+    explanation: "沒錯！答案就是William，William. K. Burton就是人稱台灣自來水之父的威廉·巴爾頓，" \
+                 "現在的自來水園區內仍鑄有他的銅像喔！" },
+  { number: 9, kind: :bear, title: "熊讚", level: "★☆☆☆☆",
     answer: "xiongzan",
-    content: "示範內容：找到熊讚吉祥物立牌，讀出立牌底部的編號。",
-    hint1: "示範提示一：立牌位於廣場中央。",
-    hint2: "示範提示二：編號是三位數字。",
-    explanation: "示範解說：答案為示範吉祥物編號。" },
-  { number: 10, kind: :quiz, title: "摩天（示範問答）", level: "4",
-    answer: "moutian",
-    content: "示範內容：摩天輪車廂上標示的載客人數上限即為答案。",
-    hint1: "示範提示一：標示貼在車廂門邊。",
-    hint2: "示範提示二：答案是個位數字。",
-    explanation: "示範解說：答案為示範載客人數上限。" },
-  { number: 11, kind: :quiz, title: "終極謎題（示範最終關）", level: "5",
-    auto_start: true, base_score: 3000, answer: "finale",
-    content: "示範內容：綜合前面 10 題的關鍵字首字母，組成最終密語。",
-    hint1: "示範提示一：依解題順序排列首字母。",
-    hint2: "示範提示二：最終密語共 6 個字母。",
-    explanation: "示範解說：答案為示範最終密語。" }
+    content: "為了標註旅途的路線，你們將熊讚的雕像畫在地圖上，但好像有些地方畫錯了，究竟是哪些地方呢？",
+    explanation: "" },
+  { number: 10, kind: :quiz, title: "摩天輪F1", level: "★★★☆☆",
+    answer: "FRONT",
+    content: "終於成功收集到了九項物品，你們馬上前往魔王佔據的摩天輪，希望召喚出神器將魔王打倒，" \
+             "但在這之前...必須通過神器的考驗。",
+    hint1: "在地面上的紅色車廂即為摩天輪的售票口，請至側邊觀看，即可找到與線索上排列方式相同的字樣。",
+    hint2: "找出排列位置中空格的地方，對照售票亭上的字母，按照順序就可以獲得解答。",
+    explanation: "沒錯、正解就是「FRONT」，也就是前方的意思，接下來就前往紅色車廂的正面，準備完成下一個考驗吧！" },
+  { number: 11, kind: :quiz, title: "摩天輪F2", level: "★★★★★",
+    auto_start: true, base_score: 3000, answer: "HEART",
+    content: "請留意題目圖片上方的敘述喔！",
+    hint1: "從售票亭的正面可找出與線索排列方式相同的字樣，對照後可發現網頁上頁碼符號的位置，在售票亭上的字樣皆為數字。",
+    hint2: "對照售票亭上的數字，找出該數字在手冊上的頁碼，依照箭頭的順序排列手冊頁碼符號上的字母，即可獲得解答。",
+    explanation: "" }
 ].freeze
 
 # Demo-friendly boss difficulty: this is a portfolio showcase, not a live
