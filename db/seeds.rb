@@ -106,7 +106,11 @@ QUESTION_SEEDS.each do |attrs|
     hint1: attrs[:hint1],
     hint2: attrs[:hint2],
     explanation: attrs.fetch(:explanation),
-    hints_enabled: attrs.fetch(:hints_enabled, true),
+    # Enabled only when there is actual hint text: in the original AP_WHEEL
+    # data questions 1/2/8/9 (and 6) have empty hints, yet the legacy site
+    # only disabled the hint button for question 6 — players on the others
+    # could spend hints (score deduction included) on blank text.
+    hints_enabled: attrs.fetch(:hints_enabled) { attrs[:hint1].present? },
     auto_start: attrs.fetch(:auto_start, false),
     base_score: attrs.fetch(:base_score, Question::DEFAULT_BASE_SCORE),
     puzzle_rows: attrs[:puzzle_rows],

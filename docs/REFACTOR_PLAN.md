@@ -34,7 +34,7 @@
 | `ScoreEntry` | QUEST_SCORE | `team_id`, `question_number`, `question_score`, `time_score`(**負值**), `hint_score`(**負值**), `boss_score`, `job_score`, `total_score`(**伺服器端計算**，下限 0)。unique index `[team_id, question_number]` |
 | `Admin`（新增） | 取代 Firebase | `email`(unique), `password_digest` |
 
-- `CODE_MAIN` 不搬 → i18n（`config/locales/zh-TW.yml`），錯誤碼對映：`01002` 序號/角色不合法、`01003` email 格式錯誤、`01004` 隊伍已滿。
+- `CODE_MAIN` 不搬 → i18n（`config/locales/zh-TW.yml`），錯誤碼對映：`01002` 序號/角色不合法、`01003` email 格式錯誤、`01004` 隊長已被註冊（原站文案）、`01005` 隊員名額已滿（重構新增的細分碼——原站兩種情境共用 01004 的隊長文案）。
 - 死代碼不搬：`Register_model`（空殼）、`Test` controller、`welcome_message.php`、`Wheel#index`（只 echo）、`Wheel#checkTimerEnd`（debug print_r）、`Wheel#test`（updateSNo 重複別名）。
 - 遊戲狀態邏輯放 model/PORO：`Team#solved_count`（只算 completed）、`Team#current_map`（solved ≥9 → map3）、計分計算 `ScoreCalculator`。
 

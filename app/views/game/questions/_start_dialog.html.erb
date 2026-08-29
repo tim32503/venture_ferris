@@ -12,9 +12,10 @@
 
 <div class="row text-center">
   <div class="col">
+    <%# No turbo_confirm here: this dialog IS the confirmation step (the
+        copy above already asks), a second prompt would be redundant. %>
     <%= button_to "確認開始", timer_game_question_path(question.number),
-                   method: :post, class: "btn btn-secondary",
-                   form: { data: { turbo_confirm: "確定要開始計時嗎？" } } %>
+                   method: :post, class: "btn btn-secondary" %>
     <%= link_to "取消，返回地圖", game_current_map_path, class: "btn btn-secondary" %>
   </div>
 </div>
