@@ -1,7 +1,7 @@
 # UI 現代化方案
 
 > 依據：`docs/UI_AUDIT.md`（2026-08-29 逐頁盤點）。本文件是「怎麼改、分幾批、先後順序」的方案；現況細節（檔案:行號）請回查 AUDIT。
-> 狀態：提案，等使用者裁決三個決策點後才動工。
+> 狀態：**U0～U3c 已全數完成**（含追加的 Boss 舞台修復與 Boss 戰遊戲化，見分批計畫表）；U4 選配未排程。以下「現況一句話」等敘述為開工前的盤點快照。
 
 ## 現況一句話
 
@@ -52,6 +52,8 @@
 | U2 jQuery 退場 | 拼圖原生重寫、modal→`<dialog>`、carousel→scroll-snap、移除 4 個 CDN script + 2 個 vendor 檔 | U0 | 大 | ✅ 完成 |
 | U3a／U3b Tailwind 改版（首批＋入場導覽） | 導入 tailwindcss-rails；welcome/admin/game 首頁與地圖等入場導覽五頁換裝 | U1、U2 | 大 | ✅ 完成 |
 | U3c Tailwind 改版（收尾） | 剩餘遊戲頁（quiz/puzzle/bear/solved/hint/start_dialog/boss/scores/rewards/records）換裝；`.dialog` 共用 class 退場；移除 Bootstrap CDN CSS + Font Awesome CDN（`fas fa-home`→inline SVG）；README 前端章節同步 | U3a、U3b | 大 | ✅ 完成 |
+| 追加：Boss 舞台修復 | `.boss-bg` 以 aspect-ratio 取得真實高度、11 隻立繪重校、圖層順序明確化（背景<怪物<草地<HP 條）——修復改版前即存在的立繪塌縮與 HP 條被蓋 | U3c | 小 | ✅ 完成 |
+| 追加：Boss 戰遊戲化 | 點怪物本體攻擊、受擊回饋/傷害數字/連擊、HP 條三段變色、擊敗演出；弱點爆擊 ×2（`boss_battles.last_critical_at` 伺服器端 2 秒節流防刷，攻擊改 fetch 同頁請求） | 舞台修復 | 中 | ✅ 完成 |
 | U4（選配） | Turbo 8 broadcasts_refreshes 取代輪詢 | 部署目標定案 | 中 | 未排程 |
 
 每批驗收：`bin/rails test`＋`test:system` 全綠不退步；U2 拼圖重寫需新增 system test（拖拉完成觸發解鎖）；U3 每批附改版前後截圖對照。

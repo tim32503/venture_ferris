@@ -56,6 +56,26 @@ p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
 	background-size: cover;
 }
 
+// Desktop-only fold fix: at the page's max-w-2xl (42rem/672px) card width,
+// the 509:720 portrait aspect-ratio above renders the stage ~951px tall —
+// taller than most laptop/desktop viewports (e.g. 1280x900), pushing the HP
+// bar, countdown and attack count below the fold on load. From 1024px up,
+// cap the stage to a viewport-relative height and derive width from the
+// same 509/720 ratio via `calc()` (rather than `width: auto` +
+// aspect-ratio's "transferred size" resolution, which is less predictable
+// across browsers) so the whole HUD fits above the fold on common desktop
+// resolutions. `max-width: 100%` keeps it from ever exceeding the
+// max-w-2xl card on unusually tall/narrow desktop windows. Mobile (<1024px)
+// is untouched — still the original full-bleed `width: 100%` stage.
+@media (min-width: 1024px){
+	.boss-bg{
+		width: calc(62vh * 509 / 720);
+		max-height: 62vh;
+		max-width: 100%;
+		margin-inline: auto;
+	}
+}
+
 .boss-grass{
 	position: absolute;
 	left: 0;
@@ -78,12 +98,11 @@ p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
 // capped at 95% width (any wider would spill past the stage's left/right
 // edge) rather than stretched tall.
 //
-// The `var(--mon-*, fallback)` defaults below are for boss #10, which has no
-// CSS block of its own (see `Game::BossesHelper#boss_asset_available?` —
-// mon10.gif isn't in this repo's recovered asset set, so the view renders a
-// plain-text fallback with the same `.boss` class instead of an `image_tag`)
-// so that fallback still lands inside the stage instead of computing to
-// `auto`/`0` and drifting to the box's top-left corner.
+// The `var(--mon-*, fallback)` defaults below are a general safety net for
+// any boss number that ends up with no CSS block of its own (see
+// `Game::BossesHelper#boss_asset_available?`'s text-fallback path) so that
+// case still lands inside the stage instead of computing to `auto`/`0` and
+// drifting to the box's top-left corner.
 .boss{
 	position: absolute;
 	z-index: 10;
@@ -101,6 +120,26 @@ p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
 .mon08{ --mon-w: 95%; --mon-x: 2.5%;  --mon-y: 28%; }
 .mon09{ --mon-w: 94%; --mon-x: 3%;    --mon-y: 28%; }
 .mon11{ --mon-w: 95%; --mon-x: 2.5%;  --mon-y: 28%; }
+
+// Boss #10 ("摩天輪魔王・第一型態") reuses mon11's sprite (see
+// `Game::BossesHelper#boss_sprite_source_number` — mon10.gif was never part
+// of the recovered asset set) but renders ~0.85x smaller than boss #11's
+// full-size final phase, so the two stages read as the same monster growing
+// stronger rather than as identical art. Scaled down from mon11's own
+// --mon-w 95% / --mon-x 2.5% above (95% * .85 = 80.75%), with --mon-x
+// increased by half the width delta ((95% - 80.75%) / 2 = 7.125%) so the
+// smaller sprite stays horizontally centered in the same spot instead of
+// drifting left. `.mon11.boss-phase-1` (button element) must come after
+// plain `.mon11` in source order to win on equal specificity.
+.mon11.boss-phase-1{ --mon-w: 80.75%; --mon-x: 9.625%; --mon-y: 28%; }
+
+// Desaturates/darkens the actual <img> (not the button `.boss-hit` itself,
+// which already uses `filter: brightness()` for the hit-flash animation
+// below — keeping these on separate elements means the two filters never
+// stack/fight each other).
+.boss-phase-1 .boss-sprite{
+	filter: grayscale(.7) brightness(.75);
+}
 
 
 #counter {

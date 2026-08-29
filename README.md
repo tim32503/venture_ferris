@@ -45,6 +45,10 @@
   欄位，玩家重新整理頁面就會被重複計數，灌爆人數；新版改成 `BossReady`
   join table（`team_id/boss_battle_id + player_id` 唯一索引），ready 人數
   由 `COUNT` 出來，同一個玩家按幾次都只算一次。
+- **Boss 戰爆擊只在伺服器端節流窗外採信。** 遊戲化後的弱點爆擊由前端「宣告」
+  （`critical` 參數），但傷害計算與 2 秒節流（`boss_battles.last_critical_at`、
+  `BossBattle#critical_ready?`）全在伺服器端——竄改 client 連發爆擊，超出節流
+  窗的宣告一律按普通攻擊計，延續全案「驗證都在伺服器端」的原則。
 - **棄用的 Google Image Charts 改用 `rqrcode`。** 舊站後台序號產生器用
   Google 已下架的 Image Charts API 產生 QR code；新版改用 `rqrcode` gem
   在本機產生（`Admin::SerialCodesController`）。
@@ -205,10 +209,19 @@ CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加
   程式碼中），因此這三題仍沿用重構時另行編寫的示範答案。答案依既有設計
   仍只存 SHA-256 digest（`Question.digest_for`，見 `app/models/question.rb`），
   不會明文寫回任何檔案。
-- **`mon10.gif` 遺失。** 原始素材備份裡怪物圖檔只有 10 個檔案（`mon01~09.gif`
-  + `mon11.gif`），第 10 題的怪物圖檔在備份當時就已經不存在，並非本次重構
-  遺漏；`app/helpers/game/bosses_helper.rb` 的 `boss_asset_available?` 會偵測
-  缺檔並讓 `app/views/game/bosses/show.html.erb` 改顯示文字說明，而不是壞圖。
+- **`mon10.gif` 從未存在，第 10/11 題其實是同一隻「摩天輪魔王」的雙型態連戰。**
+  原始素材備份裡怪物圖檔只有 10 個檔案（`mon01~09.gif` + `mon11.gif`），一度
+  被當成「第 10 題圖檔遺失」處理。考證還原後的原始劇情文本（`db/seeds.rb`）
+  發現：第 10 題標題是「魔王佔據的摩天輪」，第 11 題緊接著是同一場戰鬥的延續
+  （`auto_start`，沒有獨立的宣戰大廳），且素材命名習慣以 F1/F2 表示同一隻怪
+  的兩個型態——三者合起來指向「第 10/11 題本來就是對同一隻摩天輪魔王的連續
+  戰鬥」，`mon10.gif` 推測從未作為獨立素材存在過，不是遺失。本次改以
+  `mon11.gif` 還原設計意圖：第 10 題（第一型態）套用濾鏡＋略小尺寸顯示同一張
+  立繪，第 11 題（最終型態）維持原色滿版；對映邏輯見
+  `app/helpers/game/bosses_helper.rb` 的 `boss_sprite_source_number`／
+  `boss_phase_label`，視覺樣式見 `app/assets/stylesheets/boss.scss` 的
+  `.boss-phase-1`。`boss_asset_available?` 的文字說明 fallback 機制仍保留，
+  作為其餘題號未來若素材缺失時的防禦。
 
 ## 部署待辦
 

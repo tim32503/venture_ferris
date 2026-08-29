@@ -12,6 +12,9 @@
 
 <header class="mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-12!">
   <h2 class="text-2xl! font-bold! text-slate-100!">魔王戰：<%= @question.title %></h2>
+  <% if (phase_label = boss_phase_label(@question.number)) %>
+    <p class="mt-1! text-sm! font-semibold! text-amber-400!"><%= phase_label %></p>
+  <% end %>
 </header>
 
 <main class="mx-auto! max-w-2xl! px-4! pb-12! pt-6! text-center! sm:pb-16!"
@@ -41,7 +44,7 @@
       <%= image_tag "bossGrass.png", class: "boss-grass" %>
       <% filename = boss_image_filename(@question.number) %>
       <button type="button"
-              class="boss-hit mon<%= format('%02d', @question.number) %> boss"
+              class="boss-hit <%= boss_sprite_css_classes(@question.number) %> boss"
               data-boss-poll-target="monster"
               data-action="click->boss-poll#attack"
               aria-label="攻擊<%= @question.title %>">
