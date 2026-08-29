@@ -21,7 +21,10 @@ module VentureFerris
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    # The event and its back office operate in Taipei; without this the
+    # admin console renders timestamps in UTC (-8h off what operators expect).
+    # ActiveRecord still stores UTC as usual.
+    config.time_zone = "Taipei"
     # config.eager_load_paths << Rails.root.join("extras")
 
     # sassc-rails defaults `config.assets.css_compressor` to `:sass` outside

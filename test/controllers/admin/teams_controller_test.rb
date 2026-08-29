@@ -117,6 +117,22 @@ class Admin::TeamsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, BossReady.where(boss_battle_id: battle.id).count
   end
 
+  test "destroying a test_mode team releases its allocated reward codes back to the pool" do
+    sign_in_as_admin
+    team = Team.create!(serial_no: "TEAMDESTROYTEST2", test_mode: true)
+    player = Player.create!(team: team, role: :leader, email: "release-me@example.com")
+    allocated = RewardCode.create!(code: "RWDRELEASE000001", test_mode: true,
+                                   player_email: player.email, claimed_at: Time.current)
+    untouched = RewardCode.create!(code: "RWDRELEASE000002", test_mode: true,
+                                   player_email: "someone-else@example.com", claimed_at: Time.current)
+
+    delete admin_team_path(team)
+
+    assert_nil allocated.reload.player_email
+    assert_nil allocated.claimed_at
+    assert_equal "someone-else@example.com", untouched.reload.player_email
+  end
+
   private
 
   def sign_in_as_admin
