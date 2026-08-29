@@ -45,13 +45,14 @@
 
 ## 分批計畫
 
-| 批次 | 內容 | 依賴 | 規模 |
-|---|---|---|---|
-| U0 清理 | 刪打字機死碼/blink/ripple（或接上攻擊按鈕）、Google Fonts 更新 | — | 小 |
-| U1 結構修復 | 地圖熱點 % 化、Boss 疊圖相對定位化、表格 responsive、固定 margin 響應式（先在 Bootstrap 下修好，與框架切換解耦） | — | 中 |
-| U2 jQuery 退場 | 拼圖原生重寫、modal→`<dialog>`、carousel→scroll-snap、移除 4 個 CDN script + 2 個 vendor 檔 | U0 | 大 |
-| U3 Tailwind 改版 | 導入 tailwindcss-rails；19 頁分 3 小批逐頁換裝（玩家主線→welcome/admin→細節打磨）；移除 Bootstrap CDN CSS、重寫兩份舊 SCSS | U1、U2 | 大 |
-| U4（選配） | Turbo 8 broadcasts_refreshes 取代輪詢 | 部署目標定案 | 中 |
+| 批次 | 內容 | 依賴 | 規模 | 狀態 |
+|---|---|---|---|---|
+| U0 清理 | 刪打字機死碼/blink/ripple（或接上攻擊按鈕）、Google Fonts 更新 | — | 小 | ✅ 完成 |
+| U1 結構修復 | 地圖熱點 % 化、Boss 疊圖相對定位化、表格 responsive、固定 margin 響應式（先在 Bootstrap 下修好，與框架切換解耦） | — | 中 | ✅ 完成 |
+| U2 jQuery 退場 | 拼圖原生重寫、modal→`<dialog>`、carousel→scroll-snap、移除 4 個 CDN script + 2 個 vendor 檔 | U0 | 大 | ✅ 完成 |
+| U3a／U3b Tailwind 改版（首批＋入場導覽） | 導入 tailwindcss-rails；welcome/admin/game 首頁與地圖等入場導覽五頁換裝 | U1、U2 | 大 | ✅ 完成 |
+| U3c Tailwind 改版（收尾） | 剩餘遊戲頁（quiz/puzzle/bear/solved/hint/start_dialog/boss/scores/rewards/records）換裝；`.dialog` 共用 class 退場；移除 Bootstrap CDN CSS + Font Awesome CDN（`fas fa-home`→inline SVG）；README 前端章節同步 | U3a、U3b | 大 | ✅ 完成 |
+| U4（選配） | Turbo 8 broadcasts_refreshes 取代輪詢 | 部署目標定案 | 中 | 未排程 |
 
 每批驗收：`bin/rails test`＋`test:system` 全綠不退步；U2 拼圖重寫需新增 system test（拖拉完成觸發解鎖）；U3 每批附改版前後截圖對照。
 

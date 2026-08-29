@@ -1,44 +1,45 @@
 <% content_for :title, "任務獎勵" %>
+<% content_for :body_class, "bg-gradient-to-b! from-slate-900 via-slate-900 to-slate-800 text-slate-100!" %>
 
-<header class="container">
-  <h2 class="text-center">任務獎勵</h2>
+<header class="mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-12!">
+  <h2 class="text-2xl! font-bold! text-slate-100!">任務獎勵</h2>
 </header>
 
-<main class="container-fluid">
+<main class="mx-auto! max-w-2xl! px-4! pb-12! pt-6! sm:pb-16!">
   <% if flash[:alert] %>
-    <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
+    <div class="mb-4! rounded-lg! bg-rose-500/10! px-4! py-3! text-center! text-sm! text-rose-300! ring-1! ring-rose-500/30!" role="alert"><%= flash[:alert] %></div>
   <% end %>
   <% if flash[:notice] %>
-    <div class="alert alert-success text-center" role="alert"><%= flash[:notice] %></div>
+    <div class="mb-4! rounded-lg! bg-emerald-500/10! px-4! py-3! text-center! text-sm! text-emerald-300! ring-1! ring-emerald-500/30!" role="alert"><%= flash[:notice] %></div>
   <% end %>
 
-  <div class="dialog">
+  <div class="rounded-xl! bg-slate-800/80! p-6! text-slate-100! ring-1! ring-white/10! backdrop-blur!">
     <p>請填寫聯絡資訊，以便工作人員核發實體獎品：</p>
-    <%= form_with url: game_reward_contact_path, method: :patch, local: true do |f| %>
-      <div class="form-group">
-        <%= f.label :name, "姓名" %>
-        <%= f.text_field :name, value: current_player.name, class: "form-control" %>
+    <%= form_with url: game_reward_contact_path, method: :patch, local: true, class: "mt-4! space-y-4!" do |f| %>
+      <div>
+        <%= f.label :name, "姓名", class: "mb-1! block! text-sm! font-medium! text-slate-300!" %>
+        <%= f.text_field :name, value: current_player.name, class: "w-full! rounded-lg! border-0! bg-slate-900/60! px-3! py-2! text-slate-100! ring-1! ring-inset! ring-white/10! placeholder:text-slate-500! focus:ring-2! focus:ring-inset! focus:ring-amber-400!" %>
       </div>
-      <div class="form-group">
-        <%= f.label :gender, "性別" %>
+      <div>
+        <%= f.label :gender, "性別", class: "mb-1! block! text-sm! font-medium! text-slate-300!" %>
         <%= f.select :gender,
               options_for_select([ [ "未填", "unspecified" ], [ "男", "male" ], [ "女", "female" ] ], current_player.gender),
-              {}, class: "form-control" %>
+              {}, class: "w-full! rounded-lg! border-0! bg-slate-900/60! px-3! py-2! text-slate-100! ring-1! ring-inset! ring-white/10! focus:ring-2! focus:ring-inset! focus:ring-amber-400!" %>
       </div>
-      <div class="form-group">
-        <%= f.label :mobile, "手機號碼" %>
-        <%= f.text_field :mobile, value: current_player.mobile, class: "form-control" %>
+      <div>
+        <%= f.label :mobile, "手機號碼", class: "mb-1! block! text-sm! font-medium! text-slate-300!" %>
+        <%= f.text_field :mobile, value: current_player.mobile, class: "w-full! rounded-lg! border-0! bg-slate-900/60! px-3! py-2! text-slate-100! ring-1! ring-inset! ring-white/10! placeholder:text-slate-500! focus:ring-2! focus:ring-inset! focus:ring-amber-400!" %>
       </div>
-      <%= f.submit "儲存聯絡資訊", class: "btn btn-secondary" %>
+      <%= f.submit "儲存聯絡資訊", class: "inline-flex! items-center! justify-center! rounded-lg! bg-slate-700! px-5! py-2.5! font-semibold! text-slate-100! ring-1! ring-white/10! transition! hover:bg-slate-600! cursor-pointer!" %>
     <% end %>
   </div>
 
   <% if @codes.any? %>
-    <div class="dialog text-center">
+    <div class="mt-4! rounded-xl! bg-slate-800/80! p-6! text-center! text-slate-100! ring-1! ring-white/10! backdrop-blur!">
       <p>您的兌獎序號：</p>
-      <div class="row">
+      <div class="mt-4! grid! grid-cols-2! gap-4!">
         <% @codes.each do |code| %>
-          <div class="col-6">
+          <div>
             <p><code><%= code.code %></code></p>
             <%= reward_code_qr_svg(code) %>
           </div>
@@ -46,15 +47,14 @@
       </div>
     </div>
   <% else %>
-    <div class="dialog text-center">
+    <div class="mt-4! rounded-xl! bg-slate-800/80! p-6! text-center! text-slate-100! ring-1! ring-white/10! backdrop-blur!">
       <p>完成聯絡資訊後即可兌換獎品序號。</p>
-      <%= button_to "兌換獎品序號", game_reward_codes_path, method: :post, class: "btn btn-primary" %>
+      <%= button_to "兌換獎品序號", game_reward_codes_path, method: :post,
+            class: "mt-4! inline-flex! items-center! justify-center! rounded-lg! bg-amber-500! px-5! py-2.5! font-semibold! text-slate-900! transition! hover:bg-amber-400! cursor-pointer!" %>
     </div>
   <% end %>
 
-  <div class="row text-center">
-    <div class="col">
-      <%= link_to "《返回遊戲選單》", game_root_path, class: "btn btn-link" %>
-    </div>
+  <div class="mt-6! text-center!">
+    <%= link_to "《返回遊戲選單》", game_root_path, class: "text-sm! font-semibold! text-amber-400! transition! hover:text-amber-300!" %>
   </div>
 </main>

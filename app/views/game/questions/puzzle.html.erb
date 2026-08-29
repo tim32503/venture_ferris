@@ -1,4 +1,5 @@
 <% content_for :title, @question.title %>
+<% content_for :body_class, "bg-gradient-to-b! from-slate-900 via-slate-900 to-slate-800 text-slate-100!" %>
 
 <% content_for :head do %>
   <%# The legacy jigsaw page (wheel_puzzle.php:57-78) keeps this CSS page-local
@@ -19,45 +20,41 @@
   </style>
 <% end %>
 
-<header class="text-center">
-  <h2><%= @question.title %></h2>
+<header class="mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-12!">
+  <h2 class="text-2xl! font-bold! text-slate-100!"><%= @question.title %></h2>
 </header>
 
-<main class="container-fluid">
-  <div class="container-fluid">
-    <% if flash[:alert] %>
-      <div class="alert alert-danger text-center" role="alert"><%= flash[:alert] %></div>
-    <% end %>
-    <% if flash[:notice] %>
-      <div class="alert alert-success text-center" role="alert"><%= flash[:notice] %></div>
-    <% end %>
-  </div>
+<main class="mx-auto! max-w-3xl! px-4! pb-12! pt-6! sm:pb-16!">
+  <% if flash[:alert] %>
+    <div class="mb-4! rounded-lg! bg-rose-500/10! px-4! py-3! text-center! text-sm! text-rose-300! ring-1! ring-rose-500/30!" role="alert"><%= flash[:alert] %></div>
+  <% end %>
+  <% if flash[:notice] %>
+    <div class="mb-4! rounded-lg! bg-emerald-500/10! px-4! py-3! text-center! text-sm! text-emerald-300! ring-1! ring-emerald-500/30!" role="alert"><%= flash[:notice] %></div>
+  <% end %>
 
   <% if @attempt.started_at.blank? %>
     <%= render "game/questions/start_dialog", question: @question %>
   <% else %>
-    <div class="dialog"><%= @question.content %></div>
+    <div class="mb-4! rounded-xl! bg-slate-800/80! p-6! text-slate-100! ring-1! ring-white/10! backdrop-blur!"><%= @question.content %></div>
 
     <%# `data-controller="puzzle"` has to wrap the answer form too, not just
         the board/pile row — Stimulus only recognizes a `data-*-target`
         element as belonging to a controller if it's a DOM descendant of the
         element carrying `data-controller`. The submit button below lives in
         a separate `form_with` block, so scoping the controller to just the
-        `.row` (as the legacy jQuery-plugin version did) leaves
+        grid (as the legacy jQuery-plugin version did) leaves
         `hasSubmitTarget` false and the button silently never unlocks. %>
     <div data-controller="puzzle"
          data-puzzle-rows-value="<%= @question.puzzle_rows %>"
          data-puzzle-columns-value="<%= @question.puzzle_cols %>">
-      <div class="row">
-        <div class="col-md-6">
-          <div class="puzzle-board" data-puzzle-target="board">
-            <%= image_tag question_image_filename(@question), class: "puzzle-source-image",
-                           id: "source_image", alt: @question.title, data: { puzzle_target: "image" } %>
-          </div>
+      <div class="grid! grid-cols-1! gap-4! md:grid-cols-2!">
+        <div class="puzzle-board rounded-xl! ring-1! ring-white/10!" data-puzzle-target="board">
+          <%= image_tag question_image_filename(@question), class: "puzzle-source-image",
+                         id: "source_image", alt: @question.title, data: { puzzle_target: "image" } %>
         </div>
-        <div class="col-md-6">
-          <div class="puzzle-pile" data-puzzle-target="pile"></div>
-          <p id="puzzle-solved-banner" data-puzzle-target="solvedBanner" class="dialog text-center">
+        <div>
+          <div class="puzzle-pile rounded-xl! ring-1! ring-white/10!" data-puzzle-target="pile"></div>
+          <p id="puzzle-solved-banner" data-puzzle-target="solvedBanner" class="mt-2! rounded-xl! bg-slate-800/80! p-4! text-center! text-slate-100! ring-1! ring-white/10!">
             恭喜完成拼圖！請在照片中找出答案並於下方輸入。
           </p>
         </div>
@@ -65,20 +62,16 @@
 
       <%= render "game/questions/hint_panel", question: @question, attempt: @attempt %>
 
-      <%= form_with url: answer_game_question_path(@question.number), method: :post, local: true, class: "dialog" do |f| %>
-        <div class="input-group mb-3">
-          <%= f.text_field :answer, class: "form-control", placeholder: "拼圖完成後，請輸入你找到的答案", required: true %>
-          <div class="input-group-append">
-            <%= f.submit "確認送出", class: "btn btn-primary", disabled: true, data: { puzzle_target: "submit" } %>
-          </div>
+      <%= form_with url: answer_game_question_path(@question.number), method: :post, local: true, class: "mt-6!" do |f| %>
+        <div class="flex! flex-col! gap-3! sm:flex-row!">
+          <%= f.text_field :answer, class: "w-full! rounded-lg! border-0! bg-slate-900/60! px-3! py-2! text-slate-100! ring-1! ring-inset! ring-white/10! placeholder:text-slate-500! focus:ring-2! focus:ring-inset! focus:ring-amber-400! disabled:opacity-50!", placeholder: "拼圖完成後，請輸入你找到的答案", required: true %>
+          <%= f.submit "確認送出", class: "inline-flex! shrink-0! items-center! justify-center! rounded-lg! bg-amber-500! px-5! py-2.5! font-semibold! text-slate-900! transition! hover:bg-amber-400! disabled:cursor-not-allowed! disabled:opacity-50! cursor-pointer!", disabled: true, data: { puzzle_target: "submit" } %>
         </div>
       <% end %>
     </div>
   <% end %>
 
-  <div class="row text-center">
-    <div class="col">
-      <%= link_to "《返回遊戲地圖》", game_current_map_path, class: "btn btn-link" %>
-    </div>
+  <div class="mt-6! text-center!">
+    <%= link_to "《返回遊戲地圖》", game_current_map_path, class: "text-sm! font-semibold! text-amber-400! transition! hover:text-amber-300!" %>
   </div>
 </main>

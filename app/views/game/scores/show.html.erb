@@ -1,56 +1,59 @@
 <% content_for :title, "積分結算" %>
+<% content_for :body_class, "bg-gradient-to-b! from-slate-900 via-slate-900 to-slate-800 text-slate-100!" %>
 
-<header class="container">
-  <h2 class="text-center">積分結算</h2>
+<header class="mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-12!">
+  <h2 class="text-2xl! font-bold! text-slate-100!">積分結算</h2>
 </header>
 
-<main class="container-fluid">
+<main class="mx-auto! max-w-2xl! px-4! pb-12! pt-6! sm:pb-16!">
   <% if flash[:notice] %>
-    <div class="alert alert-success text-center" role="alert"><%= flash[:notice] %></div>
+    <div class="mb-4! rounded-lg! bg-emerald-500/10! px-4! py-3! text-center! text-sm! text-emerald-300! ring-1! ring-emerald-500/30!" role="alert"><%= flash[:notice] %></div>
   <% end %>
 
   <% if @entries.empty? %>
-    <p class="dialog text-center">尚未有任何題目完成結算，請先擊敗魔王！</p>
+    <p class="rounded-xl! bg-slate-800/80! p-6! text-center! text-slate-100! ring-1! ring-white/10! backdrop-blur!">尚未有任何題目完成結算，請先擊敗魔王！</p>
   <% else %>
-    <div class="table-responsive">
-      <table class="table text-center">
-        <thead>
-          <tr class="table-secondary">
-            <th>題號</th>
-            <th>基礎分</th>
-            <th>時間分</th>
-            <th>提示分</th>
-            <th>魔王分</th>
-            <th>職業分</th>
-            <th>小計</th>
+    <%# 7 欄（題號/基礎分/時間分/提示分/魔王分/職業分/小計）在手機寬度會擠壓，
+        維持一般 table 搭配 overflow-x-auto 橫向捲動，而非拆成卡片式——本頁是
+        單純的分數總表，欄與欄之間需要對齊比較，卡片化反而讓「同一列的各分項」
+        失去橫向對齊，閱讀效率更差（U3c 視覺總檢的結論，見 UI_STYLE_GUIDE.md）。 %>
+    <div class="overflow-x-auto! rounded-xl! bg-slate-800/80! ring-1! ring-white/10!">
+      <table class="min-w-full! divide-y! divide-white/10! text-center! text-sm!">
+        <thead class="bg-slate-900/40!">
+          <tr>
+            <th class="px-3! py-3! font-semibold! text-slate-300!">題號</th>
+            <th class="px-3! py-3! font-semibold! text-slate-300!">基礎分</th>
+            <th class="px-3! py-3! font-semibold! text-slate-300!">時間分</th>
+            <th class="px-3! py-3! font-semibold! text-slate-300!">提示分</th>
+            <th class="px-3! py-3! font-semibold! text-slate-300!">魔王分</th>
+            <th class="px-3! py-3! font-semibold! text-slate-300!">職業分</th>
+            <th class="px-3! py-3! font-semibold! text-slate-300!">小計</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y! divide-white/5!">
           <% @entries.each do |entry| %>
             <tr>
-              <td><%= entry.question_number %></td>
-              <td><%= entry.question_score %></td>
-              <td><%= entry.time_score %></td>
-              <td><%= entry.hint_score %></td>
-              <td><%= entry.boss_score %></td>
-              <td><%= entry.job_score %></td>
-              <td><strong><%= entry.total_score %></strong></td>
+              <td class="px-3! py-3! text-slate-100!"><%= entry.question_number %></td>
+              <td class="px-3! py-3! text-slate-100!"><%= entry.question_score %></td>
+              <td class="px-3! py-3! text-slate-100!"><%= entry.time_score %></td>
+              <td class="px-3! py-3! text-slate-100!"><%= entry.hint_score %></td>
+              <td class="px-3! py-3! text-slate-100!"><%= entry.boss_score %></td>
+              <td class="px-3! py-3! text-slate-100!"><%= entry.job_score %></td>
+              <td class="px-3! py-3! font-semibold! text-amber-400!"><%= entry.total_score %></td>
             </tr>
           <% end %>
         </tbody>
         <tfoot>
-          <tr class="table-dark">
-            <td colspan="6">總分</td>
-            <td><strong><%= @total %></strong></td>
+          <tr class="bg-slate-900/60!">
+            <td class="px-3! py-3! font-semibold! text-slate-100!" colspan="6">總分</td>
+            <td class="px-3! py-3! font-semibold! text-amber-400!"><%= @total %></td>
           </tr>
         </tfoot>
       </table>
     </div>
   <% end %>
 
-  <div class="row text-center">
-    <div class="col">
-      <%= link_to "《返回遊戲選單》", game_root_path, class: "btn btn-link" %>
-    </div>
+  <div class="mt-6! text-center!">
+    <%= link_to "《返回遊戲選單》", game_root_path, class: "text-sm! font-semibold! text-amber-400! transition! hover:text-amber-300!" %>
   </div>
 </main>

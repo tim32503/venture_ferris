@@ -21,8 +21,6 @@ main{
 	text-shadow: 1px 0 5px black, 0 1px 5px black;
 }
 
-.dialog{ font-size: 1.25rem; color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; padding: .75rem 1.25rem; border: 5px solid white; background-color: #999; box-shadow: 0.5px 0.5px 0 3px #999; margin: 1.5rem }
-
 // Native <dialog> replacing Bootstrap 4's jQuery-backed Modal (home page's
 // "玩法說明" popup, see dialog_controller.js). Only the browser-default
 // reset + ::backdrop live here — colors/spacing/typography are Tailwind

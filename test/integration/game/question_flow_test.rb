@@ -94,7 +94,10 @@ module Game
 
       get game_question_path(3)
       assert_response :success
-      assert_select "div.dialog", text: /示範內容 3/
+      # U3c retired the shared `.dialog` class (docs/UI_STYLE_GUIDE.md card
+      # recipe replaces it); assert on the rendered content instead of a
+      # CSS class that no longer exists.
+      assert_match "示範內容 3", response.body
       refute_match "石牆密語", response.body
       refute_match question.answer_digest, response.body
     end

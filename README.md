@@ -48,6 +48,10 @@
 - **棄用的 Google Image Charts 改用 `rqrcode`。** 舊站後台序號產生器用
   Google 已下架的 Image Charts API 產生 QR code；新版改用 `rqrcode` gem
   在本機產生（`Admin::SerialCodesController`）。
+- **前端零 jQuery、零 CSS 框架 CDN。** 舊站整套 jQuery／jQuery UI／
+  Bootstrap 4／Font Awesome CDN 已全數移除；拼圖拖拉是自寫的原生
+  Pointer Events 引擎，視覺層是 Tailwind CSS v4，細節見下方
+  〈前端：全 Hotwire／Tailwind，零 jQuery、零 CSS 框架 CDN〉。
 
 ## 架構總覽
 
@@ -89,31 +93,41 @@ RewardCode （獨立，以 player_email 字串關聯，不用外鍵——沿用�
   `require_admin`）。
 - 公開頁（首頁、隱私權、錯誤頁）留在頂層，不進 namespace。
 
-### Hotwire + jQuery 並存的選型理由
+### 前端：全 Hotwire／Tailwind，零 jQuery、零 CSS 框架 CDN
 
-這個專案故意讓 Turbo/Stimulus 與 jQuery/jQuery UI/Bootstrap 4 並存，而不是把
-全部前端邏輯改寫成 Stimulus：
+這個專案的前端經歷過一次完整的現代化（`docs/UI_MODERNIZATION_PLAN.md` U0～
+U3），起點是 2018 年原站直接沿用的 jQuery 3.3.1／jQuery UI 1.12.1／
+Bootstrap 4.1.3（含 Font Awesome）全套 CDN，終點是：
 
-- 拼圖題用的拖拉套件 `jquery.snap-puzzle.min.js` 是舊站沿用的第三方 minified
-  plugin，本身就是用 jQuery 寫的、非 ESM 模組，重寫成 Stimulus/原生 JS 的成本
-  和風險（拖拉手感、觸控相容性）不成比例；直接原樣沿用更穩。
-- Bootstrap 4.1.3 的 Modal/Dropdown 元件硬依賴 jQuery（Bootstrap 5 才拿掉這個
-  依賴），既然沿用 Bootstrap 4 的視覺風格就沿用它原本的 JS。
-- 因此 jQuery 全家桶（jQuery 3.3.1／jQuery UI 1.12.1／Bootstrap 4.1.3）走傳統
-  `<script>` CDN 標籤（`app/views/layouts/application.html.erb`），importmap
-  （`config/importmap.rb`）則只服務 Turbo/Stimulus 與專案自己寫的
-  Stimulus controllers（`app/javascript/controllers/*`）與 `lib/api.js`。兩套
-  機制刻意不混在一起：jQuery 相關腳本不進 importmap，Stimulus controller 也
-  不透過 jQuery 操作 DOM。
+- **拼圖拖拉是原生 Pointer Events 引擎，不是套件。** 舊站的
+  `jquery.snap-puzzle.min.js`（第三方 minified jQuery plugin，含 jQuery UI
+  draggable + touch-punch 模擬觸控）已整個移除，改由
+  `app/javascript/controllers/puzzle_controller.js` 用瀏覽器原生
+  Pointer Events（`pointerdown`/`pointermove`/`pointerup` + `setPointerCapture`）
+  重寫拖拉與吸附判定，滑鼠與觸控天生統一，不需要任何相容層。
+- **Bootstrap 4 的 Modal／Carousel 也都退場了**：首頁「玩法說明」彈窗改用
+  瀏覽器原生 `<dialog>` 元素（`dialog_controller.js`），選職業的輪播改用 CSS
+  `scroll-snap`（`carousel_controller.js`），兩者都不再需要 jQuery。
+- 現存的每一個 Stimulus controller（`app/javascript/controllers/*`）都是
+  原生 DOM API 或 `fetch`，`app/javascript/lib/api.js` 統一處理
+  `X-CSRF-Token`。全站前端**沒有任何一行 jQuery**，也沒有任何 Bootstrap／
+  Font Awesome 的 `<script>`／`<link>` CDN 標籤。
+- 視覺層改用 **Tailwind CSS v4**（`tailwindcss-rails` gem，免 Node、與既有
+  sprockets pipeline 共存），全站 22 個 view 依 `docs/UI_STYLE_GUIDE.md` 的
+  tokens／元件配方逐頁改版；`app/assets/stylesheets/site.scss` 與
+  `boss.scss` 兩份 2018 年手調座標的舊 SCSS 只保留 Tailwind 覆蓋不到的功能性
+  樣式（拼圖引擎的幾何定位、Boss 立繪疊圖的相對座標、地圖熱點、`scroll-snap`
+  輪播），不再承擔任何頁面的主題視覺。
 
 ### CSS 編譯器
 
-目前維持使用 `sassc-rails`（`libsass` 綁定）編譯 `site.scss`/`boss.scss`。
-`sassc`/`sassc-rails` 上游已宣告 EOL、不再維護；本次重構刻意不在這個作品集
-批次順便換掉，理由是它跟本次的重構主軸（伺服器端驗證/權限）無關，混在一起會
-讓 diff 難以審查。**未來待辦**：換成 `dartsass-rails`（官方目前建議的替代
-方案），屆時只需要把兩個 `.scss` 檔案原樣搬過去、調整 Gemfile，不影響任何
-其他程式碼。
+`app/assets/tailwind/application.css`（`@import "tailwindcss"`）經
+`tailwindcss-rails` 編譯出 `app/assets/builds/tailwind.css`，負責全站絕大部分
+樣式。`sassc-rails`（`libsass` 綁定）現在只剩下編譯上一節提到的兩份少量自訂
+CSS（`site.scss`／`boss.scss`）——拼圖/Boss 疊圖等 Tailwind utility 表達不了
+或不划算表達的功能性定位樣式。`sassc`/`sassc-rails` 上游已宣告 EOL、不再
+維護；**未來待辦**：換成 `dartsass-rails`（官方目前建議的替代方案），屆時
+只需要把兩個 `.scss` 檔案原樣搬過去、調整 Gemfile，不影響任何其他程式碼。
 
 ## 本機啟動
 

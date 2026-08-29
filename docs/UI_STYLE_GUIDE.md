@@ -207,3 +207,19 @@ U3b（`game/**`）套用玩家端配方時會遇到同樣的問題（那些頁�
 ## Admin 表格 RWD
 
 Admin 序號表格資料量小、欄位少（4 欄），維持一般 `<table>` 搭配 `overflow-x-auto` 外層即可，不需卡片化。
+
+## 玩家端表格 RWD（U3c）
+
+積分結算（7 欄）、解謎紀錄（4 欄）維持一般 `<table>` 搭配 `overflow-x-auto` 深色卡片外層（`rounded-xl bg-slate-800/80 ring-1 ring-white/10`），不改卡片式。理由：這兩頁都是「同一列多個分項要橫向對齊比較」的總表，卡片化會讓一列拆成多個獨立小卡，反而破壞「題號→各分項→小計」的橫向對齊關係，可讀性比橫向捲動更差。深色表頭用 `bg-slate-900/40`、`tbody` 用 `divide-y divide-white/5`，數字欄位可用 `text-amber-400` 標出總分/小計，其餘沿用「表格（admin 用）」配方的結構，只是換深色 token。
+
+## 已評估但未採用：`@layer components` 取代 `!` 尾綴
+
+U3c 收尾時做了一個小實驗，評估能否讓 `site.scss`/`boss.scss` 的內容包進 `@layer components { ... }`，藉由 CSS Cascade Layers 的層級順序（Tailwind v4 編譯出的 CSS 開頭宣告 `@layer theme, base, components, utilities, properties;`，layout 裡 `tailwind` 樣式表也確實排在 `site`/`boss` 之前載入）讓 Tailwind 的 `utilities` 層自動贏過 `site.scss`/`boss.scss` 的 unlayered 規則，理論上可以讓全站 utility class 的 `!` 尾綴變成非必要。
+
+實驗結果：**語法可行**（`SassC::Engine.new("@layer components { .x { color:red; &:hover{...} } }", syntax: :scss).render` 順利編出合法 CSS，libsass 把 `@layer` 當一般 at-rule 原樣保留、`&` 巢狀照常展開），但**本批不採用，維持現有「每個會撞到 site.scss/Bootstrap 既有屬性的 utility 都加 `!`」的作法**，原因：
+
+1. 這個改動的效益是「省掉 `!` 尾綴」，但風險是「改變全站 CSS 的階層語意」——一旦層級順序判斷有誤（例如未來有人把 `stylesheet_link_tag` 順序調換、或新增一份沒有宣告 `@layer` 的樣式表插在中間），會在**沒有任何錯誤訊息**的情況下讓某個屬性靜默失效，而且影響範圍是全站而不是單一頁面，除錯成本遠高於現在「這個 class 沒作用就加 `!`」的局部風險。
+2. U3a/U3b 已經對十幾個頁面套用了「每個 utility 都加 `!`」的一致寫法；只在 U3c 新頁面改用 `@layer` 會讓同一份風格指南裡出現兩套互斥的 cascade 策略，之後任何人複製既有頁面當範本時都可能選錯策略、混用出更難除錯的組合。
+3. 沒有測試能驗證「cascade 層級是否真的如預期生效」——這類問題只能肉眼看畫面，而這正是這次要收尾、不要再擴大範圍的批次。
+
+**結論：`!` 尾綴保留為全站慣例**，不因為找到理論上更乾淨的替代方案就臨時换血；`@layer` 這條路留給下一次「專門重新設計 CSS 階層」的批次再評估（屆時應該連 U3a/U3b 已出貨的頁面一起改，不要只改一部分）。
