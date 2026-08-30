@@ -66,5 +66,38 @@ module Game
       assert_equal first_phase.boss_id, final_phase.boss_id
       assert_equal [ 10, 11 ], first_phase.boss.questions.order(:number).pluck(:number)
     end
+
+    test "boss_defeat_next_path sends a first-phase victory to the final phase's question page" do
+      first_phase = build_question(10, sprite: "mon11", phase: 1)
+      final_phase = build_question(11, sprite: "mon11", phase: 2)
+
+      assert_equal game_question_path(final_phase.number), boss_defeat_next_path(first_phase)
+      assert_match "最終考驗", boss_defeat_message(first_phase)
+      assert_equal "前往最終考驗", boss_defeat_link_label(first_phase)
+    end
+
+    test "boss_defeat_next_path sends a final-phase victory to the score page" do
+      build_question(10, sprite: "mon11", phase: 1)
+      final_phase = build_question(11, sprite: "mon11", phase: 2)
+
+      assert_equal game_score_path, boss_defeat_next_path(final_phase)
+      assert_nil boss_defeat_message(final_phase)
+      assert_equal "查看本題成績", boss_defeat_link_label(final_phase)
+    end
+
+    test "boss_defeat_next_path sends an ordinary single-phase boss to the score page" do
+      question = build_question(5, sprite: "mon05")
+
+      assert_equal game_score_path, boss_defeat_next_path(question)
+      assert_nil boss_defeat_message(question)
+      assert_equal "查看本題成績", boss_defeat_link_label(question)
+    end
+
+    test "a first-phase question with no final-phase sibling yet falls back to the score page" do
+      lone_first_phase = build_question(10, sprite: "mon11", phase: 1)
+
+      assert_equal game_score_path, boss_defeat_next_path(lone_first_phase)
+      assert_nil boss_defeat_message(lone_first_phase)
+    end
   end
 end

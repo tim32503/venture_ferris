@@ -96,6 +96,38 @@ module Game
       assert_select "#m1 a.map-hotspot[href=?]", game_question_path(1)
     end
 
+    # docs/UI_AUDIT.md dead-end: with no in-game route from Q10 to Q11 on the
+    # web port, map3's Q11 fallback hotspot is the back-up path (the boss
+    # defeat redirect in boss_flow_test.rb is the primary one). It must stay
+    # hidden until boss 10 is actually defeated — gating on the weaker
+    # "Q10's own answer was correct" signal would surface the Q11 shortcut
+    # while the team is still mid-fight against boss 10 (Team
+    # #defeated_boss_numbers vs #completed_question_numbers).
+    test "map3's Q11 fallback hotspot only appears once boss 10 is defeated" do
+      team = create_team
+      sign_in_leader(team)
+      q10 = seed_question(10, boss_phase: 1, boss_hp: 1)
+      seed_question(11, boss_phase: 2, auto_start: true)
+
+      get game_map_path(3)
+      assert_response :success
+      assert_select "#m3 a.map-hotspot", count: 1
+      assert_select "#m3 a.map-hotspot[href=?]", game_question_path(11), count: 0
+
+      # Answering Q10 alone must NOT be enough — only defeating its boss is.
+      QuestionAttempt.create!(team: team, question: q10, started_at: 1.minute.ago, ended_at: Time.current)
+      get game_map_path(3)
+      assert_select "#m3 a.map-hotspot", count: 1
+
+      post ready_game_boss_path(10)
+      post attacks_game_boss_path(10) # hp=1 -> defeated
+
+      get game_map_path(3)
+      assert_response :success
+      assert_select "#m3 a.map-hotspot", count: 2
+      assert_select "#m3 a.map-hotspot[href=?]", game_question_path(11)
+    end
+
     test "quiz question renders the quiz template and never leaks the answer" do
       team = create_team
       sign_in_leader(team)

@@ -85,5 +85,40 @@ module Game
         battle.started_at.present? && battle.ended_at.blank? &&
         !battle.boss_skill_uses.exists?(player_id: player.id)
     end
+
+    # Where a defeated `question`'s boss fight sends the team next. Generic
+    # over any multi-phase boss (not hardcoded to Q10/Q11): a first-phase
+    # victory goes to the *question* page of the same boss's final-phase
+    # question (auto_start there — see Question#auto_start? / db/seeds.rb —
+    # picks the timer up on its own, no separate ready-lobby to click
+    # through), every other boss (including a final-phase victory) goes to
+    # the score page like before. Shared by Game::BossesController#show's
+    # server-rendered defeated state and #status's JSON poll target so the
+    # two never disagree about the destination.
+    def boss_defeat_next_path(question)
+      next_question = next_phase_question(question)
+      next_question ? game_question_path(next_question.number) : game_score_path
+    end
+
+    # Transitional flavor text shown when a first-phase victory hands the
+    # team off to the next phase — nil for every other boss, so the caller
+    # can render/skip the extra line without a second phase check.
+    def boss_defeat_message(question)
+      return nil unless next_phase_question(question)
+
+      "第一型態被擊敗了！前往紅色車廂正面——最終考驗開始！"
+    end
+
+    def boss_defeat_link_label(question)
+      next_phase_question(question) ? "前往最終考驗" : "查看本題成績"
+    end
+
+    private
+
+    def next_phase_question(question)
+      return nil unless question.boss_phase == FIRST_PHASE
+
+      Question.find_by(boss_id: question.boss_id, boss_phase: FINAL_PHASE)
+    end
   end
 end

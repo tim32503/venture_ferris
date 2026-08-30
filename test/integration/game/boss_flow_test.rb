@@ -193,5 +193,75 @@ module Game
       post attacks_game_boss_path(6)
       assert_equal 1, battle.reload.attack_count
     end
+
+    # docs/UI_AUDIT.md dead-end: Q10 -> Q11 had no in-game route on the web
+    # port (the legacy game relied on a physical QR code on the venue's own
+    # red gondola car to open `wheel/question/11` directly — no map hotspot,
+    # no boss-defeat redirect). These three cover the generalized fix:
+    # `status.json`'s `next_path` sends a first-phase victory to the next
+    # phase's *question* page (not its boss page — auto_start there needs
+    # the question `#show` action to fire), a final-phase victory and every
+    # ordinary single-phase boss both still go to the score page.
+    test "status reports next_path to the final-phase question after a first-phase victory" do
+      team = create_team
+      sign_in(team, role: "leader", email: "leader@example.com")
+      seed_question(10, boss_hp: 1, boss_phase: 1)
+      seed_question(11, boss_hp: 1, boss_phase: 2, auto_start: true)
+
+      post ready_game_boss_path(10)
+      post attacks_game_boss_path(10) # hp=1 -> defeated
+
+      get status_game_boss_path(10)
+      body = JSON.parse(response.body)
+      assert_equal true, body["defeated"]
+      assert_equal game_question_path(11), body["next_path"]
+      assert_match "最終考驗", body["defeat_message"]
+    end
+
+    test "status reports next_path to the score page after a final-phase victory" do
+      team = create_team
+      sign_in(team, role: "leader", email: "leader@example.com")
+      seed_question(10, boss_hp: 5, boss_phase: 1)
+      seed_question(11, boss_hp: 1, boss_phase: 2, auto_start: true)
+
+      post ready_game_boss_path(11)
+      post attacks_game_boss_path(11) # hp=1 -> defeated
+
+      get status_game_boss_path(11)
+      body = JSON.parse(response.body)
+      assert_equal true, body["defeated"]
+      assert_equal game_score_path, body["next_path"]
+      assert_nil body["defeat_message"]
+    end
+
+    test "status reports next_path to the score page for an ordinary single-phase boss" do
+      team = create_team
+      sign_in(team, role: "leader", email: "leader@example.com")
+      seed_question(6, boss_hp: 1)
+
+      post ready_game_boss_path(6)
+      post attacks_game_boss_path(6) # hp=1 -> defeated
+
+      get status_game_boss_path(6)
+      body = JSON.parse(response.body)
+      assert_equal true, body["defeated"]
+      assert_equal game_score_path, body["next_path"]
+      assert_nil body["defeat_message"]
+    end
+
+    test "boss show page links a first-phase victory to the next phase's question, not the score page" do
+      team = create_team
+      sign_in(team, role: "leader", email: "leader@example.com")
+      seed_question(10, boss_hp: 1, boss_phase: 1)
+      seed_question(11, boss_hp: 1, boss_phase: 2, auto_start: true)
+
+      post ready_game_boss_path(10)
+      post attacks_game_boss_path(10) # hp=1 -> defeated
+
+      get game_boss_path(10)
+      assert_response :success
+      assert_select "a[href=?]", game_question_path(11), text: "前往最終考驗"
+      assert_select "a[href=?]", game_score_path, count: 0
+    end
   end
 end

@@ -84,7 +84,13 @@ export default class extends PollController {
 
   onData(data) {
     if (data.defeated) {
-      this.playDefeatSequence(() => { window.location.href = this.scoreUrlValue })
+      // `next_path` is server-decided (Game::BossesHelper#boss_defeat_next_path)
+      // — a first-phase victory goes to the next phase's question page
+      // (auto_start there picks up the timer on its own), everything else
+      // goes to the score page. Falls back to the score URL the view
+      // already renders if a stale poll response predates `next_path`.
+      const destination = data.next_path || this.scoreUrlValue
+      this.playDefeatSequence(() => { window.location.href = destination }, data.defeat_message)
       return
     }
 
@@ -232,7 +238,12 @@ export default class extends PollController {
     }
   }
 
-  playDefeatSequence(callback) {
+  // `message` is the server's `defeat_message` (Game::BossesHelper
+  // #boss_defeat_message) — present only for a first-phase victory, where
+  // it names what's coming next (the final-phase fight) rather than just
+  // celebrating the hit. Absent for every other boss, leaving just the
+  // plain "撃破！" banner.
+  playDefeatSequence(callback, message) {
     if (this.defeating) return
     this.defeating = true
 
@@ -243,7 +254,18 @@ export default class extends PollController {
     if (this.hasFxTarget) {
       const banner = document.createElement("div")
       banner.className = "victory-banner"
-      banner.textContent = "撃破！"
+
+      const headline = document.createElement("div")
+      headline.textContent = "撃破！"
+      banner.appendChild(headline)
+
+      if (message) {
+        const sub = document.createElement("div")
+        sub.className = "victory-banner-sub"
+        sub.textContent = message
+        banner.appendChild(sub)
+      }
+
       this.fxTarget.appendChild(banner)
     }
 

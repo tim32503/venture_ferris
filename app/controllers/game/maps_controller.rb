@@ -39,7 +39,20 @@ module Game
         { title: "公館", left: 57.54, top: 39.26, width: 12.06, height: 22.06, number: 8 }
       ],
       3 => [
-        { title: "摩天輪", left: 37.62, top: 16.63, width: 35.60, height: 50.36, number: 10 }
+        { title: "摩天輪", left: 37.62, top: 16.63, width: 35.60, height: 50.36, number: 10 },
+        # Fallback route to Q11 for the web port: the legacy game had no
+        # hotspot here at all — the real venue had a physical QR code on the
+        # ride's actual red gondola car that opened `wheel/question/11`
+        # directly (docs/REFACTOR_PLAN.md dead-end analysis for Q10->Q11).
+        # This hotspot is the web equivalent, placed on the bottom-front
+        # gondola drawn on map3.jpg (located by crop/level-brightening the
+        # source image with ImageMagick — the wheel's own art has no other
+        # single car singled out as "the red one", so the boarding position
+        # at the bottom of the wheel is the natural stand-in). Only ever
+        # rendered once Q10 is completed (`requires_number:`, filtered in
+        # `#show` below) — before that, Q11 doesn't exist for this team yet.
+        { title: "紅色車廂（最終考驗）", left: 52.48, top: 43.35, width: 6.72, height: 7.72,
+          number: 11, requires_number: 10 }
       ]
     }.freeze
 
@@ -65,9 +78,18 @@ module Game
     def show
       @map_id = params[:id].to_i
       @image = IMAGE_FOR.fetch(@map_id)
-      @areas = AREAS.fetch(@map_id)
       @natural_width = NATURAL_WIDTH.fetch(@map_id)
       @completed_numbers = current_team.completed_question_numbers
+      # A `requires_number:` hotspot (the map3 Q11 fallback above) only
+      # renders once this team has actually *defeated that number's boss*
+      # (Team#defeated_boss_numbers, not the weaker completed_question_numbers
+      # above) — gating on the question's own answer instead would surface
+      # the Q11 shortcut while the team is still mid-fight against boss 10,
+      # letting them skip it outright.
+      defeated_boss_numbers = current_team.defeated_boss_numbers
+      @areas = AREAS.fetch(@map_id).select do |area|
+        area[:requires_number].blank? || defeated_boss_numbers.include?(area[:requires_number])
+      end
     end
   end
 end
