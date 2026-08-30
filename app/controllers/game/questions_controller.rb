@@ -25,8 +25,12 @@ module Game
     # so the hotspot tracks the image at any responsive width.
     BEAR_HOTSPOTS = [
       { id: "eyebrows", label: "眉毛", left: 42.96, top: 10.32, width: 20.98, height: 7.47 },
-      { id: "thumb", label: "大拇指", left: 49.68, top: 18.85, width: 12.17, height: 7.47 },
-      { id: "nose_color", label: "鼻子顏色", left: 69.66, top: 4.17, width: 23.07, height: 21.63 },
+      # NOTE: the legacy view's own alt/title for these two <area>s were
+      # swapped (its "大拇指" poly sits on the nose, its "鼻子顏色" poly on
+      # the raised thumb arm) — invisible in the original image-map UI, so it
+      # went unnoticed in 2018. Labels corrected here; coordinates unchanged.
+      { id: "nose_color", label: "鼻子顏色", left: 49.68, top: 18.85, width: 12.17, height: 7.47 },
+      { id: "thumb", label: "大拇指", left: 69.66, top: 4.17, width: 23.07, height: 21.63 },
       { id: "no_white_bead", label: "沒有白色珠珠", left: 29.97, top: 40.61, width: 12.35, height: 8.99 },
       { id: "belt_bead", label: "皮帶上的珠珠", left: 53.59, top: 49.27, width: 9.81, height: 7.14 }
     ].freeze
