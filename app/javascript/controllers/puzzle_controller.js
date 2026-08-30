@@ -10,13 +10,15 @@ import { Controller } from "@hotwired/stimulus"
 // question) rather than being hardcoded, unlike the legacy
 // `wheel_puzzle.php:154-158` which branched on `PUZZLE_NO == '1' | '2'`.
 //
-// Reaching 100% placed only means the pieces snapped back into their
-// original grid positions — it knows nothing about the answer text printed
-// on the assembled photo. So completing the jigsaw here just reveals/enables
-// the answer form beneath it; the player still has to read the photo and
-// type what they found, and the server is the only thing that ever checks
-// it against `answer_digest` (REFACTOR_PLAN.md §0: no more front-end answer
-// comparison).
+// Reaching 100% placed IS the answer for this kind of question — puzzle
+// questions are "interactive" (Question#interactive?): there is no answer
+// text to compare, server-side or otherwise. This mirrors the legacy
+// jquery.snap-puzzle `onComplete` in wheel_puzzle.php:197-208, which POSTed
+// straight to `timer/Question/:no/End` and redirected to the boss fight —
+// no answer form ever existed on that page. So `onPuzzleComplete` below
+// shows a brief completion banner and then submits the hidden completion
+// form itself; `Game::QuestionsController#answer` accepts it unconditionally
+// for this kind (see that action's comment).
 //
 // Layout model: every piece is an absolutely-positioned <div> sliced from
 // the source image via `background-position`/`background-size` (no canvas
@@ -35,8 +37,13 @@ import { Controller } from "@hotwired/stimulus"
 // slots instead of only being correct at the moment they were placed.
 const SNAP_THRESHOLD_RATIO = 0.4
 
+// How long the completion banner stays on screen before the hidden form
+// auto-submits — long enough to read, short enough not to feel stuck
+// (roughly the legacy `fadeOut(150).fadeIn()` beat before its own POST).
+const COMPLETE_SUBMIT_DELAY_MS = 900
+
 export default class extends Controller {
-  static targets = [ "image", "board", "pile", "solvedBanner", "submit" ]
+  static targets = [ "image", "board", "pile", "solvedBanner", "completeSubmit" ]
   static values = {
     rows: Number,
     columns: Number
@@ -52,6 +59,7 @@ export default class extends Controller {
   disconnect() {
     window.removeEventListener("resize", this.boundLayout)
     window.removeEventListener("orientationchange", this.boundLayout)
+    if (this.completeTimeout) window.clearTimeout(this.completeTimeout)
   }
 
   // `image.complete` can flip to `true` before the browser has actually
@@ -315,8 +323,19 @@ export default class extends Controller {
     this.layout()
   }
 
+  // Puzzle questions are `interactive?` (see Question#interactive?): a
+  // fully-placed grid IS the answer, so this fires the completion POST
+  // itself instead of unlocking an answer form for the player to fill in —
+  // there is no answer text to type. `completeSubmitTarget` is the submit
+  // control of a hidden `form_with url: answer_game_question_path(...)` in
+  // puzzle.html.erb; clicking it drives a real form submission (Turbo Drive
+  // handles the resulting redirect to the boss fight the same way it does
+  // for every other question kind's answer form).
   onPuzzleComplete() {
     if (this.hasSolvedBannerTarget) this.solvedBannerTarget.hidden = false
-    if (this.hasSubmitTarget) this.submitTarget.disabled = false
+
+    this.completeTimeout = window.setTimeout(() => {
+      if (this.hasCompleteSubmitTarget) this.completeSubmitTarget.click()
+    }, COMPLETE_SUBMIT_DELAY_MS)
   }
 }

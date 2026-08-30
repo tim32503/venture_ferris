@@ -11,12 +11,13 @@ require "application_system_test_case"
 class GamePuzzlePageTest < ApplicationSystemTestCase
   def setup
     @team = Team.create!(serial_no: SecureRandom.alphanumeric(16), test_mode: true)
+    # No `answer_digest` — puzzle is an `interactive?` kind (Question#interactive?):
+    # the fully-placed grid IS the answer, so there is nothing to hash.
     @question = Question.create!(
       number: 1, kind: :puzzle, title: "美福飯店（示範拼圖）",
       content: "示範內容", level: "1", explanation: "示範解說",
       puzzle_rows: 4, puzzle_cols: 4,
-      boss: seed_boss_for(1),
-      answer_digest: Question.digest_for("meifu")
+      boss: seed_boss_for(1)
     )
   end
 
@@ -46,6 +47,28 @@ class GamePuzzlePageTest < ApplicationSystemTestCase
     assert_selector ".puzzle-board .puzzle-piece.is-locked[data-row='0'][data-col='0']"
     piece_after = find(".puzzle-piece[data-row='0'][data-col='0']")
     assert_equal "true", piece_after["data-locked"]
+  end
+
+  # Puzzle is an `interactive?` question (Question#interactive?): dragging
+  # every piece into place IS the answer, with no text form to fill in —
+  # `onPuzzleComplete` in puzzle_controller.js submits the hidden completion
+  # form itself once `placedCount` reaches `rows * columns`. This drags all
+  # 16 pieces of the 4x4 board (not just one, like the test above) so the
+  # completion path actually fires, then asserts the same redirect-into-the-
+  # boss-fight behavior every other question kind gets on a correct answer.
+  test "completing the puzzle auto-submits and redirects straight into the boss fight" do
+    visit_puzzle_question
+
+    (0...@question.puzzle_rows).each do |row|
+      (0...@question.puzzle_cols).each do |col|
+        piece = find(".puzzle-piece[data-row='#{row}'][data-col='#{col}']")
+        slot = find(".puzzle-slot[data-row='#{row}'][data-col='#{col}']")
+        drag_native(piece, slot)
+      end
+    end
+
+    assert_current_path game_boss_path(@question.number)
+    assert QuestionAttempt.find_by!(team: @team, question: @question).completed?
   end
 
   private

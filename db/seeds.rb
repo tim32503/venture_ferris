@@ -6,11 +6,15 @@
 # question content below (title/content/level/hints/explanation) is
 # restored verbatim from its `QUEST_MAIN` table. The plain-text answers are
 # never stored — only `Question.digest_for(answer)` is persisted, same as
-# before (see app/models/question.rb). Two exceptions: questions 1, 2 and 9
-# (the puzzle/bear kinds) had an EMPTY `QUESTION_PASSWORD` in the original
-# dump — the legacy game apparently checked those in the front-end/JS instead
-# of against this column, so no authentic answer text survives for them; they
-# keep their placeholder demo answers ("meifu"/"yakiniku"/"xiongzan").
+# before (see app/models/question.rb). Questions 1, 2 and 9 (kind: puzzle /
+# bear) are the exception: their `QUESTION_PASSWORD` was an EMPTY string in
+# the original dump, because the legacy game judged them entirely
+# client-side — a solved jigsaw (wheel_puzzle.php) or 5 correctly-found
+# hotspots (wheel_bear.php) WAS the answer, with no text ever compared
+# server-side. This batch restores that behavior instead of papering over it
+# with a placeholder answer: these three questions have no `answer:` key at
+# all below, and `answer_digest` stays NULL for them (see
+# `Question#interactive?` and `Game::QuestionsController#answer`).
 
 # ---------------------------------------------------------------------------
 # 1. Questions (11 stations, restored from the 2018 QUEST_MAIN dump)
@@ -20,12 +24,12 @@
 # qno 9 renders the "bear" view, everything else renders the plain quiz view.
 QUESTION_SEEDS = [
   { number: 1, kind: :puzzle, title: "美福飯店", level: "★☆☆☆☆",
-    puzzle_rows: 4, puzzle_cols: 4, answer: "meifu",
+    puzzle_rows: 4, puzzle_cols: 4,
     content: "美福飯店中的房客非常喜歡門口屋簷天花上的圖樣，於是用畫紙記錄下來，因為圖樣太大而分成數張記錄下來，" \
              "沒想到卻不小心打亂了，可以請你們幫他復原嗎？",
     explanation: "" },
   { number: 2, kind: :puzzle, title: "一鷺炭火燒鳥工房", level: "★☆☆☆☆",
-    puzzle_rows: 1, puzzle_cols: 9, answer: "yakiniku",
+    puzzle_rows: 1, puzzle_cols: 9,
     content: "日以繼夜的冒險讓勇者們身心俱疲，來到了聲名遠播的一鷺燒烤店歇腳，希望飽餐一頓後再重新踏上旅途，" \
              "沒想到用餐居然有特定的順序，否則將會被趕出店門，究竟這順序為何呢？",
     explanation: "" },
@@ -81,7 +85,6 @@ QUESTION_SEEDS = [
     explanation: "沒錯！答案就是William，William. K. Burton就是人稱台灣自來水之父的威廉·巴爾頓，" \
                  "現在的自來水園區內仍鑄有他的銅像喔！" },
   { number: 9, kind: :bear, title: "熊讚", level: "★☆☆☆☆",
-    answer: "xiongzan",
     content: "為了標註旅途的路線，你們將熊讚的雕像畫在地圖上，但好像有些地方畫錯了，究竟是哪些地方呢？",
     explanation: "" },
   { number: 10, kind: :quiz, title: "摩天輪F1", level: "★★★☆☆",
@@ -155,7 +158,10 @@ QUESTION_SEEDS.each do |attrs|
     puzzle_cols: attrs[:puzzle_cols],
     boss_hp: DEMO_BOSS_HP,
     boss_time_limit: DEMO_BOSS_TIME_LIMIT,
-    answer_digest: Question.digest_for(answer),
+    # Interactive kinds (puzzle/bear — see Question#interactive?) have no
+    # `answer:` key above, so `answer` is nil here and the digest stays
+    # NULL; only quiz questions hash a real answer.
+    answer_digest: answer ? Question.digest_for(answer) : nil,
   )
   question.save!
 

@@ -262,13 +262,21 @@ CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加
 
 ## 已知限制
 
-- **題目原文已還原。** 原始 SQL dump 已於 2026-08-29 尋回，`db/seeds.rb` 的
-  11 題標題／題目敘述／難度／提示／解說已改為 `QUEST_MAIN` 的原文。其中第 1、
-  2、9 題（拼圖／熊讚特殊題）在原始資料庫的 `QUESTION_PASSWORD` 欄位本身就是
-  空字串，代表當年的正解判斷不是靠這個欄位（推測寫死在已遺失的舊站前端
-  程式碼中），因此這三題仍沿用重構時另行編寫的示範答案。答案依既有設計
-  仍只存 SHA-256 digest（`Question.digest_for`，見 `app/models/question.rb`），
-  不會明文寫回任何檔案。
+- **題目原文已還原；第 1、2、9 題（拼圖／熊讚）也已還原為互動題本貌，不再
+  是文字答案。** 原始 SQL dump 已於 2026-08-29 尋回，`db/seeds.rb` 的 11 題
+  標題／題目敘述／難度／提示／解說已改為 `QUEST_MAIN` 的原文。dump 同時證實
+  第 1、2、9 題的 `QUESTION_PASSWORD` 欄位本身就是空字串——這不是資料遺失，
+  而是因為當年這三題本來就不是文字題：拼完拼圖（第 1、2 題）或找出熊讚
+  雕像上 5 個相異處（第 9 題）本身就是答案，正解判斷完全在前端做，對照
+  舊站原始碼（`wheel_puzzle.php`/`wheel_bear.php`）也是完成互動就直接 POST
+  `timer/.../End` 進王戰，從未比對過任何文字。本次還原沿用同一設計：
+  `Question#interactive?`（`kind: puzzle`／`bear`）讓
+  `Game::QuestionsController#answer` 對這兩種 kind 不比對文字、完成互動即
+  視為答對；這三題的 `answer_digest` 維持 NULL（schema 層允許，只有
+  `kind: quiz` 的題目在 model 層仍強制必填），不再需要示範答案
+  （`meifu`/`yakiniku`/`xiongzan` 已移除）。其餘題目的答案依既有設計仍只存
+  SHA-256 digest（`Question.digest_for`，見 `app/models/question.rb`），不會
+  明文寫回任何檔案。
 - **`mon10.gif` 從未存在，第 10/11 題其實是同一隻「摩天輪魔王」的雙型態連戰。**
   原始素材備份裡怪物圖檔只有 10 個檔案（`mon01~09.gif` + `mon11.gif`），一度
   被當成「第 10 題圖檔遺失」處理。考證還原後的原始劇情文本（`db/seeds.rb`）

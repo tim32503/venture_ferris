@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_08_30_110100) do
+ActiveRecord::Schema[7.2].define(version: 2026_08_30_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -110,7 +110,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_08_30_110100) do
     t.integer "number", null: false
     t.integer "kind", default: 1, null: false
     t.string "title", null: false
-    t.string "answer_digest", null: false
+    t.string "answer_digest"
     t.text "content"
     t.string "level"
     t.text "explanation"
