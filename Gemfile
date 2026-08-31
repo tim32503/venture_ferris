@@ -29,6 +29,10 @@ gem "bcrypt", "~> 3.1.7"
 # deprecated Google Image Charts API used by the legacy site)
 gem "rqrcode"
 
+# Rate limiting / abuse throttling for the public deployment (see README
+# 「部署待辦」and config/initializers/rack_attack.rb)
+gem "rack-attack"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
