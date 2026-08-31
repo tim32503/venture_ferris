@@ -41,9 +41,11 @@ module Game
       3 => [
         { title: "摩天輪", left: 37.62, top: 16.63, width: 35.60, height: 50.36, number: 10 },
         # Fallback route to Q11 for the web port: the legacy game had no
-        # hotspot here at all — the real venue had a physical QR code on the
-        # ride's actual red gondola car that opened `wheel/question/11`
-        # directly (docs/REFACTOR_PLAN.md dead-end analysis for Q10->Q11).
+        # hotspot here at all — entry to Q11 happened through the venue
+        # itself at the ride's red gondola car (Q10's explanation sends
+        # players there and Q11 uniquely auto-starts on page load; whether
+        # the on-site trigger was a QR code, a booklet page, or staff is
+        # unrecorded).
         # This hotspot is the web equivalent, placed on the bottom-front
         # gondola drawn on map3.jpg (located by crop/level-brightening the
         # source image with ImageMagick — the wheel's own art has no other
