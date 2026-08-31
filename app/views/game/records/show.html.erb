@@ -1,38 +1,39 @@
 <% content_for :title, "解謎紀錄" %>
+<% content_for :body_class, "bg-gradient-to-b! from-slate-900 via-slate-900 to-slate-800 text-slate-100!" %>
 
-<header class="container">
-  <h2 class="text-center">解謎紀錄</h2>
+<header class="mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-12!">
+  <h2 class="text-2xl! font-bold! text-slate-100!">解謎紀錄</h2>
 </header>
 
-<main class="container-fluid">
+<main class="mx-auto! max-w-2xl! px-4! pb-12! pt-6! sm:pb-16!">
   <% if @attempts.empty? %>
-    <p class="dialog text-center">目前尚無已完成的題目。</p>
+    <p class="rounded-xl! bg-slate-800/80! p-6! text-center! text-slate-100! ring-1! ring-white/10! backdrop-blur!">目前尚無已完成的題目。</p>
   <% else %>
-    <table class="table text-center">
-      <thead>
-        <tr class="table-secondary">
-          <th>題號</th>
-          <th>題目</th>
-          <th>耗時（秒）</th>
-          <th>提示使用次數</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @attempts.each do |attempt| %>
+    <div class="overflow-x-auto! rounded-xl! bg-slate-800/80! ring-1! ring-white/10!">
+      <table class="min-w-full! divide-y! divide-white/10! text-center! text-sm!">
+        <thead class="bg-slate-900/40!">
           <tr>
-            <td><%= attempt.question.number %></td>
-            <td><%= attempt.question.title %></td>
-            <td><%= attempt.elapsed_seconds %></td>
-            <td><%= attempt.hint_count %></td>
+            <th class="px-4! py-3! font-semibold! text-slate-300!">題號</th>
+            <th class="px-4! py-3! font-semibold! text-slate-300!">題目</th>
+            <th class="px-4! py-3! font-semibold! text-slate-300!">耗時（秒）</th>
+            <th class="px-4! py-3! font-semibold! text-slate-300!">提示使用次數</th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody class="divide-y! divide-white/5!">
+          <% @attempts.each do |attempt| %>
+            <tr>
+              <td class="px-4! py-3! text-slate-100!"><%= attempt.question.number %></td>
+              <td class="px-4! py-3! text-slate-100!"><%= attempt.question.title %></td>
+              <td class="px-4! py-3! text-slate-100!"><%= attempt.elapsed_seconds %></td>
+              <td class="px-4! py-3! text-slate-100!"><%= attempt.hint_count %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   <% end %>
 
-  <div class="row text-center">
-    <div class="col">
-      <%= link_to "《返回遊戲選單》", game_root_path, class: "btn btn-link" %>
-    </div>
+  <div class="mt-6! text-center!">
+    <%= link_to "《返回遊戲選單》", game_root_path, class: "text-sm! font-semibold! text-amber-400! transition! hover:text-amber-300!" %>
   </div>
 </main>

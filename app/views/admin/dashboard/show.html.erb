@@ -1,39 +1,37 @@
-<div class="container mt-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">後台 Dashboard</h1>
-    <%= button_to "登出", admin_session_path, method: :delete, class: "btn btn-outline-secondary btn-sm" %>
+<% content_for :title, "後台 Dashboard" %>
+<% content_for :body_class, "bg-slate-50! bg-none! text-slate-800!" %>
+<% content_for :footer_class, "text-slate-400!" %>
+
+<main class="[text-shadow:none]! mx-auto! max-w-4xl! px-4! py-8! sm:py-12!">
+  <div class="mb-6! flex! items-center! justify-between!">
+    <h1 class="text-xl! font-bold! text-slate-800!">後台 Dashboard</h1>
+    <%= button_to "登出", admin_session_path, method: :delete,
+          class: "cursor-pointer! rounded-lg! bg-white! px-4! py-2! text-sm! font-semibold! text-slate-700! ring-1! ring-slate-300! transition! hover:bg-slate-50!" %>
   </div>
 
   <% if flash[:notice] %>
-    <div class="alert alert-info"><%= flash[:notice] %></div>
+    <div class="mb-6! rounded-lg! bg-emerald-50! px-4! py-3! text-sm! text-emerald-800! ring-1! ring-emerald-200!"><%= flash[:notice] %></div>
   <% end %>
 
-  <div class="row text-center mb-4">
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body">
-          <h2 class="display-4"><%= @team_count %></h2>
-          <p class="text-muted mb-0">隊伍數</p>
-        </div>
-      </div>
+  <div class="grid! grid-cols-1! gap-4! sm:grid-cols-3!">
+    <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
+      <h2 class="text-4xl! font-bold! text-slate-800!"><%= @team_count %></h2>
+      <p class="mt-1! text-sm! text-slate-500!">隊伍數</p>
     </div>
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body">
-          <h2 class="display-4"><%= @player_count %></h2>
-          <p class="text-muted mb-0">玩家數</p>
-        </div>
-      </div>
+
+    <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
+      <h2 class="text-4xl! font-bold! text-slate-800!"><%= @player_count %></h2>
+      <p class="mt-1! text-sm! text-slate-500!">玩家數</p>
     </div>
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body">
-          <h2 class="display-4"><%= @claimed_reward_code_count %></h2>
-          <p class="text-muted mb-0">已配發獎品序號數</p>
-        </div>
-      </div>
+
+    <div class="rounded-xl! bg-white! p-6! text-center! ring-1! ring-slate-200! shadow-sm!">
+      <h2 class="text-4xl! font-bold! text-slate-800!"><%= @claimed_reward_code_count %></h2>
+      <p class="mt-1! text-sm! text-slate-500!">已配發獎品序號數</p>
     </div>
   </div>
 
-  <%= link_to "序號產生器", admin_serial_codes_path, class: "btn btn-primary" %>
-</div>
+  <div class="mt-8!">
+    <%= link_to "序號產生器", admin_serial_codes_path,
+          class: "inline-flex! items-center! justify-center! rounded-lg! bg-indigo-600! px-4! py-2! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!" %>
+  </div>
+</main>

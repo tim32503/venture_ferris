@@ -45,9 +45,17 @@
   欄位，玩家重新整理頁面就會被重複計數，灌爆人數；新版改成 `BossReady`
   join table（`team_id/boss_battle_id + player_id` 唯一索引），ready 人數
   由 `COUNT` 出來，同一個玩家按幾次都只算一次。
+- **Boss 戰爆擊只在伺服器端節流窗外採信。** 遊戲化後的弱點爆擊由前端「宣告」
+  （`critical` 參數），但傷害計算與 2 秒節流（`boss_battles.last_critical_at`、
+  `BossBattle#critical_ready?`）全在伺服器端——竄改 client 連發爆擊，超出節流
+  窗的宣告一律按普通攻擊計，延續全案「驗證都在伺服器端」的原則。
 - **棄用的 Google Image Charts 改用 `rqrcode`。** 舊站後台序號產生器用
   Google 已下架的 Image Charts API 產生 QR code；新版改用 `rqrcode` gem
   在本機產生（`Admin::SerialCodesController`）。
+- **前端零 jQuery、零 CSS 框架 CDN。** 舊站整套 jQuery／jQuery UI／
+  Bootstrap 4／Font Awesome CDN 已全數移除；拼圖拖拉是自寫的原生
+  Pointer Events 引擎，視覺層是 Tailwind CSS v4，細節見下方
+  〈前端：全 Hotwire／Tailwind，零 jQuery、零 CSS 框架 CDN〉。
 
 ## 架構總覽
 
@@ -89,31 +97,41 @@ RewardCode （獨立，以 player_email 字串關聯，不用外鍵——沿用�
   `require_admin`）。
 - 公開頁（首頁、隱私權、錯誤頁）留在頂層，不進 namespace。
 
-### Hotwire + jQuery 並存的選型理由
+### 前端：全 Hotwire／Tailwind，零 jQuery、零 CSS 框架 CDN
 
-這個專案故意讓 Turbo/Stimulus 與 jQuery/jQuery UI/Bootstrap 4 並存，而不是把
-全部前端邏輯改寫成 Stimulus：
+這個專案的前端經歷過一次完整的現代化（`docs/UI_MODERNIZATION_PLAN.md` U0～
+U3），起點是 2018 年原站直接沿用的 jQuery 3.3.1／jQuery UI 1.12.1／
+Bootstrap 4.1.3（含 Font Awesome）全套 CDN，終點是：
 
-- 拼圖題用的拖拉套件 `jquery.snap-puzzle.min.js` 是舊站沿用的第三方 minified
-  plugin，本身就是用 jQuery 寫的、非 ESM 模組，重寫成 Stimulus/原生 JS 的成本
-  和風險（拖拉手感、觸控相容性）不成比例；直接原樣沿用更穩。
-- Bootstrap 4.1.3 的 Modal/Dropdown 元件硬依賴 jQuery（Bootstrap 5 才拿掉這個
-  依賴），既然沿用 Bootstrap 4 的視覺風格就沿用它原本的 JS。
-- 因此 jQuery 全家桶（jQuery 3.3.1／jQuery UI 1.12.1／Bootstrap 4.1.3）走傳統
-  `<script>` CDN 標籤（`app/views/layouts/application.html.erb`），importmap
-  （`config/importmap.rb`）則只服務 Turbo/Stimulus 與專案自己寫的
-  Stimulus controllers（`app/javascript/controllers/*`）與 `lib/api.js`。兩套
-  機制刻意不混在一起：jQuery 相關腳本不進 importmap，Stimulus controller 也
-  不透過 jQuery 操作 DOM。
+- **拼圖拖拉是原生 Pointer Events 引擎，不是套件。** 舊站的
+  `jquery.snap-puzzle.min.js`（第三方 minified jQuery plugin，含 jQuery UI
+  draggable + touch-punch 模擬觸控）已整個移除，改由
+  `app/javascript/controllers/puzzle_controller.js` 用瀏覽器原生
+  Pointer Events（`pointerdown`/`pointermove`/`pointerup` + `setPointerCapture`）
+  重寫拖拉與吸附判定，滑鼠與觸控天生統一，不需要任何相容層。
+- **Bootstrap 4 的 Modal／Carousel 也都退場了**：首頁「玩法說明」彈窗改用
+  瀏覽器原生 `<dialog>` 元素（`dialog_controller.js`），選職業的輪播改用 CSS
+  `scroll-snap`（`carousel_controller.js`），兩者都不再需要 jQuery。
+- 現存的每一個 Stimulus controller（`app/javascript/controllers/*`）都是
+  原生 DOM API 或 `fetch`，`app/javascript/lib/api.js` 統一處理
+  `X-CSRF-Token`。全站前端**沒有任何一行 jQuery**，也沒有任何 Bootstrap／
+  Font Awesome 的 `<script>`／`<link>` CDN 標籤。
+- 視覺層改用 **Tailwind CSS v4**（`tailwindcss-rails` gem，免 Node、與既有
+  sprockets pipeline 共存），全站 22 個 view 依 `docs/UI_STYLE_GUIDE.md` 的
+  tokens／元件配方逐頁改版；`app/assets/stylesheets/site.scss` 與
+  `boss.scss` 兩份 2018 年手調座標的舊 SCSS 只保留 Tailwind 覆蓋不到的功能性
+  樣式（拼圖引擎的幾何定位、Boss 立繪疊圖的相對座標、地圖熱點、`scroll-snap`
+  輪播），不再承擔任何頁面的主題視覺。
 
 ### CSS 編譯器
 
-目前維持使用 `sassc-rails`（`libsass` 綁定）編譯 `site.scss`/`boss.scss`。
-`sassc`/`sassc-rails` 上游已宣告 EOL、不再維護；本次重構刻意不在這個作品集
-批次順便換掉，理由是它跟本次的重構主軸（伺服器端驗證/權限）無關，混在一起會
-讓 diff 難以審查。**未來待辦**：換成 `dartsass-rails`（官方目前建議的替代
-方案），屆時只需要把兩個 `.scss` 檔案原樣搬過去、調整 Gemfile，不影響任何
-其他程式碼。
+`app/assets/tailwind/application.css`（`@import "tailwindcss"`）經
+`tailwindcss-rails` 編譯出 `app/assets/builds/tailwind.css`，負責全站絕大部分
+樣式。`sassc-rails`（`libsass` 綁定）現在只剩下編譯上一節提到的兩份少量自訂
+CSS（`site.scss`／`boss.scss`）——拼圖/Boss 疊圖等 Tailwind utility 表達不了
+或不划算表達的功能性定位樣式。`sassc`/`sassc-rails` 上游已宣告 EOL、不再
+維護；**未來待辦**：換成 `dartsass-rails`（官方目前建議的替代方案），屆時
+只需要把兩個 `.scss` 檔案原樣搬過去、調整 Gemfile，不影響任何其他程式碼。
 
 ## 本機啟動
 
@@ -191,10 +209,19 @@ CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加
   程式碼中），因此這三題仍沿用重構時另行編寫的示範答案。答案依既有設計
   仍只存 SHA-256 digest（`Question.digest_for`，見 `app/models/question.rb`），
   不會明文寫回任何檔案。
-- **`mon10.gif` 遺失。** 原始素材備份裡怪物圖檔只有 10 個檔案（`mon01~09.gif`
-  + `mon11.gif`），第 10 題的怪物圖檔在備份當時就已經不存在，並非本次重構
-  遺漏；`app/helpers/game/bosses_helper.rb` 的 `boss_asset_available?` 會偵測
-  缺檔並讓 `app/views/game/bosses/show.html.erb` 改顯示文字說明，而不是壞圖。
+- **`mon10.gif` 從未存在，第 10/11 題其實是同一隻「摩天輪魔王」的雙型態連戰。**
+  原始素材備份裡怪物圖檔只有 10 個檔案（`mon01~09.gif` + `mon11.gif`），一度
+  被當成「第 10 題圖檔遺失」處理。考證還原後的原始劇情文本（`db/seeds.rb`）
+  發現：第 10 題標題是「魔王佔據的摩天輪」，第 11 題緊接著是同一場戰鬥的延續
+  （`auto_start`，沒有獨立的宣戰大廳），且素材命名習慣以 F1/F2 表示同一隻怪
+  的兩個型態——三者合起來指向「第 10/11 題本來就是對同一隻摩天輪魔王的連續
+  戰鬥」，`mon10.gif` 推測從未作為獨立素材存在過，不是遺失。本次改以
+  `mon11.gif` 還原設計意圖：第 10 題（第一型態）套用濾鏡＋略小尺寸顯示同一張
+  立繪，第 11 題（最終型態）維持原色滿版；對映邏輯見
+  `app/helpers/game/bosses_helper.rb` 的 `boss_sprite_source_number`／
+  `boss_phase_label`，視覺樣式見 `app/assets/stylesheets/boss.scss` 的
+  `.boss-phase-1`。`boss_asset_available?` 的文字說明 fallback 機制仍保留，
+  作為其餘題號未來若素材缺失時的防禦。
 
 ## 部署待辦
 

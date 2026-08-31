@@ -1,17 +1,16 @@
 <% content_for :title, "已完成" %>
+<% content_for :body_class, "bg-gradient-to-b! from-slate-900 via-slate-900 to-slate-800 text-slate-100!" %>
 
-<header class="container text-center">
-  <h2>Oops...</h2>
+<header class="mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-12!">
+  <h2 class="text-2xl! font-bold! text-slate-100!">Oops...</h2>
 </header>
 
-<main class="container">
-  <div class="dialog text-center">
+<main class="mx-auto! max-w-2xl! px-4! pb-12! pt-6! sm:pb-16!">
+  <div class="rounded-xl! bg-slate-800/80! p-6! text-center! text-slate-100! ring-1! ring-white/10! backdrop-blur!">
     <p>此題目已經解過囉！</p>
   </div>
 
-  <div class="row text-center">
-    <div class="col">
-      <%= link_to "《返回遊戲地圖》", game_current_map_path, class: "btn btn-link" %>
-    </div>
+  <div class="mt-6! text-center!">
+    <%= link_to "《返回遊戲地圖》", game_current_map_path, class: "text-sm! font-semibold! text-amber-400! transition! hover:text-amber-300!" %>
   </div>
 </main>

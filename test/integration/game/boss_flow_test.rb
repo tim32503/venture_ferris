@@ -98,6 +98,77 @@ module Game
       assert battle.ended_at.present?
     end
 
+    test "critical damage matrix: general/netizen x normal/critical attacks" do
+      # general, normal attack: +1
+      team = create_team
+      sign_in(team, role: "leader", email: "leader@example.com")
+      seed_question(7, boss_hp: 100)
+      post ready_game_boss_path(7)
+      battle = team.boss_battles.find_by!(boss_no: 7)
+
+      post attacks_game_boss_path(7)
+      assert_equal 1, battle.reload.attack_count
+      assert_nil battle.last_critical_at
+
+      # general, critical attack: +2 (1 * 2)
+      post attacks_game_boss_path(7), params: { critical: "1" }
+      assert_equal 3, battle.reload.attack_count
+      assert battle.last_critical_at.present?
+
+      # netizen, normal attack: +2
+      team2 = create_team
+      sign_in(team2, role: "leader", email: "netizen@example.com", job: :netizen)
+      seed_question(8, boss_hp: 100)
+      post ready_game_boss_path(8)
+      battle2 = team2.boss_battles.find_by!(boss_no: 8)
+
+      post attacks_game_boss_path(8)
+      assert_equal 2, battle2.reload.attack_count
+
+      # netizen, critical attack: +4 (2 * 2) — this team's own throttle
+      # window (independent from team1's above) hasn't been touched yet, so
+      # the very first critical claim is accepted without any time travel.
+      post attacks_game_boss_path(8), params: { critical: "1" }
+      assert_equal 6, battle2.reload.attack_count
+    end
+
+    test "a second critical claim inside the throttle window is scored as a normal attack" do
+      team = create_team
+      sign_in(team, role: "leader", email: "leader@example.com")
+      seed_question(9, boss_hp: 100)
+      post ready_game_boss_path(9)
+      battle = team.boss_battles.find_by!(boss_no: 9)
+
+      post attacks_game_boss_path(9), params: { critical: "1" } # accepted: +2
+      assert_equal 2, battle.reload.attack_count
+      first_critical_at = battle.last_critical_at
+
+      post attacks_game_boss_path(9), params: { critical: "1" } # throttled: scored as +1
+      assert_equal 3, battle.reload.attack_count
+      assert_equal first_critical_at, battle.last_critical_at
+
+      # Simulate the throttle window having elapsed (no time travel needed —
+      # back-date the stored timestamp directly, same technique as
+      # BossBattleTest's critical_ready? coverage).
+      battle.update_column(:last_critical_at, (BossBattle::CRITICAL_THROTTLE_SECONDS + 1).seconds.ago)
+
+      post attacks_game_boss_path(9), params: { critical: "1" } # throttle elapsed: accepted again, +2
+      assert_equal 5, battle.reload.attack_count
+      assert_not_equal first_critical_at, battle.last_critical_at
+    end
+
+    test "attacking before the fight has started is rejected even with critical=1" do
+      team = create_team
+      sign_in(team, role: "leader", email: "leader@example.com")
+      seed_question(10)
+
+      post attacks_game_boss_path(10), params: { critical: "1" }
+      assert_redirected_to game_boss_path(10)
+      battle = team.boss_battles.find_by!(boss_no: 10)
+      assert_equal 0, battle.attack_count
+      assert_nil battle.last_critical_at
+    end
+
     test "attacking before the fight has started is rejected" do
       team = create_team
       sign_in(team, role: "leader", email: "leader@example.com")

@@ -106,8 +106,8 @@ QUESTION_SEEDS.each do |attrs|
     hint1: attrs[:hint1],
     hint2: attrs[:hint2],
     explanation: attrs.fetch(:explanation),
-    # Enabled only when there is actual hint text: in the original AP_WHEEL
-    # data questions 1/2/8/9 (and 6) have empty hints, yet the legacy site
+    # Enabled only when there is actual hint text: in the original 2018
+    # database dump questions 1/2/8/9 (and 6) have empty hints, yet the legacy site
     # only disabled the hint button for question 6 — players on the others
     # could spend hints (score deduction included) on blank text.
     hints_enabled: attrs.fetch(:hints_enabled) { attrs[:hint1].present? },

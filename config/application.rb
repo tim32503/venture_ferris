@@ -23,5 +23,17 @@ module VentureFerris
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # sassc-rails defaults `config.assets.css_compressor` to `:sass` outside
+    # development (see sassc/rails/railtie.rb#setup_compression), which
+    # routes every compiled CSS asset — including the pre-built, already
+    # minified `tailwind.css` from tailwindcss-rails — back through the
+    # libsass compressor. Tailwind v4's output uses modern CSS syntax
+    # (e.g. `@media (width >= 40rem)` range syntax) that libsass cannot
+    # parse, raising "unclosed parenthesis in media query expression" in
+    # test/production. Disable the compressor so built assets are served
+    # as-is; sassc-rails' own .scss compilation (site.scss/boss.scss) is
+    # unaffected since that happens at the engine/transformer step, not here.
+    config.assets.css_compressor = nil
   end
 end

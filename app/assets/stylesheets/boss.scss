@@ -1,5 +1,5 @@
 /*----- 字型設定 -----*/
-@import url(//fonts.googleapis.com/earlyaccess/notosanstc.css);
+@import url(https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap);
 *{ font-family: 'Noto Sans TC'; }
 
 /*----- 基本設定 -----*/
@@ -23,38 +23,141 @@ main{
 
 h2{	color: white; text-shadow: 0px 0 black, 0 1.5px black, 1.5px 0 black, 0 0px black; }
 p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
-.dialog{ font-size: 1.25rem; color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; padding: .75rem 1.25rem; border: 5px solid white; background-color: #999; box-shadow: 0.5px 0.5px 0 3px #999; margin: 1.5rem }
 
-/*----- 客製設定-打字機效果 -----*/
-@keyframes blink { from, to{ color: transparent; text-shadow: -1.5px 0 transparent, 0 1.5px transparent, 1.5px 0 transparent, 0 -1.5px transparent; } 50% { color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; } }
-@-webkit-keyframes blink { from, to{ color: transparent; text-shadow: -1.5px 0 transparent, 0 1.5px transparent, 1.5px 0 transparent, 0 -1.5px transparent; } 50% { color: white; text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black; } }
-.cursor-blink{ animation: blink 1s step-end infinite; }
+/*----- 客製設定-魔王戰舞台 -----*/
+//
+// `.boss-bg` used to be `height: 100%` with no sized parent, so it collapsed
+// to 0 height (all its children are position:absolute, which never
+// contribute to a parent's height) — every absolutely-positioned child
+// (background art, grass, monster) lost the box it was supposed to be
+// positioned against, and the boss art rendered up near the title instead of
+// inside the stage. Fix: give `.boss-bg` a real, intrinsic height via
+// `aspect-ratio`, locked to bossBg.png's own pixel ratio (509x720, measured
+// with `sips -g pixelWidth -g pixelHeight`) so the stage is never taller or
+// shorter than the art it's framing, and scales as one unit as the
+// container's width changes at any breakpoint. With a real height in place,
+// `bottom`/`left` percentages resolve the normal, intuitive way (against the
+// box's own height/width), so the monster offsets below no longer need the
+// percentage-margin workaround from the pre-fix version (see git history for
+// that approach) — plain `bottom`/`left` is enough now.
+//
+// `isolation: isolate` gives `.boss-bg` its own stacking context, so the
+// z-index values used *inside* it (background < monster < grass) are
+// self-contained and can never leak out to fight over paint order with
+// sibling UI outside the stage (the HP bar, attack button, etc.).
+.boss-bg{
+	position: relative;
+	isolation: isolate;
+	width: 100%;
+	aspect-ratio: 509 / 720;
+	background-image: asset-url("bossBg.png");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: cover;
+}
 
-/*----- 客製設定-魔王頁 -----*/
-.boss-bg{ height: 100%; width: 100%; }
-.boss-grass{ width: 100%; position: absolute; bottom: -2rem; left: 0; z-index: 100; }
-.boss{ z-index: 10; }
-.mon01{ width: 80%; position: absolute; bottom: 15rem; left: 3rem; z-index: 10; }
-.mon02{ width: 90%; position: absolute; bottom: 10rem; left: 1.5rem; z-index: 10; }
-.mon03{ width: 70%; position: absolute; bottom: 10rem; left: 3.5rem; z-index: 10; }
-.mon04{ width: 40%; position: absolute; bottom: 5rem; left: 8rem; z-index: 10; }
-.mon05{ width: 80%; position: absolute; bottom: 10rem; left: 2.5rem; z-index: 10; }
-.mon06{ width: 70%; position: absolute; bottom: 15rem; left: 4rem; z-index: 10; }
-.mon07{ width: 60%; position: absolute; bottom: 8rem; left: 5rem; z-index: 10; }
-.mon08{ width: 100%; position: absolute; bottom: 10rem; left: 0.5rem; z-index: 10; }
-.mon09{ width: 80%; position: absolute; bottom: 10rem; left: 2rem; z-index: 10; }
-.mon11{ width: 150%; position: absolute; bottom: 13rem; left: -6rem; z-index: 10; }
+// Desktop-only fold fix: at the page's max-w-2xl (42rem/672px) card width,
+// the 509:720 portrait aspect-ratio above renders the stage ~951px tall —
+// taller than most laptop/desktop viewports (e.g. 1280x900), pushing the HP
+// bar, countdown and attack count below the fold on load. From 1024px up,
+// cap the stage to a viewport-relative height and derive width from the
+// same 509/720 ratio via `calc()` (rather than `width: auto` +
+// aspect-ratio's "transferred size" resolution, which is less predictable
+// across browsers) so the whole HUD fits above the fold on common desktop
+// resolutions. `max-width: 100%` keeps it from ever exceeding the
+// max-w-2xl card on unusually tall/narrow desktop windows. Mobile (<1024px)
+// is untouched — still the original full-bleed `width: 100%` stage.
+@media (min-width: 1024px){
+	.boss-bg{
+		width: calc(62vh * 509 / 720);
+		max-height: 62vh;
+		max-width: 100%;
+		margin-inline: auto;
+	}
+}
+
+.boss-grass{
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	z-index: 20; // in front of the monster — grass foreground hides its feet
+}
+
+// Each mon0N block sets the monster's size/position as a % of `.boss-bg`'s
+// own box (now that the box has real dimensions). `--mon-y` is a uniform 28%
+// of the stage height for every monster: the grass foreground (see above)
+// covers roughly the bottom third of the stage, and 28% keeps each
+// monster's feet tucked just behind that grass line regardless of the
+// monster's own height, while its body stays fully visible above the grass
+// and (checked per-monster below) below the title text at the top of the
+// stage. `--mon-w`/`--mon-x` were recalibrated per monster from each GIF's
+// intrinsic size (`sips -g pixelWidth -g pixelHeight`) so every monster
+// renders at a comparable visual height (~60% of stage height) and stays
+// horizontally centered — except mon08/mon11, which are wide/short sprites
+// capped at 95% width (any wider would spill past the stage's left/right
+// edge) rather than stretched tall.
+//
+// The `var(--mon-*, fallback)` defaults below are a general safety net for
+// any boss number that ends up with no CSS block of its own (see
+// `Game::BossesHelper#boss_asset_available?`'s text-fallback path) so that
+// case still lands inside the stage instead of computing to `auto`/`0` and
+// drifting to the box's top-left corner.
+.boss{
+	position: absolute;
+	z-index: 10;
+	left: var(--mon-x, 35%);
+	bottom: var(--mon-y, 28%);
+	width: var(--mon-w, 30%);
+}
+.mon01{ --mon-w: 93%; --mon-x: 3.5%;  --mon-y: 28%; }
+.mon02{ --mon-w: 92%; --mon-x: 4%;    --mon-y: 28%; }
+.mon03{ --mon-w: 88%; --mon-x: 6%;    --mon-y: 28%; }
+.mon04{ --mon-w: 57%; --mon-x: 21.5%; --mon-y: 28%; }
+.mon05{ --mon-w: 86%; --mon-x: 7%;    --mon-y: 28%; }
+.mon06{ --mon-w: 89%; --mon-x: 5.5%;  --mon-y: 28%; }
+.mon07{ --mon-w: 41%; --mon-x: 29.5%; --mon-y: 28%; }
+.mon08{ --mon-w: 95%; --mon-x: 2.5%;  --mon-y: 28%; }
+.mon09{ --mon-w: 94%; --mon-x: 3%;    --mon-y: 28%; }
+.mon11{ --mon-w: 95%; --mon-x: 2.5%;  --mon-y: 28%; }
+
+// Boss #10 ("摩天輪魔王・第一型態") reuses mon11's sprite (see
+// `Game::BossesHelper#boss_sprite_source_number` — mon10.gif was never part
+// of the recovered asset set) but renders ~0.85x smaller than boss #11's
+// full-size final phase, so the two stages read as the same monster growing
+// stronger rather than as identical art. Scaled down from mon11's own
+// --mon-w 95% / --mon-x 2.5% above (95% * .85 = 80.75%), with --mon-x
+// increased by half the width delta ((95% - 80.75%) / 2 = 7.125%) so the
+// smaller sprite stays horizontally centered in the same spot instead of
+// drifting left. `.mon11.boss-phase-1` (button element) must come after
+// plain `.mon11` in source order to win on equal specificity.
+.mon11.boss-phase-1{ --mon-w: 80.75%; --mon-x: 9.625%; --mon-y: 28%; }
+
+// Desaturates/darkens the actual <img> (not the button `.boss-hit` itself,
+// which already uses `filter: brightness()` for the hit-flash animation
+// below — keeping these on separate elements means the two filters never
+// stack/fight each other).
+.boss-phase-1 .boss-sprite{
+	filter: grayscale(.7) brightness(.75);
+}
 
 
 #counter {
     font-size: 3rem;
     color: #ffc107;
     text-shadow: -1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black;
-	
+
 }
 
+// Positioned (not just a high z-index) so it actually participates in paint
+// order — a non-positioned element's z-index is ignored outright, which was
+// the root cause of the HP bar sometimes disappearing behind the boss stage:
+// `.boss-bg` above is `position: relative`, and *any* positioned box paints
+// over a same-level non-positioned one regardless of z-index or DOM order.
+// Once `#bossHP` is positioned too, its higher z-index reliably wins.
 #bossHP{
-	z-index: 200;
+	position: relative;
+	z-index: 30;
 	margin: .5rem;
 }
 
@@ -68,6 +171,7 @@ p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
   transform: scale(0);
   position: absolute;
   opacity: 1;
+  pointer-events: none;
 }
 
 .rippleEffect {
@@ -79,4 +183,159 @@ p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
     transform: scale(2);
     opacity: 0;
   }
+}
+
+//----- 打擊感：怪物本體按鈕 -----
+//
+// `.boss-hit` sits on the same element as `.mon0N`/`.boss` (see above) —
+// this only resets the <button> UA chrome (background/border/padding/font),
+// adds focus/interaction affordances, and clips the ripple span (see
+// boss_poll_controller.js#ripple) to the button's own box. It must *not*
+// redeclare `position`/`left`/`bottom`/`width`, all already owned by `.boss`
+// above — `.boss`'s `position: absolute` is enough to give the ripple span
+// a containing block on its own.
+.boss-hit {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.boss-hit:focus-visible {
+  outline: 3px solid #ffc107;
+  outline-offset: 4px;
+  border-radius: .5rem;
+}
+
+.boss-sprite,
+.boss-sprite-fallback {
+  display: block;
+  width: 100%;
+}
+
+// Short hit shake+flash, retriggered on every attack click (see
+// boss_poll_controller.js#playHitFlash, which forces a reflow before
+// re-adding this class so rapid repeat clicks restart the animation instead
+// of being ignored while a previous run is still playing).
+@keyframes bossHit {
+  0%   { transform: translate(0, 0);      filter: brightness(1); }
+  20%  { transform: translate(-4%, 2%);   filter: brightness(2.2); }
+  40%  { transform: translate(4%, -2%);   filter: brightness(1.6); }
+  60%  { transform: translate(-3%, 1%);   filter: brightness(1.3); }
+  100% { transform: translate(0, 0);      filter: brightness(1); }
+}
+
+.boss-hit.hit-flash {
+  animation: bossHit .25s ease;
+}
+
+// Defeat performance: plays for ~0.9s (boss_poll_controller.js
+// DEFEAT_DELAY_MS) before the poll-triggered redirect to the score page —
+// see onData/playDefeatSequence. Kept short on purpose per spec (portfolio
+// pacing, not a real "victory screen").
+@keyframes bossDefeat {
+  0%   { transform: rotate(0deg) translateY(0);     opacity: 1; }
+  100% { transform: rotate(12deg) translateY(30%);  opacity: 0; }
+}
+
+.boss-hit.defeated {
+  animation: bossDefeat .9s ease forwards;
+  pointer-events: none;
+}
+
+//----- 打擊感：命中特效層（弱點標記／傷害數字／連擊／勝利橫幅） -----
+//
+// One absolutely-positioned layer inside `.boss-bg` (which is already
+// `position: relative; isolation: isolate;`, see above), so every child
+// here paints within the stage's own stacking context — never fights the
+// HP bar / attack button outside the stage for z-index.
+.boss-fx-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 25; // above .boss-grass (20) and .boss (10), inside the same isolated stage
+  pointer-events: none; // re-enabled per-child below (only the weak point is clickable)
+}
+
+// Weak-point target (Game::BossesController#attacks `critical` param —
+// server-side throttled via BossBattle#critical_ready?, see model comment).
+// `left`/`top` are set inline (%) by boss_poll_controller.js#spawnWeakPoint;
+// the translate(-50%,-50%) here just makes that percentage describe the
+// marker's *center* rather than its top-left corner.
+.weak-point {
+  position: absolute;
+  width: 14%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .95) 0%, rgba(255, 193, 7, .85) 35%, rgba(255, 87, 34, .55) 70%, rgba(255, 87, 34, 0) 100%);
+  box-shadow: 0 0 12px 4px rgba(255, 193, 7, .8);
+  cursor: pointer;
+  pointer-events: auto;
+  animation: weakPointPulse 1s ease-in-out infinite;
+}
+
+@keyframes weakPointPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%      { transform: translate(-50%, -50%) scale(1.15); }
+}
+
+// Floating damage number, spawned at the click point (boss_poll_controller.js
+// #spawnDamageNumber sets `left`/`top` in px, relative to `.boss-fx-layer`).
+.dmg-number {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #ffdd57;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+  pointer-events: none;
+  animation: dmgFloat .8s ease-out forwards;
+  white-space: nowrap;
+}
+
+.dmg-number.crit {
+  font-size: 1.9rem;
+  color: #ff5252;
+}
+
+@keyframes dmgFloat {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); }
+}
+
+// Combo counter — shown once 2+ hits land within
+// boss_poll_controller.js's COMBO_RESET_MS window, hidden again once it
+// elapses without a new hit.
+.combo-counter {
+  position: absolute;
+  top: 6%;
+  right: 4%;
+  font-weight: 700;
+  color: #ffc107;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+.combo-counter.show {
+  opacity: 1;
+}
+
+// Brief "撃破！" banner shown while playDefeatSequence's DEFEAT_DELAY_MS
+// plays out, just before the poll redirects teammates to the score page.
+.victory-banner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffc107;
+  text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
+  animation: dmgFloat .9s ease-out forwards;
 }

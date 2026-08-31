@@ -1,24 +1,38 @@
 <% content_for :title, "遊戲地圖" %>
+<% content_for :body_class, "bg-gradient-to-b! from-slate-900 via-slate-900 to-slate-800 text-slate-100!" %>
 
 <%# Same active-question redirect as the home page (see game/home/show.html.erb
     and active_question_poll_controller.js) — legacy wheel_map1/2/3.php all ran
     the same questionIsStart()/BossIsStart() polls the home page did. %>
-<main data-controller="active-question-poll"
+<main class="mx-auto! max-w-5xl! px-4! py-8! sm:py-12!"
+      data-controller="active-question-poll"
       data-active-question-poll-url-value="<%= status_game_question_path(Question::FIRST_NUMBER) %>"
       data-active-question-poll-question-base-path-value="<%= question_redirect_base_path %>"
       data-active-question-poll-boss-base-path-value="<%= boss_redirect_base_path %>">
-  <div id="m<%= @map_id %>" style="position: relative;">
-    <%= image_tag @image, usemap: "#Map#{@map_id}", class: "img-fluid" %>
-    <map name="Map<%= @map_id %>" id="Map<%= @map_id %>">
+
+  <% back_path = @map_id == 2 ? game_current_map_path : game_root_path %>
+  <%= link_to back_path,
+        class: "fixed! left-4! top-4! z-10! inline-flex! h-11! w-11! items-center! justify-center! rounded-full! bg-slate-800/90! text-slate-100! ring-1! ring-white/10! shadow-lg! backdrop-blur! transition! hover:bg-slate-700! focus-visible:outline! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-amber-400!",
+        id: "menubar", "aria-label": "返回" do %>
+    <svg class="h-5! w-5!" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+    </svg>
+  <% end %>
+
+  <div class="mx-auto! max-w-5xl! rounded-xl! bg-slate-800/60! p-3! ring-1! ring-white/10! backdrop-blur! sm:p-4!">
+    <div id="m<%= @map_id %>" class="mx-auto! overflow-hidden! rounded-lg!" style="position: relative; max-width: <%= @natural_width %>px;">
+      <%= image_tag @image, class: "block! w-full!" %>
       <% @areas.each do |area| %>
         <%
           href = area[:to_map] ? game_map_path(area[:to_map]) : game_question_path(area[:number])
           solved = area[:number].present? && @completed_numbers.include?(area[:number])
+          label = "#{area[:title]}#{" (已完成)" if solved}"
         %>
-        <area alt="<%= area[:title] %>" title="<%= area[:title] %><%= " (已完成)" if solved %>"
-              href="<%= href %>" shape="<%= area[:shape] %>" coords="<%= area[:coords] %>">
+        <%= link_to "", href, class: "map-hotspot",
+              style: "left: #{area[:left]}%; top: #{area[:top]}%; width: #{area[:width]}%; height: #{area[:height]}%;",
+              title: label, "aria-label": label %>
       <% end %>
-    </map>
+    </div>
   </div>
 
   <%# The legacy map views (wheel_map1/2/3.php) have no solved/unsolved styling
@@ -26,14 +40,6 @@
       a small UX addition built on Team#completed_question_numbers rather than a
       port of existing legacy behavior. %>
   <% if @completed_numbers.any? %>
-    <p class="text-center dialog">已完成關卡：第 <%= @completed_numbers.join("、") %> 題</p>
+    <p class="mx-auto! mt-4! max-w-5xl! rounded-lg! bg-slate-800/70! px-4! py-3! text-center! text-sm! text-emerald-300! ring-1! ring-emerald-500/30!">已完成關卡：第 <%= @completed_numbers.join("、") %> 題</p>
   <% end %>
-
-  <% back_path = @map_id == 2 ? game_current_map_path : game_root_path %>
-  <div class="map-menu" id="menubar" onclick="window.location.href='<%= back_path %>'">
-    <span class="fa-stack fa-2x">
-      <i class="fas fa-square fa-stack-2x" style="color:#333"></i>
-      <i class="fas fa-home fa-stack-1x" style="color:white"></i>
-    </span>
-  </div>
 </main>

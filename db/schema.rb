@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_08_19_015326) do
+ActiveRecord::Schema[7.2].define(version: 2026_08_29_173644) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -31,6 +31,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_08_19_015326) do
     t.integer "hp", default: 120, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "last_critical_at"
     t.index ["team_id", "boss_no"], name: "index_boss_battles_on_team_id_and_boss_no", unique: true
     t.index ["team_id"], name: "index_boss_battles_on_team_id"
   end

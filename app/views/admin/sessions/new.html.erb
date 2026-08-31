@@ -1,24 +1,33 @@
-<div class="container mt-5" style="max-width: 420px;">
-  <h1 class="h3 mb-4">後台登入</h1>
+<% content_for :title, "後台登入" %>
+<% content_for :body_class, "bg-slate-50! bg-none! text-slate-800!" %>
+<% content_for :footer_class, "text-slate-400!" %>
 
-  <% if flash[:alert] %>
-    <div class="alert alert-danger"><%= flash[:alert] %></div>
-  <% end %>
-  <% if flash[:notice] %>
-    <div class="alert alert-info"><%= flash[:notice] %></div>
-  <% end %>
+<main class="[text-shadow:none]! mx-auto! flex! min-h-[80vh]! w-full! max-w-sm! items-center! justify-center! px-4! py-12!">
+  <div class="w-full! rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm! sm:p-8!">
+    <h1 class="text-xl! font-bold! text-slate-800!">後台登入</h1>
 
-  <%= form_with url: admin_session_path, method: :post, local: true do |f| %>
-    <div class="form-group">
-      <%= f.label :email, "帳號 (Email)" %>
-      <%= f.email_field :email, class: "form-control", required: true, autofocus: true %>
-    </div>
+    <% if flash[:alert] %>
+      <div class="mt-4! rounded-lg! bg-rose-50! px-4! py-3! text-sm! text-rose-800! ring-1! ring-rose-200!"><%= flash[:alert] %></div>
+    <% end %>
+    <% if flash[:notice] %>
+      <div class="mt-4! rounded-lg! bg-emerald-50! px-4! py-3! text-sm! text-emerald-800! ring-1! ring-emerald-200!"><%= flash[:notice] %></div>
+    <% end %>
 
-    <div class="form-group">
-      <%= f.label :password, "密碼" %>
-      <%= f.password_field :password, class: "form-control", required: true %>
-    </div>
+    <%= form_with url: admin_session_path, method: :post, local: true, class: "mt-6! space-y-4!" do |f| %>
+      <div>
+        <%= f.label :email, "帳號 (Email)", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+        <%= f.email_field :email, required: true, autofocus: true,
+              class: "w-full! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! placeholder:text-slate-400! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+      </div>
 
-    <%= f.submit "登入", class: "btn btn-primary btn-block" %>
-  <% end %>
-</div>
+      <div>
+        <%= f.label :password, "密碼", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+        <%= f.password_field :password, required: true,
+              class: "w-full! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! placeholder:text-slate-400! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+      </div>
+
+      <%= f.submit "登入",
+            class: "w-full! cursor-pointer! rounded-lg! bg-indigo-600! px-4! py-2! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!" %>
+    <% end %>
+  </div>
+</main>

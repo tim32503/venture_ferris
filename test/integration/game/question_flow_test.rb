@@ -82,9 +82,9 @@ module Game
 
       get game_map_path(1)
       assert_response :success
-      assert_select "map#Map1 area", count: 5
-      assert_select "map#Map1 area[href=?]", game_map_path(2)
-      assert_select "map#Map1 area[href=?]", game_question_path(1)
+      assert_select "#m1 a.map-hotspot", count: 5
+      assert_select "#m1 a.map-hotspot[href=?]", game_map_path(2)
+      assert_select "#m1 a.map-hotspot[href=?]", game_question_path(1)
     end
 
     test "quiz question renders the quiz template and never leaks the answer" do
@@ -94,7 +94,10 @@ module Game
 
       get game_question_path(3)
       assert_response :success
-      assert_select "div.dialog", text: /示範內容 3/
+      # U3c retired the shared `.dialog` class (docs/UI_STYLE_GUIDE.md card
+      # recipe replaces it); assert on the rendered content instead of a
+      # CSS class that no longer exists.
+      assert_match "示範內容 3", response.body
       refute_match "石牆密語", response.body
       refute_match question.answer_digest, response.body
     end

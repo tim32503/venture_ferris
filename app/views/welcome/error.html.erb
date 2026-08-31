@@ -1,15 +1,16 @@
-<header class="container">
-</header>
+<% content_for :title, "錯誤" %>
+<% content_for :body_class, "bg-gradient-to-b! from-slate-900 via-slate-900 to-slate-800 text-slate-100!" %>
 
-<main class="container">
-  <div class="dialog text-center" role="alert">
-    <h2>錯誤</h2>
-    <p>[#<%= @error_code %>] <%= @error_message %></p>
-  </div>
+<main class="[text-shadow:none]! mx-auto! flex! min-h-[80vh]! w-full! max-w-md! items-center! justify-center! px-4! py-12!">
+  <div class="w-full! rounded-xl! bg-slate-800/80! p-6! text-center! ring-1! ring-white/10! backdrop-blur! sm:p-8!" role="alert">
+    <h1 class="text-xl! font-bold! text-rose-400!">錯誤</h1>
+    <p class="mt-3! text-slate-200!">[#<%= @error_code %>] <%= @error_message %></p>
 
-  <div class="text-center">
-    <% if @error_code == '01001' || @error_code == '01004' %>
-      <%= link_to "帳號轉移", game_login_path, class: "btn btn-primary" %>
+    <% if @error_code == "01001" || @error_code == "01004" %>
+      <div class="mt-6!">
+        <%= link_to "帳號轉移", game_login_path,
+              class: "inline-flex! items-center! justify-center! rounded-lg! bg-amber-500! px-5! py-2.5! font-semibold! text-slate-900! transition! hover:bg-amber-400! focus-visible:outline! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-amber-400!" %>
+      </div>
     <% end %>
   </div>
 </main>

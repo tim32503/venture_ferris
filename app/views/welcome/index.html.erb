@@ -1,124 +1,48 @@
 <% content_for :title, "勇闖摩天輪" %>
-<% content_for :head do %>
-  <style>
-    @import url(//fonts.googleapis.com/earlyaccess/notosanstc.css);
-    *{
-      font-family: 'Noto Sans TC'; 
-      color: white; text-shadow: 1px 0 5px black, 0 1px 5px black;
-    }
+<% content_for :body_class, "bg-gradient-to-b! from-slate-900 via-slate-900 to-slate-800 text-slate-100!" %>
 
-    html{
-      height: 100%;
-    }
+<div class="relative! isolate!">
+  <div class="absolute! inset-0! -z-20! bg-cover! bg-center! bg-no-repeat!" style="background-image:url('<%= asset_path("loginBg.jpg") %>');"></div>
+  <div class="absolute! inset-0! -z-10! bg-slate-900/60!"></div>
 
-    body{
-      background-image: url('<%= asset_path("loginBg.jpg") %>');
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      background-position: center top;
-      background-size: cover;
-    }
-    
-    header{
-      margin: 5rem;
-    }
-    
-    main{
-      background-color: #666;
-      margin: 3rem;
-      padding: 2rem;
-      border: .25rem solid white;
-      border-radius: .25rem;
-    }
-  </style>
-<% end %>
+  <header class="[text-shadow:none]! mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-14!">
+    <%= image_tag "logo.png", class: "mx-auto! w-full! max-w-md! drop-shadow-lg!" %>
+  </header>
 
-<header>
-  <div class="text-center">
-    <%= image_tag "logo.png", class: "img-fluid" %>
-  </div>
-</header>
+  <main class="[text-shadow:none]! mx-auto! max-w-2xl! px-4! pb-12! pt-6! sm:pb-16! sm:pt-8!">
+    <div class="rounded-xl! bg-slate-800/80! p-6! ring-1! ring-white/10! backdrop-blur! sm:p-8!">
+      <div class="text-center!">
+        <%= button_to "▶ 直接體驗（Demo）", game_session_path, params: { demo: "1" },
+              class: "inline-flex! items-center! justify-center! rounded-lg! bg-amber-500! px-6! py-3! text-lg! font-semibold! text-slate-900! transition! hover:bg-amber-400! focus-visible:outline! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-amber-400!" %>
+        <p class="mt-3! text-sm! text-slate-400!">Demo 模式：每次點擊都會建立一個全新的單人示範隊伍，Boss 難度已調降以便單人體驗</p>
+      </div>
 
-<main>
-  <div class="text-center mb-3">
-    <%= button_to "▶ 直接體驗（Demo）", game_session_path, params: { demo: "1" }, class: "btn btn-lg btn-primary" %>
-    <p><small>Demo 模式：每次點擊都會建立一個全新的單人示範隊伍，Boss 難度已調降以便單人體驗</small></p>
-  </div>
+      <dl class="mt-8! grid! grid-cols-1! gap-4! sm:grid-cols-2!">
+        <div class="rounded-lg! bg-slate-900/60! p-4! ring-1! ring-white/10!">
+          <dt class="text-sm! font-semibold! text-amber-400!">活動時間</dt>
+          <dd class="mt-1! text-slate-200!">10/20、10/21<br>11:00 - 21:00</dd>
+        </div>
 
-  <table class="table text-center">
-    <thead>
-      <tr class="table-secondary">
-        <th colspan="2">活動時間</th>
-      </tr>
-    </thead>
-    
-    <tbody>
-      <tr>
-        <td>10/20</td>
-        <td rowspan="2" class="align-middle">11:00 - 21:00</td>
-      </tr>
-      <tr>
-        <td>10/21</td>
-      </tr>
-    </tbody>
-  </table>
-  
-  <table class="table text-center">
-    <thead>
-      <tr class="table-secondary">
-        <th>活動地點</th>
-      </tr>
-    </thead>
-    
-    <tbody>
-      <tr>
-        <td>大直美麗華旁植福路</td>
-      </tr>
-    </tbody>
-  </table>
-  
-  <table class="table text-center">
-    <thead>
-      <tr class="table-secondary">
-        <th>主辦單位</th>
-      </tr>
-    </thead>
-    
-    <tbody>
-      <tr>
-        <td>臺北市商業處</td>
-      </tr>
-      <tr>
-        <td>臺北市商圈產業聯合會</td>
-      </tr>
-    </tbody>
-  </table>
-  
-  <table class="table text-center">
-    <thead>
-      <tr class="table-secondary">
-        <th>指導單位</th>
-      </tr>
-    </thead>
-    
-    <tbody>
-      <tr>
-        <td>經濟部中小企業處</td>
-      </tr>
-    </tbody>
-  </table>
-  
-  <table class="table text-center">
-    <thead>
-      <tr class="table-secondary">
-        <th>遊戲設計</th>
-      </tr>
-    </thead>
-    
-    <tbody>
-      <tr>
-        <td>Escapeholics密室逃脫</td>
-      </tr>
-    </tbody>
-  </table>
-</main>
+        <div class="rounded-lg! bg-slate-900/60! p-4! ring-1! ring-white/10!">
+          <dt class="text-sm! font-semibold! text-amber-400!">活動地點</dt>
+          <dd class="mt-1! text-slate-200!">大直美麗華旁植福路</dd>
+        </div>
+
+        <div class="rounded-lg! bg-slate-900/60! p-4! ring-1! ring-white/10!">
+          <dt class="text-sm! font-semibold! text-amber-400!">主辦單位</dt>
+          <dd class="mt-1! text-slate-200!">臺北市商業處<br>臺北市商圈產業聯合會</dd>
+        </div>
+
+        <div class="rounded-lg! bg-slate-900/60! p-4! ring-1! ring-white/10!">
+          <dt class="text-sm! font-semibold! text-amber-400!">指導單位</dt>
+          <dd class="mt-1! text-slate-200!">經濟部中小企業處</dd>
+        </div>
+
+        <div class="rounded-lg! bg-slate-900/60! p-4! ring-1! ring-white/10! sm:col-span-2!">
+          <dt class="text-sm! font-semibold! text-amber-400!">遊戲設計</dt>
+          <dd class="mt-1! text-slate-200!">Escapeholics密室逃脫</dd>
+        </div>
+      </dl>
+    </div>
+  </main>
+</div>

@@ -37,7 +37,7 @@ class GameHomePollRedirectTest < ApplicationSystemTestCase
     assert_current_path game_team_path
 
     visit game_root_path
-    assert_selector "main[data-controller='active-question-poll']"
+    assert_selector "main[data-controller~='active-question-poll']"
 
     # A teammate elsewhere starts this question's timer (P3's team-wide
     # "someone is timing a question right now" signal — Team#active_question_attempt).
