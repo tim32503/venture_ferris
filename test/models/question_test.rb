@@ -48,4 +48,22 @@ class QuestionTest < ActiveSupport::TestCase
     question = build_question(number: 3, boss_hp: 42).tap(&:save!)
     assert_equal 42, question.boss_defeated_threshold
   end
+
+  test "answer_digest is optional for puzzle and bear kinds but required for quiz" do
+    puzzle = build_question(number: 1, kind: :puzzle, answer_digest: nil)
+    assert puzzle.valid?
+
+    bear = build_question(number: 9, kind: :bear, answer_digest: nil)
+    assert bear.valid?
+
+    quiz = build_question(number: 3, kind: :quiz, answer_digest: nil)
+    assert_not quiz.valid?
+    assert_includes quiz.errors[:answer_digest], "can't be blank"
+  end
+
+  test "interactive? is true for puzzle and bear, false for quiz" do
+    assert build_question(number: 1, kind: :puzzle).interactive?
+    assert build_question(number: 9, kind: :bear).interactive?
+    assert_not build_question(number: 3, kind: :quiz).interactive?
+  end
 end

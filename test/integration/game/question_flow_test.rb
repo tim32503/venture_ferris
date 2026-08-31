@@ -96,6 +96,38 @@ module Game
       assert_select "#m1 a.map-hotspot[href=?]", game_question_path(1)
     end
 
+    # docs/UI_AUDIT.md dead-end: with no in-game route from Q10 to Q11 on the
+    # web port, map3's Q11 fallback hotspot is the back-up path (the boss
+    # defeat redirect in boss_flow_test.rb is the primary one). It must stay
+    # hidden until boss 10 is actually defeated — gating on the weaker
+    # "Q10's own answer was correct" signal would surface the Q11 shortcut
+    # while the team is still mid-fight against boss 10 (Team
+    # #defeated_boss_numbers vs #completed_question_numbers).
+    test "map3's Q11 fallback hotspot only appears once boss 10 is defeated" do
+      team = create_team
+      sign_in_leader(team)
+      q10 = seed_question(10, boss_phase: 1, boss_hp: 1)
+      seed_question(11, boss_phase: 2, auto_start: true)
+
+      get game_map_path(3)
+      assert_response :success
+      assert_select "#m3 a.map-hotspot", count: 1
+      assert_select "#m3 a.map-hotspot[href=?]", game_question_path(11), count: 0
+
+      # Answering Q10 alone must NOT be enough — only defeating its boss is.
+      QuestionAttempt.create!(team: team, question: q10, started_at: 1.minute.ago, ended_at: Time.current)
+      get game_map_path(3)
+      assert_select "#m3 a.map-hotspot", count: 1
+
+      post ready_game_boss_path(10)
+      post attacks_game_boss_path(10) # hp=1 -> defeated
+
+      get game_map_path(3)
+      assert_response :success
+      assert_select "#m3 a.map-hotspot", count: 2
+      assert_select "#m3 a.map-hotspot[href=?]", game_question_path(11)
+    end
+
     test "quiz question renders the quiz template and never leaks the answer" do
       team = create_team
       sign_in_leader(team)
@@ -111,28 +143,51 @@ module Game
       refute_match question.answer_digest, response.body
     end
 
-    test "puzzle question renders the puzzle template with rows/cols from the question" do
+    test "puzzle question renders the puzzle template with rows/cols and no answer text field" do
       team = create_team
       sign_in_leader(team)
-      seed_question(1, kind: :puzzle, puzzle_rows: 4, puzzle_cols: 4, answer_digest: Question.digest_for("meifu"))
+      seed_question(1, kind: :puzzle, puzzle_rows: 4, puzzle_cols: 4, answer_digest: nil)
       post timer_game_question_path(1)
 
       get game_question_path(1)
       assert_response :success
       assert_select "[data-controller='puzzle'][data-puzzle-rows-value='4'][data-puzzle-columns-value='4']"
-      refute_match "meifu", response.body
+      # Puzzle is an interactive kind (Question#interactive?): no answer text
+      # to type, so the answer form only carries a hidden completion submit.
+      assert_select "input[type='text']", count: 0
     end
 
-    test "bear question renders the bear template" do
+    test "bear question renders the bear template with hotspot overlays and no answer text field" do
       team = create_team
       sign_in_leader(team)
-      seed_question(9, kind: :bear, answer_digest: Question.digest_for("xiongzan"))
+      seed_question(9, kind: :bear, answer_digest: nil)
       post timer_game_question_path(9)
 
       get game_question_path(9)
       assert_response :success
       assert_select "[data-controller='bear']"
-      refute_match "xiongzan", response.body
+      assert_select "[data-bear-target='hotspot']", count: Game::QuestionsController::BEAR_HOTSPOTS.size
+      # Bear is an interactive kind too: no answer text to type.
+      assert_select "input[type='text']", count: 0
+    end
+
+    test "puzzle and bear kinds complete unconditionally on answer, without ever checking answer text" do
+      team = create_team
+      sign_in_leader(team)
+      puzzle = seed_question(1, kind: :puzzle, answer_digest: nil)
+      post timer_game_question_path(1)
+
+      # No `answer` param at all — an interactive kind never reads it.
+      post answer_game_question_path(1)
+      assert_redirected_to game_boss_path(1)
+      assert QuestionAttempt.find_by!(team: team, question: puzzle).completed?
+
+      bear = seed_question(9, kind: :bear, answer_digest: nil)
+      post timer_game_question_path(9)
+
+      post answer_game_question_path(9), params: { answer: "anything, or nothing at all" }
+      assert_redirected_to game_boss_path(9)
+      assert QuestionAttempt.find_by!(team: team, question: bear).completed?
     end
 
     test "timer is idempotent: a second POST does not reset started_at" do

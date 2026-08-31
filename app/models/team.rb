@@ -62,4 +62,16 @@ class Team < ApplicationRecord
   def completed_question_numbers
     question_attempts.completed.joins(:question).order("questions.number").pluck("questions.number")
   end
+
+  # Question numbers whose boss fight this team has actually defeated
+  # (`boss_battles.ended_at` present), low-to-high. Deliberately distinct
+  # from `completed_question_numbers` above: that one flips as soon as the
+  # question's own answer is correct, *before* its boss fight even starts,
+  # so it isn't precise enough for a hotspot that specifically stands in for
+  # "this boss is defeated and there's nowhere to go" (Game::MapsController
+  # ::AREAS' map3 Q11 fallback — gating on the weaker signal would let a
+  # team reach Q11 without ever having fought boss 10 at all).
+  def defeated_boss_numbers
+    boss_battles.completed.joins(:question).order("questions.number").pluck("questions.number")
+  end
 end

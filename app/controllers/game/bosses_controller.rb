@@ -132,6 +132,13 @@ module Game
     # memory of "did I already use my skill", always re-derive it from the
     # DB). Never blocks (REFACTOR_PLAN.md §0 — no legacy `while(true) +
     # usleep`).
+    #
+    # `next_path`/`defeat_message` are only meaningful once `defeated` is
+    # true, but are always computed and sent — boss_poll_controller.js reads
+    # them straight off this response rather than re-deriving "where does a
+    # defeated boss send the team" client-side (Game::BossesHelper
+    # #boss_defeat_next_path is the single place that decision lives, shared
+    # with `#show`'s own server-rendered defeated state).
     def status
       render json: {
         hp_percent: @battle.hp_percent,
@@ -140,6 +147,8 @@ module Game
         total: current_team.players.count,
         started: @battle.started_at.present?,
         defeated: @battle.ended_at.present?,
+        next_path: boss_defeat_next_path(@question),
+        defeat_message: boss_defeat_message(@question),
         bonus_time_seconds: @battle.bonus_time_seconds,
         spotlight_active: @battle.spotlight_active?,
         skill_available: boss_skill_available?(@battle, current_player)

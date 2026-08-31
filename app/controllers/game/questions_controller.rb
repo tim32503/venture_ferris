@@ -11,6 +11,32 @@ module Game
   # only `#status` is JSON, since it is the one polled without a full page
   # load.
   class QuestionsController < BaseController
+    # Question 9's "spot the difference" hotspots, transcribed from the
+    # legacy `<area coords="...">` in wheel_bear.php:28-32 against the
+    # original P09.png pixel dimensions (1101x1512, confirmed via `sips -g
+    # pixelWidth -g pixelHeight app/assets/images/P09.png`). The legacy
+    # shapes were `rect` (eyebrows) / `poly` (thumb, nose_color) / `circle`
+    # (the two beads); approximated here by their bounding box — same
+    # simplification Game::MapsController::AREAS uses for poly/circle
+    # hotspots — then padded 40px in the source image's own coordinate space
+    # before converting to percentages, since the raw anatomical regions are
+    # too small to comfortably tap on a phone otherwise. Percentages are of
+    # the image's own pixel box (same convention as MapsController::AREAS),
+    # so the hotspot tracks the image at any responsive width.
+    BEAR_HOTSPOTS = [
+      { id: "eyebrows", label: "眉毛", left: 42.96, top: 10.32, width: 20.98, height: 7.47 },
+      # NOTE: the legacy view's own alt/title for these two <area>s were
+      # swapped (its "大拇指" poly sits on the nose, its "鼻子顏色" poly on
+      # the raised thumb arm) — invisible in the original image-map UI, so it
+      # went unnoticed in 2018. Labels corrected here; coordinates unchanged.
+      { id: "nose_color", label: "鼻子顏色", left: 49.68, top: 18.85, width: 12.17, height: 7.47 },
+      { id: "thumb", label: "大拇指", left: 69.66, top: 4.17, width: 23.07, height: 21.63 },
+      { id: "no_white_bead", label: "沒有白色珠珠", left: 29.97, top: 40.61, width: 12.35, height: 8.99 },
+      { id: "belt_bead", label: "皮帶上的珠珠", left: 53.59, top: 49.27, width: 9.81, height: 7.14 }
+    ].freeze
+
+    BEAR_IMAGE_NATURAL_WIDTH = 1101
+
     before_action :set_question
 
     def show
@@ -24,7 +50,10 @@ module Game
 
       case @question.kind
       when "puzzle" then render :puzzle
-      when "bear" then render :bear
+      when "bear"
+        @bear_hotspots = BEAR_HOTSPOTS
+        @bear_image_natural_width = BEAR_IMAGE_NATURAL_WIDTH
+        render :bear
       else render :quiz
       end
     end
@@ -40,13 +69,23 @@ module Game
     end
 
     # POST /game/questions/:number/answer — the server-side answer check
-    # this whole batch exists to add (REFACTOR_PLAN.md §0).
+    # this whole batch exists to add (REFACTOR_PLAN.md §0), *except* for
+    # `interactive?` questions (puzzle/bear, numbers 1/2/9): by the time this
+    # endpoint is hit, the front-end (puzzle_controller.js / bear_controller.js)
+    # has already decided the player is done — a solved jigsaw or 5
+    # correctly-found hotspots IS the answer for those two kinds, with no
+    # text ever compared, same trust model the legacy wheel_puzzle.php/
+    # wheel_bear.php pages used (they POSTed straight to
+    # `timer/Question/:no/End` from their completion callback). So
+    # `params[:answer]` is never read for an `interactive?` question — it
+    # completes unconditionally — while `quiz` questions are unaffected and
+    # still go through `Question#answer?`.
     def answer
       attempt = attempt_record
 
       return redirect_to game_question_path(@question.number) if attempt.completed?
 
-      if @question.answer?(params[:answer])
+      if @question.interactive? || @question.answer?(params[:answer])
         attempt.update!(started_at: attempt.started_at || Time.current, ended_at: Time.current)
         # REFACTOR_PLAN.md P4 req #7: a correct answer now sends the team
         # straight into that question's boss fight (legacy redirected to

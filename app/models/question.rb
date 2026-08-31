@@ -38,10 +38,31 @@ class Question < ApplicationRecord
                       uniqueness: true,
                       inclusion: { in: FIRST_NUMBER..LAST_NUMBER }
   validates :title, presence: true
-  validates :answer_digest, presence: true
+  # Only `quiz` questions store a real answer. Puzzle/bear are "interactive"
+  # kinds (see `interactive?` below) whose completion is judged client-side,
+  # so they have nothing to hash — `answer_digest` is nullable at the schema
+  # level for exactly these two kinds (db/migrate/*_allow_null_answer_digest_
+  # on_questions.rb).
+  validates :answer_digest, presence: true, if: :quiz?
   validates :base_score, numericality: { greater_than: 0 }
   validates :boss_hp, numericality: { greater_than: 0 }
   validates :boss_time_limit, numericality: { greater_than: 0 }
+
+  # Puzzle and bear questions are "interactive": the interaction itself (a
+  # solved jigsaw, or all 5 hotspots in the bear minigame found) IS the
+  # answer, judged entirely client-side — exactly like the legacy
+  # wheel_puzzle.php/wheel_bear.php pages, which POSTed straight to
+  # `timer/Question/:no/End` from their completion callback with no answer
+  # text ever compared server-side (wheel_puzzle.php:201-208,
+  # wheel_bear.php:206-213). That is also why questions 1, 2 and 9 had an
+  # EMPTY `QUESTION_PASSWORD` in the recovered 2018 dump — there was never an
+  # authoritative answer text for these two kinds to begin with.
+  # `Game::QuestionsController#answer` uses this to skip `answer?` entirely
+  # for these two kinds and complete unconditionally once the front-end
+  # (puzzle_controller.js / bear_controller.js) says the player is done.
+  def interactive?
+    puzzle? || bear?
+  end
 
   # Attack count threshold that defeats this question's boss. Kept as a named
   # concept (rather than reading `boss_hp` directly everywhere) because the

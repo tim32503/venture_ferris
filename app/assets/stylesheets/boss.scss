@@ -334,13 +334,24 @@ p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.25rem;
   font-size: 2rem;
   font-weight: 800;
   color: #ffc107;
   text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
   animation: dmgFloat .9s ease-out forwards;
+}
+
+// Optional transition line under "撃破！" (Game::BossesHelper
+// #boss_defeat_message) — only present for a first-phase multi-phase boss,
+// naming what's coming next instead of just celebrating the hit.
+.victory-banner-sub {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff3cd;
 }
 
 //----- 職業主動技視覺回饋（docs/JOB_SKILLS_DESIGN.md）-----

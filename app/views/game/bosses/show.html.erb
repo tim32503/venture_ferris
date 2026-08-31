@@ -41,7 +41,10 @@
   <% if @battle.ended_at.present? %>
     <div class="rounded-xl! bg-slate-800/80! p-6! text-slate-100! ring-1! ring-white/10! backdrop-blur!">
       <p>魔王已被擊敗！恭喜過關。</p>
-      <%= link_to "查看本題成績", game_score_path, class: "mt-4! inline-flex! items-center! justify-center! rounded-lg! bg-amber-500! px-5! py-2.5! font-semibold! text-slate-900! transition! hover:bg-amber-400!" %>
+      <% if (message = boss_defeat_message(@question)) %>
+        <p class="mt-2! text-sm! text-amber-300!"><%= message %></p>
+      <% end %>
+      <%= link_to boss_defeat_link_label(@question), boss_defeat_next_path(@question), class: "mt-4! inline-flex! items-center! justify-center! rounded-lg! bg-amber-500! px-5! py-2.5! font-semibold! text-slate-900! transition! hover:bg-amber-400!" %>
     </div>
   <% elsif @battle.started_at.present? %>
     <div class="boss-bg" style="position: relative;" data-boss-poll-target="stage">
