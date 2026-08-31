@@ -56,12 +56,39 @@ class PlayerTest < ActiveSupport::TestCase
     assert_includes fourth.errors[:role], "隊伍隊員已滿"
   end
 
-  test "unique index rejects duplicate [team, role, email]" do
+  test "unique index rejects duplicate [team, email]" do
     team = build_team
     build_player(team, role: :member, email: "dup@example.com").save!
 
     dup = Player.new(team: team, role: :member, email: "dup@example.com")
     assert_raises(ActiveRecord::RecordInvalid) { dup.save! }
+  end
+
+  # docs/SCHEMA_REDESIGN.md §2-7d: the old `[team_id, role, email]` index let
+  # one address hold the leader seat *and* a member seat on the same team,
+  # burning two of the four slots. Zero rows in the 2018 dump ever did this.
+  test "one email cannot hold both roles on the same team" do
+    team = build_team
+    build_player(team, role: :leader, email: "both@example.com").save!
+
+    also_member = build_player(team, role: :member, email: "both@example.com")
+    assert_not also_member.valid?
+    assert_includes also_member.errors[:email], "has already been taken"
+  end
+
+  test "two teammates cannot hold the same job" do
+    team = build_team
+    build_player(team, role: :leader, email: "leader@example.com", job: :senior).save!
+
+    twin = build_player(team, role: :member, email: "member@example.com", job: :senior)
+    assert_raises(ActiveRecord::RecordNotUnique) { twin.save! }
+  end
+
+  test "the same job may be held on two different teams" do
+    build_player(build_team, role: :leader, email: "a@example.com", job: :senior).save!
+
+    other = build_player(build_team, role: :leader, email: "b@example.com", job: :senior)
+    assert other.save
   end
 
   test "same email can join as leader on a different team" do

@@ -19,6 +19,7 @@ class GameHomePollRedirectTest < ApplicationSystemTestCase
     Question.create!(
       number: Question::FIRST_NUMBER, kind: :puzzle, title: "錨點題目", content: "示範內容", level: "1",
       explanation: "示範解說", boss_hp: 3, boss_time_limit: 60, puzzle_rows: 1, puzzle_cols: 1,
+      boss: seed_boss_for(Question::FIRST_NUMBER),
       answer_digest: Question.digest_for("anchor")
     )
 
@@ -28,6 +29,7 @@ class GameHomePollRedirectTest < ApplicationSystemTestCase
     question = Question.create!(
       number: 3, kind: :quiz, title: "示範題目", content: "示範內容", level: "1",
       explanation: "示範解說", boss_hp: 3, boss_time_limit: 60,
+      boss: seed_boss_for(3),
       answer_digest: Question.digest_for("answer3")
     )
 

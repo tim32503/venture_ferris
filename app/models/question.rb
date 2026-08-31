@@ -11,7 +11,18 @@ class Question < ApplicationRecord
   DEFAULT_BOSS_HP = 120
   DEFAULT_BOSS_TIME_LIMIT = 30
 
+  # Two questions can share one Boss: Q10/Q11 are phase 1 and phase 2 of the
+  # same 摩天輪魔王 (docs/SCHEMA_REDESIGN.md §2-3). `boss_phase` is NULL for
+  # every single-phase boss.
+  belongs_to :boss
+
   has_many :question_attempts, dependent: :destroy
+  has_many :boss_battles, dependent: :destroy
+  # `hints` (not `question_hints`) is the name every caller uses — the hint
+  # cap and the hint panel both read `question.hints.size`, so the number of
+  # rows here *is* the per-question limit (docs/SCHEMA_REDESIGN.md §2-4).
+  has_many :hints, -> { order(:position) },
+            class_name: "QuestionHint", inverse_of: :question, dependent: :destroy
 
   enum :kind, { puzzle: 0, quiz: 1, bear: 2 }, validate: true
 

@@ -16,18 +16,27 @@ module Game
       team.players.find_by!(email: "leader@example.com")
     end
 
-    def seed_question(number, **attrs)
-      Question.create!({
+    # `hints:` defaults to two rows, matching what every hinted question in
+    # db/seeds.rb carries — the hint cap is now the question's own hint count
+    # (docs/SCHEMA_REDESIGN.md §2-4), so passing `hints: []` is how a test
+    # builds a question that refuses hints outright.
+    def seed_question(number, hints: [ "提示一", "提示二" ], **attrs)
+      question = Question.create!({
         number: number,
         kind: :quiz,
         title: "第 #{number} 題",
         content: "示範內容 #{number}",
         level: "1",
-        hint1: "提示一 #{number}",
-        hint2: "提示二 #{number}",
         explanation: "示範解說 #{number}",
+        boss: seed_boss_for(number),
         answer_digest: Question.digest_for("answer#{number}")
       }.merge(attrs))
+
+      hints.each_with_index do |content, index|
+        question.hints.create!(position: index + 1, content: "#{content} #{number}")
+      end
+
+      question
     end
 
     test "every game action redirects an unauthenticated visitor" do
@@ -167,7 +176,7 @@ module Game
     test "question 6 rejects hints outright and never shows the hint button" do
       team = create_team
       sign_in_leader(team)
-      seed_question(6, hints_enabled: false)
+      seed_question(6, hints: [])
       post timer_game_question_path(6)
 
       get game_question_path(6)

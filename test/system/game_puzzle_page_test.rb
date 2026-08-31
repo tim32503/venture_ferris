@@ -15,6 +15,7 @@ class GamePuzzlePageTest < ApplicationSystemTestCase
       number: 1, kind: :puzzle, title: "美福飯店（示範拼圖）",
       content: "示範內容", level: "1", explanation: "示範解說",
       puzzle_rows: 4, puzzle_cols: 4,
+      boss: seed_boss_for(1),
       answer_digest: Question.digest_for("meifu")
     )
   end

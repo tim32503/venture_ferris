@@ -19,48 +19,44 @@ module Game
     # text (db/seeds.rb) shows Q10 ("魔王佔據的摩天輪") and Q11 are a single
     # continuous fight against the same "摩天輪魔王" (Q11 is `auto_start`,
     # i.e. no separate ready-lobby, and the legacy asset naming treats them
-    # as F1/F2 of one boss), so boss #10 is presumed to have never had a
-    # standalone sprite of its own. Boss #10 therefore reuses mon11.gif as
-    # its "第一型態" (phase 1) — see `boss_sprite_source_number` /
-    # `boss_phase_label` — while boss #11 keeps showing mon11.gif at full
-    # color as the "最終型態" (final phase).
+    # as F1/F2 of one boss).
     #
-    # `boss_asset_available?` below is kept as a general defense: if any
-    # *other* boss number's sprite ever goes missing (new numbering, asset
-    # regression, etc.), the view still falls back to a text notice instead
-    # of a broken `image_tag`, exactly as before this change.
-    WHEEL_BOSS_FIRST_PHASE_NUMBER = 10
-    WHEEL_BOSS_FINAL_PHASE_NUMBER = 11
+    # That used to be expressed here, as `number == 10 ? 11 : number`
+    # restated by three separate methods. It is now a foreign key: both
+    # questions point at the same `Boss` row, and `questions.boss_phase`
+    # says which form is being fought (docs/SCHEMA_REDESIGN.md §2-3). These
+    # helpers only format what the association already says.
+    FIRST_PHASE = 1
+    FINAL_PHASE = 2
 
-    def boss_sprite_source_number(number)
-      number == WHEEL_BOSS_FIRST_PHASE_NUMBER ? WHEEL_BOSS_FINAL_PHASE_NUMBER : number
-    end
-
-    def boss_image_filename(number)
-      format("mon%02d.gif", boss_sprite_source_number(number))
+    def boss_image_filename(question)
+      "#{question.boss.sprite}.gif"
     end
 
     # CSS classes for the monster's hit button: the positioning class
     # (`.mon0N`, see boss.scss) always matches the sprite actually being
-    # rendered (`boss_sprite_source_number`), plus a `.boss-phase-1` modifier
-    # for boss #10 that dims/shrinks the shared mon11 sprite so it reads as
-    # an earlier, weaker form.
-    def boss_sprite_css_classes(number)
-      classes = [ "mon#{format('%02d', boss_sprite_source_number(number))}" ]
-      classes << "boss-phase-1" if number == WHEEL_BOSS_FIRST_PHASE_NUMBER
+    # rendered, plus a `.boss-phase-1` modifier that dims/shrinks a shared
+    # sprite so an earlier phase reads as a weaker form.
+    def boss_sprite_css_classes(question)
+      classes = [ question.boss.sprite ]
+      classes << "boss-phase-1" if question.boss_phase == FIRST_PHASE
       classes.join(" ")
     end
 
-    # Phase badge text shown on the boss page for the two-stage "摩天輪魔王"
-    # fight (boss #10/#11 only); nil for every other boss number so the view
+    # Phase badge text shown on the boss page for a multi-phase fight (only
+    # the 摩天輪魔王 has one); nil for every single-phase boss so the view
     # renders nothing extra for them.
-    def boss_phase_label(number)
-      case number
-      when WHEEL_BOSS_FIRST_PHASE_NUMBER then "魔王・第一型態"
-      when WHEEL_BOSS_FINAL_PHASE_NUMBER then "魔王・最終型態"
+    def boss_phase_label(question)
+      case question.boss_phase
+      when FIRST_PHASE then "魔王・第一型態"
+      when FINAL_PHASE then "魔王・最終型態"
       end
     end
 
+    # Kept as a general defense even though `bosses.sprite` is NOT NULL: a
+    # non-null sprite name says nothing about whether the asset pipeline can
+    # actually resolve `mon0N.gif`. If one ever goes missing the view still
+    # falls back to a text notice instead of a broken `image_tag`.
     def boss_asset_available?(logical_path)
       manifest = Rails.application.assets_manifest
       return true if manifest && manifest.assets[logical_path]

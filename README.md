@@ -66,20 +66,27 @@
 | `Team` | WHEEL_PLAYER_MAIN | 隊伍，16 碼序號登入；`test_mode` 標記示範/彩排隊伍 |
 | `Player` | WHEEL_PLAYER_USER | 隊伍成員；1 隊長＋最多 3 隊員；`job` 可為 null（未選職業） |
 | `Question` | QUEST_MAIN | 11 道謎題；答案只存 SHA-256 digest，不存明文 |
+| `QuestionHint` | （舊 QUEST_MAIN.QUESTION_HINT1/2 欄位） | 某題的提示，`[question_id, position]` 唯一；「沒有提示列」就是「這題不能用提示」 |
+| `Boss` | （舊站無此表） | 怪物主檔，只有 `sprite`；10 隻對 11 題（第 10/11 題共用摩天輪魔王） |
 | `QuestionAttempt` | QUEST_LOG | 某隊某題的計時/提示紀錄；`ended_at` 為 null 代表進行中 |
-| `BossBattle` | BOSS_LOG | 每題一隻王（`boss_no` 與題號共用編號） |
+| `BossBattle` | BOSS_LOG | 每題一場王戰，`question_id` 外鍵；`[team_id, question_id]` 唯一 |
 | `BossReady` | （舊 READY_COUNT 欄位） | 玩家對某場王戰的「準備」標記，join table 保證冪等 |
-| `ScoreEntry` | QUEST_SCORE | 每隊每題最終分數，伺服器端算好後寫入 |
+| `ScoreEntry` | QUEST_SCORE | 每隊每題最終分數，`question_id` 外鍵，伺服器端算好後寫入 |
 | `RewardCode` | WHEEL_PLAYER_REWARD | 兌獎序號池；以 email 為 key，一人固定配發 2 組 |
 | `Admin` | （新增，取代舊站前端驗證機制） | 後台帳號，`has_secure_password` |
 
 文字版 ERD（`1—N` 表示一對多）：
 
 ```
-Team 1─N Player
+Team 1─N Player          UQ [team_id, email]（一個 email 在一隊只佔一個席位）
+                         UQ [team_id, job] WHERE job IS NOT NULL（同隊職業不重複）
 Team 1─N QuestionAttempt N─1 Question
-Team 1─N BossBattle 1─N BossReady N─1 Player
-Team 1─N ScoreEntry
+Team 1─N BossBattle      N─1 Question      UQ [team_id, question_id]
+         BossBattle 1─N BossReady N─1 Player
+Team 1─N ScoreEntry      N─1 Question      UQ [team_id, question_id]
+Boss 1─N Question （10 隻怪對 11 題；第 10/11 題指向同一列，
+                    以 questions.boss_phase = 1/2 區分型態）
+Question 1─N QuestionHint                  UQ [question_id, position]
 RewardCode （獨立，以 player_email 字串關聯，不用外鍵——沿用舊站以 email
              為配發 key 的語意，允許玩家換序號重新登入仍拿回同一組獎品）
 ```
@@ -87,6 +94,34 @@ RewardCode （獨立，以 player_email 字串關聯，不用外鍵——沿用�
 `ScoreCalculator`（`app/models/score_calculator.rb`）是一個 PORO，不對應
 資料表，只負責把「該題分數／時間分數／提示扣分／王戰加分／職業加分」組成一筆
 `ScoreEntry`。
+
+### 刻意保留的非正規設計
+
+正規化這一輪的重點不只是「把該拆的拆掉」，也包括**寫清楚哪些沒拆、為什麼**。
+完整論證見 `docs/SCHEMA_REDESIGN.md` §5，摘要：
+
+- **`reward_codes.player_email` 是字串 key 而不是 `player_id` 外鍵。** 兌獎配發
+  以「人」為單位而非「隊籍」；`sessions#create` 在玩家換序號時會建立**新的
+  `Player` 列**，改成外鍵會讓同一個人重複領獎。這個語意承襲自 2018 dump 的
+  `WHEEL_PLAYER_REWARD.USER_ID`（本身就是 email 欄位）。
+- **`boss_battles.hp` 是 `questions.boss_hp` 的複本。** 那是**開戰瞬間的快照**：
+  進行中的戰鬥不該因為題目被調參而改變難度。
+- **`boss_time_limit` 反而不做快照。** 因為它本質是動態的——隊上有「阿北」會
+  +10 秒，而隊員可以在開戰前才換職業。這個與上一項的不對稱是刻意的。
+- **`score_entries` 存 5 個分項＋可導出的 `total_score`。** 分項取決於結算當下的
+  隊伍職業組成，事後無法重算，整列是一次結算的物化快照。
+- **`players` 同時承載 person（`email`）與 membership（`team_id`/`role`/`job`）
+  與聯絡資訊。** 理論上有跨隊更新異常，但 2018 真實資料 573 名玩家中跨隊 email
+  是 **0 筆**；這是一場活動的遊戲，不是 CRM。
+- **`boss_hp`/`boss_time_limit` 留在 `questions` 而沒有移進 `bosses`。** 它們是
+  「這一戰」的參數而非「這隻怪」的屬性——第 10/11 題打同一隻怪但難度本來就不同
+  （`base_score` 是 1000 vs 3000），移過去會強迫兩題同難度，那是行為變更。
+  同理 `bosses` 刻意不加 `name`：舊 dump 沒有怪物名稱，加了就是憑空發明。
+- **`Player::MAX_MEMBERS = 3` 只在應用層，`MAX_LEADERS = 1` 卻可以落到 DB。**
+  唯一性能用 partial unique index 表達，計數上限不行（需要 trigger）；**不為了
+  對稱而引入 trigger**。
+- **外鍵一律 RESTRICT，刪除連鎖只在 Rails 的 `dependent: :destroy`。** 繞過應用層
+  的刪除會失敗而不是靜默毀掉歷史。
 
 ### 路由設計
 
@@ -217,11 +252,14 @@ CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加
   的兩個型態——三者合起來指向「第 10/11 題本來就是對同一隻摩天輪魔王的連續
   戰鬥」，`mon10.gif` 推測從未作為獨立素材存在過，不是遺失。本次改以
   `mon11.gif` 還原設計意圖：第 10 題（第一型態）套用濾鏡＋略小尺寸顯示同一張
-  立繪，第 11 題（最終型態）維持原色滿版；對映邏輯見
-  `app/helpers/game/bosses_helper.rb` 的 `boss_sprite_source_number`／
-  `boss_phase_label`，視覺樣式見 `app/assets/stylesheets/boss.scss` 的
-  `.boss-phase-1`。`boss_asset_available?` 的文字說明 fallback 機制仍保留，
-  作為其餘題號未來若素材缺失時的防禦。
+  立繪，第 11 題（最終型態）維持原色滿版。這個考證結論後來直接變成 schema：
+  `bosses` 表的第 10、11 題**指向同一列**，型態由 `questions.boss_phase` 決定，
+  取代了原本散在三個 helper method 裡的 `number == 10 ? 11 : number` 判斷
+  （見 `docs/SCHEMA_REDESIGN.md` §2-3——這也是「抽 `bosses` 表」這個決策從
+  「不抽」翻轉成「抽」的原因：怪物與題目不是 1:1）。視覺樣式見
+  `app/assets/stylesheets/boss.scss` 的 `.boss-phase-1`。
+  `boss_asset_available?` 的文字說明 fallback 機制仍保留，作為其餘題號未來若
+  素材缺失時的防禦——`sprite` 是 NOT NULL 字串，這跟 asset 檔案存不存在是兩件事。
 
 ## 部署待辦
 

@@ -121,9 +121,12 @@ p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
 .mon09{ --mon-w: 94%; --mon-x: 3%;    --mon-y: 28%; }
 .mon11{ --mon-w: 95%; --mon-x: 2.5%;  --mon-y: 28%; }
 
-// Boss #10 ("摩天輪魔王・第一型態") reuses mon11's sprite (see
-// `Game::BossesHelper#boss_sprite_source_number` — mon10.gif was never part
-// of the recovered asset set) but renders ~0.85x smaller than boss #11's
+// Boss #10 ("摩天輪魔王・第一型態") reuses mon11's sprite — mon10.gif was never
+// part of the recovered asset set, because questions 10 and 11 fight the same
+// monster. That is a foreign key now: both questions share one `bosses` row
+// and `questions.boss_phase` (1 vs 2) picks the form, which is what
+// `Game::BossesHelper#boss_sprite_css_classes` turns into the modifier class
+// below. Phase 1 renders ~0.85x smaller than boss #11's
 // full-size final phase, so the two stages read as the same monster growing
 // stronger rather than as identical art. Scaled down from mon11's own
 // --mon-w 95% / --mon-x 2.5% above (95% * .85 = 80.75%), with --mon-x

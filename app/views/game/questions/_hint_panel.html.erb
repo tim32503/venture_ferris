@@ -1,20 +1,22 @@
-<%# Renders nothing at all when hints are disabled (question 6) — no hint
-    button, no hint text, matching REFACTOR_PLAN.md P3's "第 6 題不顯示提示按鈕".
-    Legacy equivalent: wheel_question.php:169-171 disables (but still shows)
-    the hint button for qno 6; this hides it outright since there is
-    nothing it could ever do. %>
-<% if question.hints_enabled? %>
+<%# Renders nothing at all for a question with no hint rows (question 6) — no
+    hint button, no hint text, matching REFACTOR_PLAN.md P3's "第 6 題不顯示
+    提示按鈕". Legacy equivalent: wheel_question.php:169-171 disables (but still
+    shows) the hint button for qno 6; this hides it outright since there is
+    nothing it could ever do.
+
+    The cap is the question's own hint count (docs/SCHEMA_REDESIGN.md §2-4):
+    the old `Game::QuestionsController::HINT_LIMIT = 2` constant was really
+    just "however many hint columns the table had". %>
+<% hints = question.hints.to_a %>
+<% if hints.any? %>
   <div class="mb-4! rounded-xl! bg-slate-800/80! p-6! text-slate-100! ring-1! ring-white/10! backdrop-blur!">
-    <p class="text-slate-300!">情報筆記（已使用 <%= attempt.hint_count %> / <%= Game::QuestionsController::HINT_LIMIT %> 次提示）</p>
+    <p class="text-slate-300!">情報筆記（已使用 <%= attempt.hint_count %> / <%= hints.size %> 次提示）</p>
 
-    <% if attempt.hint_count >= 1 %>
-      <p class="mt-2!">(1) <%= question.hint1 %></p>
-    <% end %>
-    <% if attempt.hint_count >= 2 %>
-      <p class="mt-2!">(2) <%= question.hint2 %></p>
+    <% hints.first(attempt.hint_count).each do |hint| %>
+      <p class="mt-2!">(<%= hint.position %>) <%= hint.content %></p>
     <% end %>
 
-    <% if attempt.hint_count < Game::QuestionsController::HINT_LIMIT %>
+    <% if attempt.hint_count < hints.size %>
       <%= button_to "使用提示", hints_game_question_path(question.number),
                      method: :post,
                      class: "mt-4! inline-flex! items-center! justify-center! rounded-lg! bg-slate-700! px-4! py-2! text-sm! font-semibold! text-slate-100! ring-1! ring-white/10! transition! hover:bg-slate-600! cursor-pointer!",

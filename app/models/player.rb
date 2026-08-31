@@ -1,6 +1,11 @@
 # A Player is a member of a Team. Each team has exactly one leader and up to
 # three members (see REFACTOR_PLAN.md §1.1 / §8-2).
 class Player < ApplicationRecord
+  # MAX_LEADERS is expressible as a unique index and MAX_MEMBERS is not (a
+  # count ceiling needs a trigger, which this project deliberately does not
+  # introduce), so the two limits are enforced at different layers — see
+  # docs/SCHEMA_REDESIGN.md §5-7. `#team_capacity` below is the one that
+  # covers both in Ruby.
   MAX_LEADERS = 1
   MAX_MEMBERS = 3
 
@@ -13,7 +18,11 @@ class Player < ApplicationRecord
   enum :job, { uncle: 0, senior: 1, netizen: 2, celebrity: 3 }, validate: { allow_nil: true }
 
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :email, uniqueness: { scope: [ :team_id, :role ] }
+  # Scoped to the team alone, not to [team, role]: one email is one seat on a
+  # team (docs/SCHEMA_REDESIGN.md §2-7d). This must mirror the
+  # `index_players_on_team_id_and_email` unique index exactly — a looser
+  # validation would let `save` pass Ruby and then blow up in PostgreSQL.
+  validates :email, uniqueness: { scope: :team_id }
   validate :team_capacity
 
   private

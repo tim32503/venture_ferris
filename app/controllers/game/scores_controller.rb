@@ -9,7 +9,10 @@ module Game
   class ScoresController < BaseController
     def show
       ScoreEntry.record_pending_for!(current_team)
-      @entries = current_team.score_entries.order(:question_number)
+      # Ordered by the question's business number (not by `question_id`) so
+      # the table keeps reading 1, 2, 3… exactly as it did when the column
+      # was a bare `question_number`.
+      @entries = current_team.score_entries.includes(:question).joins(:question).order("questions.number")
       @total = @entries.sum(&:total_score)
     end
 

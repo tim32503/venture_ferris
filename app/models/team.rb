@@ -49,7 +49,9 @@ class Team < ApplicationRecord
   # started is what the home page's poll now also redirects everyone else
   # on the team toward). Mirrors `active_question_attempt`'s shape.
   def active_boss_battle
-    boss_battles.where.not(started_at: nil).where(ended_at: nil).order(started_at: :desc).first
+    boss_battles.includes(:question)
+                .where.not(started_at: nil).where(ended_at: nil)
+                .order(started_at: :desc).first
   end
 
   # Question numbers this team has completed, low-to-high. Used to show a
