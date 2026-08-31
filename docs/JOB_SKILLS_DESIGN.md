@@ -50,3 +50,9 @@
 ## 平衡備註（demo hp=10 基準）
 
 單人 demo：netizen 主動技 5 傷＝半血，仍需點擊；celebrity 聚光燈使爆擊連發可觀但窗僅 5 秒；uncle/senior 在時限寬鬆的 demo 中偏保險型。正式難度（hp 120/30 秒）下四技均有明確位置。數值日後可調（都是常數）。
+
+---
+
+## 實作完成註記（2026-08-30）
+
+已於分支 `feat/job-skills`（PR #41）全數實作並驗收：四技效果與節流窗經 curl 實測、每場一次由 `boss_skill_uses` unique index 保證、M0 計分黃金值零修改。實作中發現並修正 `Player` 漏掛 `has_many :boss_skill_uses, dependent: :destroy` 的 FK bug（含回歸測試）。

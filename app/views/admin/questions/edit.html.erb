@@ -1,0 +1,105 @@
+<% content_for :title, "編輯第 #{@question.number} 題" %>
+<% content_for :body_class, "bg-slate-50! bg-none! text-slate-800!" %>
+<% content_for :footer_class, "text-slate-400!" %>
+
+<main class="[text-shadow:none]! mx-auto! max-w-6xl! px-4! py-8! sm:py-12! flex! flex-col! gap-6! sm:flex-row!">
+  <%= render "admin/nav" %>
+
+  <div class="min-w-0! flex-1!">
+    <%= render "admin/header", title: "編輯第 #{@question.number} 題" %>
+
+    <%= link_to "← 回題目列表", admin_questions_path, class: "mb-6! inline-block! text-sm! font-semibold! text-indigo-600! hover:text-indigo-500!" %>
+
+    <%= form_with model: @question, url: admin_question_path(@question), method: :patch, local: true, class: "space-y-8!" do |f| %>
+      <div class="rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-base! font-semibold! text-slate-800!">題目內容</h2>
+
+        <div class="mt-4! space-y-4!">
+          <div>
+            <%= f.label :title, "標題", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+            <%= f.text_field :title,
+                  class: "w-full! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+          </div>
+
+          <div>
+            <%= f.label :content, "內容", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+            <%= f.text_area :content, rows: 4,
+                  class: "w-full! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+          </div>
+
+          <div class="grid! grid-cols-1! gap-4! sm:grid-cols-2!">
+            <div>
+              <%= f.label :level, "難度", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+              <%= f.text_field :level,
+                    class: "w-full! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+            </div>
+          </div>
+
+          <div>
+            <%= f.label :explanation, "解說", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+            <%= f.text_area :explanation, rows: 3,
+                  class: "w-full! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-base! font-semibold! text-slate-800!">Boss 參數</h2>
+        <div class="mt-4! grid! grid-cols-1! gap-4! sm:grid-cols-2!">
+          <div>
+            <%= f.label :boss_hp, "Boss HP", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+            <%= f.number_field :boss_hp, min: 1,
+                  class: "w-full! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+          </div>
+          <div>
+            <%= f.label :boss_time_limit, "時限（秒）", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+            <%= f.number_field :boss_time_limit, min: 1,
+                  class: "w-full! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-base! font-semibold! text-slate-800!">答案重設</h2>
+        <p class="mt-1! text-sm! text-slate-500!">目前答案不顯示（僅存雜湊）。留空表示不變更；輸入新答案將立即以雜湊儲存並生效。</p>
+        <div class="mt-4!">
+          <label class="mb-1! block! text-sm! font-medium! text-slate-700!" for="question_new_answer">新答案（明文，留空不變更）</label>
+          <%= text_field_tag "question[new_answer]", nil, id: "question_new_answer", autocomplete: "off",
+                class: "w-full! max-w-sm! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! placeholder:text-slate-400! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+        </div>
+      </div>
+
+      <div class="rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+        <h2 class="text-base! font-semibold! text-slate-800!">提示</h2>
+        <div class="mt-4! space-y-4!" data-hint-fields>
+          <%= f.fields_for :hints do |hint_form| %>
+            <div class="flex! items-end! gap-3! border-b! border-slate-100! pb-4!">
+              <div class="w-20!">
+                <%= hint_form.label :position, "順序", class: "mb-1! block! text-xs! font-medium! text-slate-500!" %>
+                <%= hint_form.number_field :position, min: 1,
+                      class: "w-full! rounded-lg! border-0! px-2! py-1.5! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+              </div>
+              <div class="flex-1!">
+                <%= hint_form.label :content, "內容", class: "mb-1! block! text-xs! font-medium! text-slate-500!" %>
+                <%= hint_form.text_area :content, rows: 2,
+                      class: "w-full! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+              </div>
+              <% if hint_form.object.persisted? %>
+                <div class="flex! items-center! gap-2! pb-2!">
+                  <%= hint_form.check_box :_destroy, class: "h-4! w-4! rounded! border-slate-300! text-rose-600! focus:ring-rose-500!" %>
+                  <%= hint_form.label :_destroy, "刪除", class: "text-sm! text-rose-600!" %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <p class="mt-2! text-xs! text-slate-400!">最下方為新增提示的空白列；順序（position）重複或留白會擋下儲存。</p>
+      </div>
+
+      <div>
+        <%= f.submit "儲存變更",
+              class: "cursor-pointer! rounded-lg! bg-indigo-600! px-5! py-2.5! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!" %>
+      </div>
+    <% end %>
+  </div>
+</main>

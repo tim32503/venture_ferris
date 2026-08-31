@@ -57,6 +57,29 @@
   Pointer Events 引擎，視覺層是 Tailwind CSS v4，細節見下方
   〈前端：全 Hotwire／Tailwind，零 jQuery、零 CSS 框架 CDN〉。
 
+## 相較原作的新增功能
+
+重構之外，這個版本也加上了原作沒有的玩法與營運能力：
+
+- **Boss 戰遊戲化**：點怪物本體攻擊、受擊震動與傷害數字、連擊計數、HP 條
+  三段變色與擊敗演出；隨機浮現的**弱點爆擊**（×2，伺服器端 2 秒節流防刷，
+  見重構亮點）。第 10/11 關依原始劇情考證還原為「摩天輪魔王」雙型態連戰。
+- **四職業主動技**（每場王戰每人一次，`BossSkillUse` unique index 保證；
+  效果與授權全在伺服器端，client 只傳意圖）：
+
+  | 職業 | 被動 | 主動技 |
+  |---|---|---|
+  | 阿北 | 王戰時限 +10 秒 | 倚老賣老・本場時限再 +10 秒 |
+  | 鄉民 | 每次攻擊 +2 | 肉搜公審・立即 5 點傷害 |
+  | 鞋姊 | 提示不扣分 | 醍醐灌頂・下一擊必定爆擊 |
+  | 罔美 | 結算 +100 分 | 聚光燈・5 秒爆擊窗＋立即弱點 |
+
+- **營運後台**（`/admin`，全區伺服器端驗證）：營運總覽 Dashboard（進度
+  分布、進行中戰鬥、兌獎池餘量）、隊伍管理（搜尋/詳情/個資遮罩，刪除僅限
+  test_mode 隊伍且 controller 層硬擋）、題目管理（內容/提示子表/Boss 參數/
+  **答案重設**——輸入明文伺服器轉 digest、永不回顯）、兌獎序號池管理與
+  批次產生、隊伍序號產生器（rqrcode QR）。
+
 ## 架構總覽
 
 ### Models
@@ -71,6 +94,7 @@
 | `QuestionAttempt` | QUEST_LOG | 某隊某題的計時/提示紀錄；`ended_at` 為 null 代表進行中 |
 | `BossBattle` | BOSS_LOG | 每題一場王戰，`question_id` 外鍵；`[team_id, question_id]` 唯一 |
 | `BossReady` | （舊 READY_COUNT 欄位） | 玩家對某場王戰的「準備」標記，join table 保證冪等 |
+| `BossSkillUse` | （新增） | 玩家於某場王戰的主動技使用紀錄，`[boss_battle_id, player_id]` 唯一＝每場每人一次 |
 | `ScoreEntry` | QUEST_SCORE | 每隊每題最終分數，`question_id` 外鍵，伺服器端算好後寫入 |
 | `RewardCode` | WHEEL_PLAYER_REWARD | 兌獎序號池；以 email 為 key，一人固定配發 2 組 |
 | `Admin` | （新增，取代舊站前端驗證機制） | 後台帳號，`has_secure_password` |
@@ -83,6 +107,7 @@ Team 1─N Player          UQ [team_id, email]（一個 email 在一隊只佔一
 Team 1─N QuestionAttempt N─1 Question
 Team 1─N BossBattle      N─1 Question      UQ [team_id, question_id]
          BossBattle 1─N BossReady N─1 Player
+         BossBattle 1─N BossSkillUse N─1 Player
 Team 1─N ScoreEntry      N─1 Question      UQ [team_id, question_id]
 Boss 1─N Question （10 隻怪對 11 題；第 10/11 題指向同一列，
                     以 questions.boss_phase = 1/2 區分型態）
@@ -152,7 +177,7 @@ Bootstrap 4.1.3（含 Font Awesome）全套 CDN，終點是：
   `X-CSRF-Token`。全站前端**沒有任何一行 jQuery**，也沒有任何 Bootstrap／
   Font Awesome 的 `<script>`／`<link>` CDN 標籤。
 - 視覺層改用 **Tailwind CSS v4**（`tailwindcss-rails` gem，免 Node、與既有
-  sprockets pipeline 共存），全站 22 個 view 依 `docs/UI_STYLE_GUIDE.md` 的
+  sprockets pipeline 共存），全站 view（含後台）依 `docs/UI_STYLE_GUIDE.md` 的
   tokens／元件配方逐頁改版；`app/assets/stylesheets/site.scss` 與
   `boss.scss` 兩份 2018 年手調座標的舊 SCSS 只保留 Tailwind 覆蓋不到的功能性
   樣式（拼圖引擎的幾何定位、Boss 立繪疊圖的相對座標、地圖熱點、`scroll-snap`

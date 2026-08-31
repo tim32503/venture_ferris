@@ -1,0 +1,9 @@
+<nav class="w-full! shrink-0! sm:w-44!">
+  <ul class="flex! gap-2! overflow-x-auto! sm:flex-col! sm:gap-1! sm:overflow-visible!">
+    <li><%= link_to "Dashboard", admin_root_path, class: admin_nav_link_class(current_page?(admin_root_path)) %></li>
+    <li><%= link_to "隊伍管理", admin_teams_path, class: admin_nav_link_class(current_page?(admin_teams_path)) %></li>
+    <li><%= link_to "題目管理", admin_questions_path, class: admin_nav_link_class(current_page?(admin_questions_path)) %></li>
+    <li><%= link_to "兌獎序號", admin_reward_codes_path, class: admin_nav_link_class(current_page?(admin_reward_codes_path)) %></li>
+    <li><%= link_to "隊伍序號", admin_serial_codes_path, class: admin_nav_link_class(current_page?(admin_serial_codes_path)) %></li>
+  </ul>
+</nav>
