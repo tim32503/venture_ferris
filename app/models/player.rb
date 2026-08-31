@@ -11,6 +11,11 @@ class Player < ApplicationRecord
 
   belongs_to :team
   has_many :boss_readies, dependent: :destroy
+  # Mirrors `boss_readies` above: without this, destroying a Player who has
+  # activated a Boss-fight skill (docs/JOB_SKILLS_DESIGN.md) hits the
+  # `boss_skill_uses.player_id` FK instead of cascading — found by manually
+  # cleaning up dev-server demo data created while verifying this feature.
+  has_many :boss_skill_uses, dependent: :destroy
 
   enum :role, { leader: 0, member: 1 }, validate: true
   enum :gender, { unspecified: 0, male: 1, female: 2 }, default: :unspecified, validate: true

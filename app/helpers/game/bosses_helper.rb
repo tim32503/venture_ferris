@@ -73,5 +73,17 @@ module Game
     def boss_redirect_base_path
       game_boss_path(Question::FIRST_NUMBER).delete_suffix(Question::FIRST_NUMBER.to_s)
     end
+
+    # Whether `player` can still activate their job's active skill in
+    # `battle` (docs/JOB_SKILLS_DESIGN.md) — shared by
+    # Game::BossesController#status/#skill and the boss page's initial
+    # render, so the "used it already" fact is computed exactly once and the
+    # skill card's disabled state on first paint always agrees with what the
+    # very first poll tick would report.
+    def boss_skill_available?(battle, player)
+      player.job.present? &&
+        battle.started_at.present? && battle.ended_at.blank? &&
+        !battle.boss_skill_uses.exists?(player_id: player.id)
+    end
   end
 end

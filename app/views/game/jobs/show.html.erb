@@ -26,6 +26,8 @@
             <%= image_tag "#{job}.png", class: "block! w-full! rounded-lg!", alt: job_label(job) %>
             <div class="job-carousel-caption">
               <h5 class="mb-2! text-lg! font-bold! text-slate-100!"><%= job_label(job) %></h5>
+              <p class="mb-1! text-xs! text-slate-300!"><%= job_passive_description(job) %></p>
+              <p class="mb-2! text-xs! text-amber-400!">主動：<%= job_skill_name(job) %>・<%= job_skill_description(job) %></p>
               <%= form_with url: game_job_path, method: :patch, local: true do |f| %>
                 <%= f.hidden_field :job, value: job %>
                 <%= f.submit "選擇#{job_label(job)}",
