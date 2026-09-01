@@ -1,7 +1,16 @@
 # 勇闖摩天輪（Venture Ferris）
 
+[▶ Live Demo](https://venture-ferris.fly.dev)
+
 一個把 2018 年台北市商業處「勇闖摩天輪」團隊實境解謎活動網站，從 2018 年老舊
 的 CodeIgniter 3 專案重構為 Rails 7.2 的技術作品集專案。
+
+![遊戲流程展示](docs/images/demo.gif)
+
+點首頁「▶ 直接體驗（Demo）」即可單人跑完取隊名、選職業、地圖解謎到 Boss
+戰的完整流程，不需要湊滿 4 人；Demo 模式下 Boss 血量與時限都已調降，方便
+一個人在幾分鐘內體驗到結算畫面（正式站部署在東京、有 auto-suspend，第一次
+打開可能要等一兩秒喚醒機器）。
 
 ## 專案簡介
 
