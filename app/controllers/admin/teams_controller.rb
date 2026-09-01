@@ -35,16 +35,9 @@ class Admin::TeamsController < Admin::BaseController
     end
 
     serial_no = @team.serial_no
-    # Reward codes are keyed by player email (a deliberate denormalization,
-    # see docs/SCHEMA_REDESIGN.md §5), so destroying the team would otherwise
-    # leave its allocated codes permanently drained from the pool. Test teams
-    # are the only deletable kind, so releasing their codes is always safe.
-    member_emails = @team.players.pluck(:email)
-    Team.transaction do
-      @team.destroy!
-      RewardCode.where(player_email: member_emails)
-                .update_all(player_email: nil, claimed_at: nil)
-    end
+    # Delete + reward-code release is shared with `rails demo:cleanup`
+    # (lib/tasks/demo_cleanup.rake) — see Team#purge_with_reward_release!.
+    @team.purge_with_reward_release!
     redirect_to admin_teams_path, notice: "已刪除測試隊伍 #{serial_no}（其配發的兌獎序號已釋回池中）"
   end
 

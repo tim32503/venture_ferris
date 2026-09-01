@@ -68,4 +68,27 @@ class TeamTest < ActiveSupport::TestCase
     assert_equal 9, team.solved_count
     assert_equal Team::FINAL_MAP_NUMBER, team.current_map
   end
+
+  test "purge_with_reward_release! destroys a test_mode team and releases only its own claimed reward codes" do
+    team = build_team(test_mode: true).tap(&:save!)
+    player = Player.create!(team: team, role: :leader, email: "purge-me@example.com")
+    mine = RewardCode.create!(code: "PURGERELEASE0001", test_mode: true,
+                               player_email: player.email, claimed_at: Time.current)
+    someone_elses = RewardCode.create!(code: "PURGERELEASE0002", test_mode: true,
+                                        player_email: "unrelated@example.com", claimed_at: Time.current)
+
+    team.purge_with_reward_release!
+
+    assert_not Team.exists?(team.id)
+    assert_nil mine.reload.player_email
+    assert_nil mine.claimed_at
+    assert_equal "unrelated@example.com", someone_elses.reload.player_email
+  end
+
+  test "purge_with_reward_release! refuses a non-test_mode (production) team" do
+    team = build_team(test_mode: false).tap(&:save!)
+
+    assert_raises(ArgumentError) { team.purge_with_reward_release! }
+    assert Team.exists?(team.id)
+  end
 end

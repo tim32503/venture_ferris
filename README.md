@@ -308,7 +308,16 @@ CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加
   為逗號分隔的允許網域清單（見 `config/environments/production.rb`）；
   不設定則維持 Rails 預設（不限制 Host）。
 - 重新產生正式環境用的序號池與兌獎序號池（目前 seeds 裡的都是示範用途）。
-- 首頁 Demo 入口（`POST /game/session` 帶 `demo=1`）目前**沒有節流**：任何
-  訪客每點一次就建立一組新的 `Team`+`Player` 並在兌獎時消耗 `RewardCode`
-  池。公開部署前應加上 rate limit（如 `rack-attack`）與 `test_mode` 隊伍的
-  定期清理排程。
+- 首頁 Demo 入口的濫用防護已完成：`config/initializers/rack_attack.rb`
+  用 `rack-attack` 對 `POST /game/session`（`demo=1` 每 IP 每小時 5 次、
+  一般登入每 IP 每分鐘 20 次）與 `POST /admin/session`（每 IP 每分鐘 10 次）
+  節流，超過門檻回傳 429 與中文提示；門檻可用環境變數覆寫（見該檔）。
+  遊戲行為端點（Boss 攻擊、各種 `*/status` 輪詢）刻意不節流，initializer
+  內有明確註解說明邊界。搭配 `rails demo:cleanup`（`lib/tasks/demo_cleanup.rake`）
+  定期清除超過 `DEMO_CLEANUP_HOURS`（預設 24）小時的 `test_mode` 隊伍並釋回
+  其配發的兌獎序號，`Team::DEMO_SERIAL_NO` 展示隊伍固定排除。部署時建議加入
+  crontab，例如每小時執行一次：
+
+  ```
+  0 * * * * cd /app && bin/rails demo:cleanup
+  ```

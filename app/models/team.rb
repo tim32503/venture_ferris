@@ -74,4 +74,29 @@ class Team < ApplicationRecord
   def defeated_boss_numbers
     boss_battles.completed.joins(:question).order("questions.number").pluck("questions.number")
   end
+
+  # Destroys this team and releases any reward codes its players had
+  # claimed back to the pool. Shared by Admin::TeamsController#destroy (an
+  # operator deleting one team by hand) and `rails demo:cleanup`
+  # (lib/tasks/demo_cleanup.rake, batch-deleting stale demo teams) so the
+  # "delete + release" behavior can never drift between the two callers.
+  #
+  # Reward codes are keyed by player email (a deliberate denormalization,
+  # see docs/SCHEMA_REDESIGN.md §5), so destroying the team would otherwise
+  # leave its allocated codes permanently drained from the pool.
+  #
+  # Only ever safe for `test_mode` teams — both callers are already
+  # restricted to test_mode teams at their own layer (the admin controller
+  # refuses non-test_mode ids before calling this; the cleanup rake task
+  # only ever queries `test_mode: true`), but the guard is repeated here so
+  # a future caller cannot accidentally destroy production data.
+  def purge_with_reward_release!
+    raise ArgumentError, "refusing to purge a non-test_mode team (id=#{id})" unless test_mode?
+
+    member_emails = players.pluck(:email)
+    self.class.transaction do
+      destroy!
+      RewardCode.where(player_email: member_emails).update_all(player_email: nil, claimed_at: nil)
+    end
+  end
 end
