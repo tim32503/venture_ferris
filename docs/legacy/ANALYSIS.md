@@ -61,7 +61,7 @@
 **沒有傳統帳密登入，分兩套完全不同、且都不安全的機制：**
 
 - **玩家端**：靠 URL 網址帶參數。`/wheel/login/{SERIAL_NO}/{CHAR_TYPE}`（`application/controllers/Wheel.php:19-31`）把 16 碼序號＋角色類型（Leader/Member）丟給 view；真正「登入」動作在 `/wheel/register/{sno}/{type}/{uid}/{gender}`（`Wheel.php:258-279`），呼叫 `Wheel_model::checkUserData()`（`application/models/wheel/Wheel_model.php:64-108`）驗證序號長度與是否存在於 `WHEEL_PLAYER_MAIN`，通過後用 `$this->session->set_userdata($data)` 把整包資料寫進 CI session（第 105 行）。之後所有頁面靠 session 裡的 `SERIAL_NO`/`USER_ID`/`CHAR_TYPE` 認人，**沒有密碼，沒有 token 過期以外的保護**，session 用 CI 內建 `session` library，`files` driver，cookie 名稱 `ci_session`，過期時間 7200 秒（`application/config/config.php:380-386`）。`csrf_protection` 是關閉的（`application/config/config.php:451`）
-- **後台端**：`Admin` controller（`application/controllers/Admin.php`）四個 method **完全沒有任何伺服器端驗證**——不檢查 session、不檢查 token。畫面上用 Firebase Authentication + FirebaseUI 讓人用 Google/Email 登入，登入後由 `admin_identify.php:14-24` 這段**前端 JavaScript**檢查 `user.email != "tim32503@gmail.com"` 來決定要不要導去 `/admin/home`。也就是說任何人只要直接打 `GET /admin/home` 或 `/admin/generate` 就能看到序號產生器內容，Firebase 驗證只是「畫面導引」，不是真正的存取控制
+- **後台端**：`Admin` controller（`application/controllers/Admin.php`）四個 method **完全沒有任何伺服器端驗證**——不檢查 session、不檢查 token。畫面上用 Firebase Authentication + FirebaseUI 讓人用 Google/Email 登入，登入後由 `admin_identify.php:14-24` 這段**前端 JavaScript**檢查 `user.email != "<個人 Gmail，已遮蔽>"` 來決定要不要導去 `/admin/home`。也就是說任何人只要直接打 `GET /admin/home` 或 `/admin/generate` 就能看到序號產生器內容，Firebase 驗證只是「畫面導引」，不是真正的存取控制
 
 ## 8. 敏感資訊清單（只列位置，不貼值）
 
@@ -72,7 +72,7 @@
 | 3 | `application/views/admin/admin_index.php:17-22` | Firebase Web SDK 設定（apiKey/authDomain/databaseURL/projectId/storageBucket/messagingSenderId），舊活動專案，應視為需棄用 |
 | 4 | `application/views/wheel/wheel_home.php:38-45` | 同一組 Firebase 設定重複出現 |
 | 5 | `application/views/wheel/wheel_boss.php:12-20`（header 區塊，載入 Firebase JS/CSS） | 與上同一 Firebase 專案的 SDK 引用 |
-| 6 | `application/views/admin/admin_home.php:16` | 寫死的個人 Gmail 帳號（`tim32503@gmail.com`）被當成「是否為管理員」唯一判斷依據 |
+| 6 | `application/views/admin/admin_home.php:16` | 寫死的個人 Gmail 帳號（個人 Gmail，已遮蔽）被當成「是否為管理員」唯一判斷依據 |
 | 7 | `application/views/admin/admin_home.php:6,18,20,23,27,29` | 寫死指向個人測試網域 `https://test.curihaosity.xyz`，與正式網域（`application/config/config.php:26`：`https://taipeicooc2018.escapeholics.com/`）不一致，屬殘留的開發期硬編碼 |
 | 8（次要，非洩漏） | `application/core/config/database.php` | 整個 `application/core/config/` 是與 `application/config/` 內容不同的孤兒複本（帳密欄位是空的，CI 也不會載入這個路徑，`grep -rn "core/config"` 全專案查無引用），清理時建議確認排除、不要誤搬進新專案 |
 
