@@ -1,0 +1,54 @@
+# fly.toml — Fly.io app configuration for venture_ferris
+#
+# App name: "venture-ferris" is not reserved in advance. If `fly launch` /
+# `fly apps create venture-ferris` reports the name is taken, pick another
+# (e.g. "venture-ferris-<something>") and update the `app` line below plus
+# every reference to venture-ferris.fly.dev in docs/DEPLOYMENT.md and
+# config/environments/production.rb's ALLOWED_HOSTS value.
+#
+# Target configuration (see "Fly.io 深度查證" in docs/DEPLOYMENT_RESEARCH.md
+# for the pricing math behind these choices): shared-cpu-1x / 512MB app
+# machine with a 512MB swap, auto-suspend to $0 compute while idle, paired
+# with an unmanaged Fly Postgres single-node "Development" cluster (256MB) —
+# together this lands under the ~$5/month small-invoice waiver Fly.io has
+# applied to this account's recent bills (not a contractual guarantee, see
+# the research doc §1).
+app = "venture-ferris"
+primary_region = "nrt"
+
+[build]
+
+[deploy]
+  # Runs once per deploy, on its own machine, before traffic is cut over.
+  # bin/docker-entrypoint also runs `db:prepare` on every server boot as a
+  # defensive fallback (e.g. after a machine resumes from suspend without a
+  # fresh deploy) — both calls are idempotent, so having both is deliberate,
+  # not redundant configuration drift.
+  release_command = "bin/rails db:prepare"
+
+[env]
+  RAILS_ENV = "production"
+  RAILS_LOG_TO_STDOUT = "true"
+  RAILS_SERVE_STATIC_FILES = "true"
+  PORT = "3000"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/up"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  swap_size_mb = 512
+  processes = ["app"]

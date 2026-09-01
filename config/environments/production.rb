@@ -46,7 +46,11 @@ Rails.application.configure do
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # Can be used together with config.force_ssl for Strict-Transport-Security and secure cookies.
-  # config.assume_ssl = true
+  # Fly.io's edge proxy terminates TLS and forwards plain HTTP to the app over
+  # its private network, setting X-Forwarded-Proto: https — without this,
+  # force_ssl below would see a plain-HTTP request and 301-redirect it to
+  # itself, an infinite redirect loop. See docs/DEPLOYMENT.md.
+  config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
@@ -100,11 +104,12 @@ Rails.application.configure do
   #   "example.com",     # Allow requests from example.com
   #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
   # ]
-  # Deployment target is not yet decided (see README.md "部署待辦"), so this
-  # only takes effect when the ALLOWED_HOSTS env var is actually set — a
-  # comma-separated list of hostnames, e.g. "example.com,www.example.com".
-  # Leaving it unset keeps the default (commented-out, i.e. no allowlist)
-  # behavior above.
+  # Deployed on Fly.io (see docs/DEPLOYMENT.md). This only takes effect when
+  # the ALLOWED_HOSTS env var is actually set — a comma-separated list of
+  # hostnames, e.g. "venture-ferris.fly.dev,example.com". Leaving it unset
+  # keeps the default (commented-out, i.e. no allowlist) behavior above.
+  # `fly secrets set ALLOWED_HOSTS=...` should always include the app's
+  # *.fly.dev hostname, plus any custom domain later attached.
   if ENV["ALLOWED_HOSTS"].present?
     config.hosts = ENV["ALLOWED_HOSTS"].split(",").map(&:strip)
   end
