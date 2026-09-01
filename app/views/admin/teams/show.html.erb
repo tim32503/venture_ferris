@@ -31,7 +31,9 @@
         </div>
       </dl>
 
-      <% if @team.test_mode? %>
+      <% if current_admin&.viewer? %>
+        <p class="mt-6! text-sm! text-slate-500!">唯讀模式不可操作。</p>
+      <% elsif @team.test_mode? %>
         <div class="mt-6!">
           <%= button_to "刪除此測試隊伍", admin_team_path(@team), method: :delete,
                 data: { turbo_confirm: "確定要刪除測試隊伍 #{@team.serial_no} 嗎？此操作將一併清除隊員、解題紀錄、戰鬥紀錄與分數，且無法復原。" },

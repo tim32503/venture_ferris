@@ -10,6 +10,11 @@
 
     <%= link_to "← 回題目列表", admin_questions_path, class: "mb-6! inline-block! text-sm! font-semibold! text-indigo-600! hover:text-indigo-500!" %>
 
+    <% if current_admin&.viewer? %>
+      <div class="rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
+        <p class="text-sm! text-slate-500!">唯讀模式不可操作。</p>
+      </div>
+    <% else %>
     <%= form_with model: @question, url: admin_question_path(@question), method: :patch, local: true, class: "space-y-8!" do |f| %>
       <div class="rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
         <h2 class="text-base! font-semibold! text-slate-800!">題目內容</h2>
@@ -100,6 +105,7 @@
         <%= f.submit "儲存變更",
               class: "cursor-pointer! rounded-lg! bg-indigo-600! px-5! py-2.5! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!" %>
       </div>
+    <% end %>
     <% end %>
   </div>
 </main>

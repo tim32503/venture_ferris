@@ -1,3 +1,9 @@
+<% if current_admin&.viewer? %>
+  <div class="mb-6! rounded-lg! bg-amber-50! px-4! py-3! text-sm! font-semibold! text-amber-800! ring-1! ring-amber-200!">
+    展示模式（唯讀）— 這是公開的展示帳號，可以瀏覽後台所有頁面，但所有寫入操作都會被伺服器擋下。
+  </div>
+<% end %>
+
 <div class="mb-6! flex! items-center! justify-between!">
   <h1 class="text-xl! font-bold! text-slate-800!"><%= title %></h1>
   <%= button_to "登出", admin_session_path, method: :delete,

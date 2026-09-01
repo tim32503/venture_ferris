@@ -13,6 +13,7 @@
 # is itself a kind of Module.
 class Admin::BaseController < ApplicationController
   before_action :require_admin
+  before_action :block_viewer_writes
 
   private
 
@@ -25,5 +26,27 @@ class Admin::BaseController < ApplicationController
     return if current_admin
 
     redirect_to admin_login_path, alert: "請先登入後台"
+  end
+
+  # The viewer role exists so a portfolio visitor can log in with a public,
+  # intentionally-published account and actually click around the real back
+  # office — but never change anything. Enforcement lives here, at the base
+  # controller, rather than as a per-action check in each controller: it
+  # blocks by HTTP verb (any non-GET/HEAD request) instead of by listing
+  # every write action, so a future controller/action that writes data is
+  # covered automatically the moment it inherits from Admin::BaseController,
+  # with no extra step to remember. Admin::SessionsController skips this
+  # (see its own `skip_before_action`) because a viewer must still be able
+  # to log in (POST) and log out (DELETE).
+  #
+  # This is the actual security boundary for the read-only demo account: the
+  # UI hides write forms/buttons for viewers (app/views/admin/**) purely as
+  # a UX nicety, but that alone would not stop a direct POST/PATCH/DELETE
+  # crafted outside the browser — this before_action does.
+  def block_viewer_writes
+    return unless current_admin&.viewer?
+    return if request.get? || request.head?
+
+    redirect_back fallback_location: admin_root_path, alert: "展示帳號為唯讀模式"
   end
 end

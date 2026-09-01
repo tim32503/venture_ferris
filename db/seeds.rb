@@ -242,6 +242,27 @@ unless Admin.exists?(email: ADMIN_EMAIL)
   Admin.create!(
     email: ADMIN_EMAIL,
     password: ENV.fetch("ADMIN_PASSWORD", "changeme"),
+    role: :operator,
+  )
+end
+
+# ---------------------------------------------------------------------------
+# 6. Viewer demo account (portfolio showcase — password intentionally public)
+# ---------------------------------------------------------------------------
+# This is not a real credential to protect: it exists so a portfolio visitor
+# can log into the actual back office and click around, and the point only
+# works if the password is published right here rather than pulled from an
+# ENV var. What keeps it safe to publish is that every write it could
+# attempt is refused server-side (Admin::BaseController#block_viewer_writes),
+# not that the password is hard to find.
+DEMO_VIEWER_EMAIL = "demo-admin@venture-ferris.example"
+DEMO_VIEWER_PASSWORD = "walkthrough2026"
+
+unless Admin.exists?(email: DEMO_VIEWER_EMAIL)
+  Admin.create!(
+    email: DEMO_VIEWER_EMAIL,
+    password: DEMO_VIEWER_PASSWORD,
+    role: :viewer,
   )
 end
 

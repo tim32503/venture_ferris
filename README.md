@@ -106,7 +106,7 @@
 | `BossSkillUse` | （新增） | 玩家於某場王戰的主動技使用紀錄，`[boss_battle_id, player_id]` 唯一＝每場每人一次 |
 | `ScoreEntry` | QUEST_SCORE | 每隊每題最終分數，`question_id` 外鍵，伺服器端算好後寫入 |
 | `RewardCode` | WHEEL_PLAYER_REWARD | 兌獎序號池；以 email 為 key，一人固定配發 2 組 |
-| `Admin` | （新增，取代舊站前端驗證機制） | 後台帳號，`has_secure_password` |
+| `Admin` | （新增，取代舊站前端驗證機制） | 後台帳號，`has_secure_password`；`role` enum 分 `operator`／`viewer`（唯讀展示帳號） |
 
 文字版 ERD（`1—N` 表示一對多）：
 
@@ -246,6 +246,26 @@ ADMIN_PASSWORD=your-password bin/rails db:seed
 > 上面的預設值 `changeme`。另外要注意：帳號建立之後才改 secret 不會自動更新
 > 既有帳號的密碼（seeds 只在建立時讀取），改密碼需同時更新資料庫中的
 > `Admin` 記錄（例如 `Admin.find_by!(email: ...).update!(password: ...)`）。
+
+### 展示帳號（唯讀）
+
+`db/seeds.rb` 另外會建立一個公開的展示帳號，讓作品集訪客可以實際登入後台
+瀏覽，帳密**刻意公開**（`Admin.role` enum 的 `viewer`，見
+`app/models/admin.rb`）：
+
+```
+email: demo-admin@venture-ferris.example
+password: walkthrough2026
+```
+
+viewer 可以看到後台所有頁面（Dashboard、隊伍管理、題目管理、兌獎序號、隊伍
+序號），但任何寫入操作都會被擋下，並顯示「展示模式（唯讀）」提示。設計上
+**寫入攔截在伺服器端 controller 層，非僅前端隱藏**——`Admin::BaseController`
+的 `block_viewer_writes` 會擋下 viewer 帳號送出的所有非 GET 請求（見
+`app/controllers/admin/base_controller.rb`），即使直接對寫入端點發送
+POST/PATCH/DELETE 也一樣被拒絕，前端只是額外把對應的表單／按鈕換成「唯讀模式
+不可操作」的說明文字，純粹是 UX，不是安全邊界。一般 operator 帳號（例如上面
+的 `admin@venture-ferris.example`）完全不受影響。
 
 ## 測試
 
