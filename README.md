@@ -1,6 +1,6 @@
 # 勇闖摩天輪（Venture Ferris）
 
-[▶ Live Demo](https://venture-ferris.fly.dev)
+[▶ Live Demo](https://venture-ferris.curihaosity.xyz)
 
 一個把 2018 年台北市商業處「勇闖摩天輪」團隊實境解謎活動網站，從 2018 年老舊
 的 CodeIgniter 3 專案重構為 Rails 7.2 的技術作品集專案。
@@ -241,6 +241,11 @@ ADMIN_PASSWORD=your-password bin/rails db:seed
 
 若未設定 `ADMIN_PASSWORD`，seeds 會用預設密碼 `changeme`（僅供本機示範，正式
 環境請務必自行設定這個環境變數後再跑 seeds）。
+
+> ⚠️ **正式環境的後台密碼＝部署時設定的 `ADMIN_PASSWORD` secret 的值**，不是
+> 上面的預設值 `changeme`。另外要注意：帳號建立之後才改 secret 不會自動更新
+> 既有帳號的密碼（seeds 只在建立時讀取），改密碼需同時更新資料庫中的
+> `Admin` 記錄（例如 `Admin.find_by!(email: ...).update!(password: ...)`）。
 
 ## 測試
 
