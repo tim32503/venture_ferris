@@ -304,8 +304,9 @@ CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加
   `auto_stop_machines = "suspend"` 省成本、`release_command` 部署時跑
   `bin/rails db:prepare`。
 - `.github/workflows/deploy.yml`：push 到 `main` 自動部署；另有每日排程
-  跑 `bin/rails demo:cleanup`（取代下方原本建議的 host crontab 方案，
-  因為 Fly machine 沒有常駐 host 層 crontab 可用）；兩者都有
+  跑 `bin/rails demo:cleanup`（Fly machine 沒有常駐 host 層 crontab，
+  故清理排程落在 CI 的 schedule job；執行前會先打 `/up` 喚醒
+  auto-suspend 的機器）；兩者都有
   `FLY_API_TOKEN` secret 存在性檢查，secret 未設定時只是灰色 skip 不會讓
   build 變紅。
 - `config/environments/production.rb`：`assume_ssl` ＋ `force_ssl` 搭配

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Abuse-prevention throttles for the public deployment (see README「部署待辦」).
+# Abuse-prevention throttles for the public deployment (see README「部署」節).
 #
 # This app deploys to a single fixed-cost VPS with no plan to scale across
 # multiple app servers (see README), so `Rails.cache` (the file store by

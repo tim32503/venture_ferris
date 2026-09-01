@@ -110,7 +110,7 @@ flyctl 會用 `Dockerfile` 建 image（預設走 remote builder），推送後�
 
 1. 先跑 `fly.toml` 的 `release_command`（`bin/rails db:prepare`）在一台獨立的
    release machine 上，建好 schema。
-2. 再啟動 app machine，套用 `[[vm]]` 的 512MB＋512MB swap 規格，掛上
+2. 再啟動 app machine，套用 512MB machine＋512MB swap（`swap_size_mb` 是 fly.toml 頂層欄位）規格，掛上
    `[http_service]` 的 `auto_stop_machines = "suspend"` 等設定。
 
 ## 7. 首次載入 seed 資料

@@ -61,6 +61,14 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
+      - name: Wake the machine before SSH
+        # min_machines_running = 0 + auto-suspend means the machine is almost
+        # certainly asleep when this cron fires, and `flyctl ssh console` does
+        # NOT go through http_service so it cannot trigger auto-start itself.
+        # An HTTP hit on /up wakes the machine first; a few retries cover the
+        # resume window.
+        run: curl -sS --retry 5 --retry-delay 3 --retry-all-errors -o /dev/null https://venture-ferris.fly.dev/up
+
       - name: Run rails demo:cleanup on the deployed machine
         # -a matches fly.toml's `app = "venture-ferris"` — update both if
         # the app is ever renamed (see fly.toml's header comment on name

@@ -1,8 +1,8 @@
-# Periodic cleanup for the public "Demo" entry point (README「部署待辦」):
+# Periodic cleanup for the public "Demo" entry point (README「部署」節):
 # every homepage Demo click leaves behind a `test_mode` Team + Player row
 # (Game::SessionsController#create_demo!) that nobody ever comes back to
-# delete. Meant to run on a schedule (e.g. hourly via cron — see the README
-# for the exact line), not by hand.
+# delete. Runs daily via the schedule job in .github/workflows/deploy.yml,
+# not by hand.
 namespace :demo do
   desc "Delete test_mode teams older than DEMO_CLEANUP_HOURS (default 24), releasing their reward codes"
   task cleanup: :environment do

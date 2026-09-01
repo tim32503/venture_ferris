@@ -15,6 +15,9 @@
 # the research doc §1).
 app = "venture-ferris"
 primary_region = "nrt"
+# Top-level app field — putting this inside [[vm]] gets silently dropped by
+# flyctl (verified with `flyctl config show --local`).
+swap_size_mb = 512
 
 [build]
 
@@ -50,5 +53,4 @@ primary_region = "nrt"
 [[vm]]
   size = "shared-cpu-1x"
   memory = "512mb"
-  swap_size_mb = 512
   processes = ["app"]
