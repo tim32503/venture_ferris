@@ -14,277 +14,77 @@
 
 ## 專案簡介
 
-原案是 2018 年在台北大直美麗華旁舉辦的線下團隊實境解謎活動：玩家掃描活動序號
-登入、組成 1 隊長＋最多 3 隊員的隊伍、選擇「阿北／鄉民／鞋姊／罔美」四種職業
-（各有不同的解謎輔助效果），接著在三張地圖上依序破解 11 道謎題（拼圖題／問答
-題／密碼題），每破解一題就會觸發一場「打王」——對該題專屬的怪物即時累計攻擊
-次數直到擊敗為止，全部關卡結束後依時間、提示使用次數、職業加成計算總分，最後
-用分數兌換獎品序號。
+原案是 2018 年在台北大直美麗華旁舉辦的線下團隊實境解謎活動：玩家掃序號登
+入、組隊、選職業，依序破解 11 道謎題並「打王」，最後依時間、提示使用次數、
+職業加成計算總分，兌換獎品序號。
 
 這個 repo 是該遊戲玩法邏輯的完整重寫，用來展示如何把一個「前端幾乎沒有任何
 伺服器端把關」的 10 年前 PHP 專案，改寫成一個資料驗證、權限控管都在伺服器端
 完成的現代 Rails 應用。
 
 > 原案的活動素材、美術與品牌名稱版權屬原主辦單位所有，本專案僅作**技術重構
-> 展示**用途，不用於任何商業或活動用途。詳見〈素材授權註記〉。
+> 展示**用途，不用於任何商業或活動用途。詳見下方〈素材授權註記〉。
 
 ## 重構亮點
 
-這份重構的重點不是「把 PHP 翻譯成 Ruby」，而是把幾個舊站架構上有明確安全或
-維護性問題的地方，改成 Rails 慣用且正確的做法：
+- **答案驗證伺服器端化。** 舊站把正確答案直接印在頁面 HTML／JS 裡，開發者工具就能看到；新版比對全在 `POST /game/questions/:number/answer` 完成，頁面 render 內容不含 digest。細節見 [ARCHITECTURE.md「重構亮點」](docs/ARCHITECTURE.md#refactor-highlights)。
+- **後台伺服器端驗證＋唯讀展示角色。** 舊站後台只用前端 SDK 擋畫面、可直接繞過；新版 `has_secure_password` + session 逐 action 檔在伺服器端，另有 `viewer` 唯讀角色供訪客瀏覽而不能寫入。細節同上。
+- **Boss 戰爆擊伺服器端節流。** 前端只「宣告」爆擊，實際傷害與 2 秒節流窗全在伺服器端判定，竄改 client 連發爆擊無效。細節同上。
+- **前端零 jQuery、零 CSS 框架 CDN。** 舊站整套 jQuery／jQuery UI／Bootstrap 4／Font Awesome 已移除，拼圖拖拉改寫為原生 Pointer Events 引擎，視覺層改用 Tailwind CSS v4。細節見 [ARCHITECTURE.md「前端」](docs/ARCHITECTURE.md#frontend)。
+- **正規化 schema，計分邏輯有黃金值測試護欄。** 9 張表的正規化決策（含 8 條刻意保留的非正規設計）逐一論證於 `docs/SCHEMA_REDESIGN.md`；重構前後計分測試斷言值逐位元不變。細節見 [ARCHITECTURE.md「刻意保留的非正規設計」](docs/ARCHITECTURE.md#non-normalized-design)。
 
-- **答案驗證從前端搬到伺服器端。** 舊站 `wheel_question.php:241` 會把題目的
-  正確答案直接印在頁面的 HTML／JS 裡，玩家打開瀏覽器開發工具就能看到答案。新
-  版新增了 `POST /game/questions/:number/answer`（`Game::QuestionsController`）
-  做伺服器端比對，`questions#show` 的 render 內容完全不含 `answer_digest`
-  （見 `app/models/question.rb` 的 `Question.digest_for`／`#answer?`）。
-- **後台驗證從前端遮罩改為伺服器端驗證。** 舊站 admin 後台原本只用一個
-  第三方前端驗證 SDK 擋畫面，沒有任何伺服器端檢查，任何人直接打 API 或修改
-  JS 都能繞過；新版 `Admin`（`app/models/admin.rb`）用 `has_secure_password`
-  + session，`Admin::BaseController#require_admin` 在每個 action 前檔。
-- **CSRF 保護啟用。** 舊站整站關閉 CSRF；新版沿用 Rails 預設全站開啟
-  （`app/views/layouts/application.html.erb` 的 `csrf_meta_tags`，前端
-  fetch 一律透過 `app/javascript/lib/api.js` 帶 `X-CSRF-Token`）。
-- **輪詢機制從伺服器端 long-poll 改成 client 端定時輪詢。** 舊站
-  `Wheel_model.php` 用 `while(true) + usleep()` 在單個 request 裡阻塞等待
-  狀態變化；新版改用 Stimulus controller（`active_question_poll_controller.js`
-  等）每 500ms 固定間隔打一次 `status.json`，endpoint 本身永遠立即
-  `render json:` 回應，不佔用 worker。
-- **Boss 挑戰 ready 狀態冪等化。** 舊站的 `BOSS_LOG.READY_COUNT` 是一個計數
-  欄位，玩家重新整理頁面就會被重複計數，灌爆人數；新版改成 `BossReady`
-  join table（`team_id/boss_battle_id + player_id` 唯一索引），ready 人數
-  由 `COUNT` 出來，同一個玩家按幾次都只算一次。
-- **Boss 戰爆擊只在伺服器端節流窗外採信。** 遊戲化後的弱點爆擊由前端「宣告」
-  （`critical` 參數），但傷害計算與 2 秒節流（`boss_battles.last_critical_at`、
-  `BossBattle#critical_ready?`）全在伺服器端——竄改 client 連發爆擊，超出節流
-  窗的宣告一律按普通攻擊計，延續全案「驗證都在伺服器端」的原則。
-- **棄用的 Google Image Charts 改用 `rqrcode`。** 舊站後台序號產生器用
-  Google 已下架的 Image Charts API 產生 QR code；新版改用 `rqrcode` gem
-  在本機產生（`Admin::SerialCodesController`）。
-- **前端零 jQuery、零 CSS 框架 CDN。** 舊站整套 jQuery／jQuery UI／
-  Bootstrap 4／Font Awesome CDN 已全數移除；拼圖拖拉是自寫的原生
-  Pointer Events 引擎，視覺層是 Tailwind CSS v4，細節見下方
-  〈前端：全 Hotwire／Tailwind，零 jQuery、零 CSS 框架 CDN〉。
+完整論述、架構總覽（Models／ERD／路由）、相較原作的新增功能全文，見
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)。
 
-## 相較原作的新增功能
-
-重構之外，這個版本也加上了原作沒有的玩法與營運能力：
-
-- **Boss 戰遊戲化**：點怪物本體攻擊、受擊震動與傷害數字、連擊計數、HP 條
-  三段變色與擊敗演出；隨機浮現的**弱點爆擊**（×2，伺服器端 2 秒節流防刷，
-  見重構亮點）。第 10/11 關依原始劇情考證還原為「摩天輪魔王」雙型態連戰。
-- **四職業主動技**（每場王戰每人一次，`BossSkillUse` unique index 保證；
-  效果與授權全在伺服器端，client 只傳意圖）：
-
-  | 職業 | 被動 | 主動技 |
-  |---|---|---|
-  | 阿北 | 王戰時限 +10 秒 | 倚老賣老・本場時限再 +10 秒 |
-  | 鄉民 | 每次攻擊 +2 | 肉搜公審・立即 5 點傷害 |
-  | 鞋姊 | 提示不扣分 | 醍醐灌頂・下一擊必定爆擊 |
-  | 罔美 | 結算 +100 分 | 聚光燈・5 秒爆擊窗＋立即弱點 |
-
-- **營運後台**（`/admin`，全區伺服器端驗證）：營運總覽 Dashboard（進度
-  分布、進行中戰鬥、兌獎池餘量）、隊伍管理（搜尋/詳情/個資遮罩，刪除僅限
-  test_mode 隊伍且 controller 層硬擋）、題目管理（內容/提示子表/Boss 參數/
-  **答案重設**——輸入明文伺服器轉 digest、永不回顯）、兌獎序號池管理與
-  批次產生、隊伍序號產生器（rqrcode QR）。
-
-## 架構總覽
-
-### Models
-
-| Model | 對應舊表 | 說明 |
-|---|---|---|
-| `Team` | WHEEL_PLAYER_MAIN | 隊伍，16 碼序號登入；`test_mode` 標記示範/彩排隊伍 |
-| `Player` | WHEEL_PLAYER_USER | 隊伍成員；1 隊長＋最多 3 隊員；`job` 可為 null（未選職業） |
-| `Question` | QUEST_MAIN | 11 道謎題；答案只存 SHA-256 digest，不存明文 |
-| `QuestionHint` | （舊 QUEST_MAIN.QUESTION_HINT1/2 欄位） | 某題的提示，`[question_id, position]` 唯一；「沒有提示列」就是「這題不能用提示」 |
-| `Boss` | （舊站無此表） | 怪物主檔，只有 `sprite`；10 隻對 11 題（第 10/11 題共用摩天輪魔王） |
-| `QuestionAttempt` | QUEST_LOG | 某隊某題的計時/提示紀錄；`ended_at` 為 null 代表進行中 |
-| `BossBattle` | BOSS_LOG | 每題一場王戰，`question_id` 外鍵；`[team_id, question_id]` 唯一 |
-| `BossReady` | （舊 READY_COUNT 欄位） | 玩家對某場王戰的「準備」標記，join table 保證冪等 |
-| `BossSkillUse` | （新增） | 玩家於某場王戰的主動技使用紀錄，`[boss_battle_id, player_id]` 唯一＝每場每人一次 |
-| `ScoreEntry` | QUEST_SCORE | 每隊每題最終分數，`question_id` 外鍵，伺服器端算好後寫入 |
-| `RewardCode` | WHEEL_PLAYER_REWARD | 兌獎序號池；以 email 為 key，一人固定配發 2 組 |
-| `Admin` | （新增，取代舊站前端驗證機制） | 後台帳號，`has_secure_password`；`role` enum 分 `operator`／`viewer`（唯讀展示帳號） |
-
-文字版 ERD（`1—N` 表示一對多）：
-
-```
-Team 1─N Player          UQ [team_id, email]（一個 email 在一隊只佔一個席位）
-                         UQ [team_id, job] WHERE job IS NOT NULL（同隊職業不重複）
-Team 1─N QuestionAttempt N─1 Question
-Team 1─N BossBattle      N─1 Question      UQ [team_id, question_id]
-         BossBattle 1─N BossReady N─1 Player
-         BossBattle 1─N BossSkillUse N─1 Player
-Team 1─N ScoreEntry      N─1 Question      UQ [team_id, question_id]
-Boss 1─N Question （10 隻怪對 11 題；第 10/11 題指向同一列，
-                    以 questions.boss_phase = 1/2 區分型態）
-Question 1─N QuestionHint                  UQ [question_id, position]
-RewardCode （獨立，以 player_email 字串關聯，不用外鍵——沿用舊站以 email
-             為配發 key 的語意，允許玩家換序號重新登入仍拿回同一組獎品）
-```
-
-`ScoreCalculator`（`app/models/score_calculator.rb`）是一個 PORO，不對應
-資料表，只負責把「該題分數／時間分數／提示扣分／王戰加分／職業加分」組成一筆
-`ScoreEntry`。
-
-### 刻意保留的非正規設計
-
-正規化這一輪的重點不只是「把該拆的拆掉」，也包括**寫清楚哪些沒拆、為什麼**。
-完整論證見 `docs/SCHEMA_REDESIGN.md` §5，摘要：
-
-- **`reward_codes.player_email` 是字串 key 而不是 `player_id` 外鍵。** 兌獎配發
-  以「人」為單位而非「隊籍」；`sessions#create` 在玩家換序號時會建立**新的
-  `Player` 列**，改成外鍵會讓同一個人重複領獎。這個語意承襲自 2018 dump 的
-  `WHEEL_PLAYER_REWARD.USER_ID`（本身就是 email 欄位）。
-- **`boss_battles.hp` 是 `questions.boss_hp` 的複本。** 那是**開戰瞬間的快照**：
-  進行中的戰鬥不該因為題目被調參而改變難度。
-- **`boss_time_limit` 反而不做快照。** 因為它本質是動態的——隊上有「阿北」會
-  +10 秒，而隊員可以在開戰前才換職業。這個與上一項的不對稱是刻意的。
-- **`score_entries` 存 5 個分項＋可導出的 `total_score`。** 分項取決於結算當下的
-  隊伍職業組成，事後無法重算，整列是一次結算的物化快照。
-- **`players` 同時承載 person（`email`）與 membership（`team_id`/`role`/`job`）
-  與聯絡資訊。** 理論上有跨隊更新異常，但 2018 真實資料 573 名玩家中跨隊 email
-  是 **0 筆**；這是一場活動的遊戲，不是 CRM。
-- **`boss_hp`/`boss_time_limit` 留在 `questions` 而沒有移進 `bosses`。** 它們是
-  「這一戰」的參數而非「這隻怪」的屬性——第 10/11 題打同一隻怪但難度本來就不同
-  （`base_score` 是 1000 vs 3000），移過去會強迫兩題同難度，那是行為變更。
-  同理 `bosses` 刻意不加 `name`：舊 dump 沒有怪物名稱，加了就是憑空發明。
-- **`Player::MAX_MEMBERS = 3` 只在應用層，`MAX_LEADERS = 1` 卻可以落到 DB。**
-  唯一性能用 partial unique index 表達，計數上限不行（需要 trigger）；**不為了
-  對稱而引入 trigger**。
-- **外鍵一律 RESTRICT，刪除連鎖只在 Rails 的 `dependent: :destroy`。** 繞過應用層
-  的刪除會失敗而不是靜默毀掉歷史。
-
-### 路由設計
-
-- 玩家端集中在 `namespace :game`（`Game::BaseController` 統一檔
-  `require_player_session`），對照舊站 38 個 `Wheel` controller action，一一
-  對應成 RESTful 路由（詳見 `docs/REFACTOR_PLAN.md` §2 的完整對照表）。
-- 後台集中在 `namespace :admin`（`Admin::BaseController` 統一檔
-  `require_admin`）。
-- 公開頁（首頁、隱私權、錯誤頁）留在頂層，不進 namespace。
-
-### 前端：全 Hotwire／Tailwind，零 jQuery、零 CSS 框架 CDN
-
-這個專案的前端經歷過一次完整的現代化（`docs/UI_MODERNIZATION_PLAN.md` U0～
-U3），起點是 2018 年原站直接沿用的 jQuery 3.3.1／jQuery UI 1.12.1／
-Bootstrap 4.1.3（含 Font Awesome）全套 CDN，終點是：
-
-- **拼圖拖拉是原生 Pointer Events 引擎，不是套件。** 舊站的
-  `jquery.snap-puzzle.min.js`（第三方 minified jQuery plugin，含 jQuery UI
-  draggable + touch-punch 模擬觸控）已整個移除，改由
-  `app/javascript/controllers/puzzle_controller.js` 用瀏覽器原生
-  Pointer Events（`pointerdown`/`pointermove`/`pointerup` + `setPointerCapture`）
-  重寫拖拉與吸附判定，滑鼠與觸控天生統一，不需要任何相容層。
-- **Bootstrap 4 的 Modal／Carousel 也都退場了**：首頁「玩法說明」彈窗改用
-  瀏覽器原生 `<dialog>` 元素（`dialog_controller.js`），選職業的輪播改用 CSS
-  `scroll-snap`（`carousel_controller.js`），兩者都不再需要 jQuery。
-- 現存的每一個 Stimulus controller（`app/javascript/controllers/*`）都是
-  原生 DOM API 或 `fetch`，`app/javascript/lib/api.js` 統一處理
-  `X-CSRF-Token`。全站前端**沒有任何一行 jQuery**，也沒有任何 Bootstrap／
-  Font Awesome 的 `<script>`／`<link>` CDN 標籤。
-- 視覺層改用 **Tailwind CSS v4**（`tailwindcss-rails` gem，免 Node、與既有
-  sprockets pipeline 共存），全站 view（含後台）依 `docs/UI_STYLE_GUIDE.md` 的
-  tokens／元件配方逐頁改版；`app/assets/stylesheets/site.scss` 與
-  `boss.scss` 兩份 2018 年手調座標的舊 SCSS 只保留 Tailwind 覆蓋不到的功能性
-  樣式（拼圖引擎的幾何定位、Boss 立繪疊圖的相對座標、地圖熱點、`scroll-snap`
-  輪播），不再承擔任何頁面的主題視覺。
-
-### CSS 編譯器
-
-`app/assets/tailwind/application.css`（`@import "tailwindcss"`）經
-`tailwindcss-rails` 編譯出 `app/assets/builds/tailwind.css`，負責全站絕大部分
-樣式。`sassc-rails`（`libsass` 綁定）現在只剩下編譯上一節提到的兩份少量自訂
-CSS（`site.scss`／`boss.scss`）——拼圖/Boss 疊圖等 Tailwind utility 表達不了
-或不划算表達的功能性定位樣式。`sassc`/`sassc-rails` 上游已宣告 EOL、不再
-維護；**未來待辦**：換成 `dartsass-rails`（官方目前建議的替代方案），屆時
-只需要把兩個 `.scss` 檔案原樣搬過去、調整 Gemfile，不影響任何其他程式碼。
+**技術棧**：Rails 7.2／PostgreSQL／Hotwire（Turbo + Stimulus）／Tailwind CSS v4／部署 Fly.io（東京）+ Cloudflare。
 
 ## 本機啟動
 
 ```bash
-# 1. 安裝 Ruby gems（Ruby 版本見 .ruby-version，目前 3.3.5）
-bundle install
-
-# 2. 準備資料庫（需要本機有 PostgreSQL 在跑；連線設定見 config/database.yml，
-#    預設用本機 socket + 目前系統使用者，一般本機開發不用另外設帳密）
-bin/rails db:prepare
-
-# 3. 灌入資料（11 題已還原原文的題目、demo 隊伍、20 組正式序號、100 組兌獎序號、
-#    後台帳號；見 db/seeds.rb）
-bin/rails db:seed
-
-# 4. 啟動伺服器
-bin/rails server
+bundle install                 # 1. 安裝 gems（Ruby 版本見 .ruby-version）
+bin/rails db:prepare            # 2. 建立資料庫（本機 PostgreSQL socket，免帳密）
+bin/rails db:seed               # 3. 灌入 11 題／demo 隊伍／序號池／後台帳號
+bin/rails server                # 4. 啟動伺服器 → http://localhost:3000
 ```
 
-打開 http://localhost:3000 後，首頁會有一個「▶ 直接體驗（Demo）」按鈕，點下去
-會（`POST /game/session` 帶 `demo: "1"`，見
-`Game::SessionsController#create_demo!`）當場建立一個全新的單人示範隊伍
-（`test_mode: true`、隨機序號、隨機訪客 email）並直接以該隊隊長身分登入，
-不需要湊到 4 個人，也不會和其他訪客互相搶名額——每次點擊都是獨立的一支隊，
-可以一路把 11 題 + Boss 戰 + 結算 + 兌獎跑完。`db/seeds.rb` 另外保留的固定
-序號 `Team::DEMO_SERIAL_NO`（見 `app/models/team.rb`）只是展示資料本身、
-**刻意不預塞任何玩家**，不是首頁 Demo 按鈕實際登入的隊伍。示範資料
-（`db/seeds.rb`）把所有題目的王戰 HP 設定成 10、基準時限 60 秒（隊上有
-「阿北」職業時 +10 秒），方便單人在合理時間內打完全部 Boss；已登入 demo
-隊伍的頁面（`/game`）會在主選單標題旁顯示一個「Demo」標籤。
+首頁「▶ 直接體驗（Demo）」按鈕會當場建立一支全新單人示範隊伍並直接登入，
+不需湊滿 4 人即可跑完全部關卡＋Boss 戰＋結算＋兌獎。
 
-後台入口在 `/admin/login`。帳號由 `db/seeds.rb` 建立，email 固定為
-`admin@venture-ferris.example`，密碼可用環境變數指定：
+後台入口 `/admin/login`：
+
+- **operator**（一般帳號）：`admin@venture-ferris.example`，密碼由 `ADMIN_PASSWORD` 環境變數指定（`ADMIN_PASSWORD=xxx bin/rails db:seed`；未設定時預設 `changeme`，僅供本機示範）。
+- **viewer**（唯讀展示帳號，帳密刻意公開）：`demo-admin@venture-ferris.example` / `walkthrough2026`，可瀏覽後台所有頁面，但任何寫入操作都會被伺服器端 `Admin::BaseController#block_viewer_writes` 擋下。
+
+> ⚠️ 正式環境的後台密碼＝部署時設定的 `ADMIN_PASSWORD` secret，不是預設值
+> `changeme`；帳號建立後才改 secret 不會自動更新既有密碼，需另外更新資料庫
+> 中的 `Admin` 記錄。
+
+### 測試
 
 ```bash
-ADMIN_PASSWORD=your-password bin/rails db:seed
+bin/rails test          # Model + integration tests
+bin/rails test:system   # System tests（需要本機 Chrome）
+bin/rubocop              # Lint
+bin/brakeman             # 安全性靜態掃描
 ```
 
-若未設定 `ADMIN_PASSWORD`，seeds 會用預設密碼 `changeme`（僅供本機示範，正式
-環境請務必自行設定這個環境變數後再跑 seeds）。
+CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加 `bin/importmap audit`。
 
-> ⚠️ **正式環境的後台密碼＝部署時設定的 `ADMIN_PASSWORD` secret 的值**，不是
-> 上面的預設值 `changeme`。另外要注意：帳號建立之後才改 secret 不會自動更新
-> 既有帳號的密碼（seeds 只在建立時讀取），改密碼需同時更新資料庫中的
-> `Admin` 記錄（例如 `Admin.find_by!(email: ...).update!(password: ...)`）。
+## 文件導覽
 
-### 展示帳號（唯讀）
-
-`db/seeds.rb` 另外會建立一個公開的展示帳號，讓作品集訪客可以實際登入後台
-瀏覽，帳密**刻意公開**（`Admin.role` enum 的 `viewer`，見
-`app/models/admin.rb`）：
-
-```
-email: demo-admin@venture-ferris.example
-password: walkthrough2026
-```
-
-viewer 可以看到後台所有頁面（Dashboard、隊伍管理、題目管理、兌獎序號、隊伍
-序號），但任何寫入操作都會被擋下，並顯示「展示模式（唯讀）」提示。設計上
-**寫入攔截在伺服器端 controller 層，非僅前端隱藏**——`Admin::BaseController`
-的 `block_viewer_writes` 會擋下 viewer 帳號送出的所有非 GET 請求（見
-`app/controllers/admin/base_controller.rb`），即使直接對寫入端點發送
-POST/PATCH/DELETE 也一樣被拒絕，前端只是額外把對應的表單／按鈕換成「唯讀模式
-不可操作」的說明文字，純粹是 UX，不是安全邊界。一般 operator 帳號（例如上面
-的 `admin@venture-ferris.example`）完全不受影響。
-
-## 測試
-
-```bash
-# Model + integration tests
-bin/rails test
-
-# System tests（需要本機有 Chrome，見 test/application_system_test_case.rb）
-bin/rails test:system
-
-# Lint
-bin/rubocop
-
-# 安全性靜態掃描
-bin/brakeman
-```
-
-CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加
-`bin/importmap audit`。
+| 文件 | 內容 |
+|---|---|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | 架構總覽、重構亮點完整版、新增功能全文、已知限制全文——本文件的深度版 |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Fly.io 從零到上線的完整操作序列 |
+| [`docs/DEPLOYMENT_RESEARCH.md`](docs/DEPLOYMENT_RESEARCH.md) | 部署主機定價與規格查證（Fly.io/Vultr/Linode/DO/Render 比較） |
+| [`docs/REFACTOR_PLAN.md`](docs/REFACTOR_PLAN.md) | 重構計畫 v2：舊站行為對照表與已知 bug 修正原則 |
+| [`docs/SCHEMA_REDESIGN.md`](docs/SCHEMA_REDESIGN.md) | Schema 正規化方案：逐項決策表與 M0 計分黃金值測試附錄 |
+| [`docs/UI_MODERNIZATION_PLAN.md`](docs/UI_MODERNIZATION_PLAN.md) | UI 現代化方案：Tailwind 改版分批計畫 |
+| [`docs/UI_AUDIT.md`](docs/UI_AUDIT.md) | UI 現代化前的現況逐頁盤點 |
+| [`docs/UI_STYLE_GUIDE.md`](docs/UI_STYLE_GUIDE.md) | Tailwind tokens 與元件配方 |
+| [`docs/JOB_SKILLS_DESIGN.md`](docs/JOB_SKILLS_DESIGN.md) | Boss 戰四職業主動技設計 |
+| [`docs/ADMIN_CONSOLE_PLAN.md`](docs/ADMIN_CONSOLE_PLAN.md) | 後台功能補全計畫（A1-A5） |
+| [`docs/legacy/ANALYSIS.md`](docs/legacy/ANALYSIS.md) | 2018 原始 CodeIgniter 專案盤點報告 |
 
 ## 素材授權註記
 
@@ -296,67 +96,13 @@ CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加
 
 ## 已知限制
 
-- **題目原文已還原；第 1、2、9 題（拼圖／熊讚）也已還原為互動題本貌，不再
-  是文字答案。** 原始 SQL dump 已於 2026-08-29 尋回，`db/seeds.rb` 的 11 題
-  標題／題目敘述／難度／提示／解說已改為 `QUEST_MAIN` 的原文。dump 同時證實
-  第 1、2、9 題的 `QUESTION_PASSWORD` 欄位本身就是空字串——這不是資料遺失，
-  而是因為當年這三題本來就不是文字題：拼完拼圖（第 1、2 題）或找出熊讚
-  雕像上 5 個相異處（第 9 題）本身就是答案，正解判斷完全在前端做，對照
-  舊站原始碼（`wheel_puzzle.php`/`wheel_bear.php`）也是完成互動就直接 POST
-  `timer/.../End` 進王戰，從未比對過任何文字。本次還原沿用同一設計：
-  `Question#interactive?`（`kind: puzzle`／`bear`）讓
-  `Game::QuestionsController#answer` 對這兩種 kind 不比對文字、完成互動即
-  視為答對；這三題的 `answer_digest` 維持 NULL（schema 層允許，只有
-  `kind: quiz` 的題目在 model 層仍強制必填），不再需要示範答案
-  （`meifu`/`yakiniku`/`xiongzan` 已移除）。其餘題目的答案依既有設計仍只存
-  SHA-256 digest（`Question.digest_for`，見 `app/models/question.rb`），不會
-  明文寫回任何檔案。
-- **`mon10.gif` 從未存在，第 10/11 題其實是同一隻「摩天輪魔王」的雙型態連戰。**
-  原始素材備份裡怪物圖檔只有 10 個檔案（`mon01~09.gif` + `mon11.gif`），一度
-  被當成「第 10 題圖檔遺失」處理。考證還原後的原始劇情文本（`db/seeds.rb`）
-  發現：第 10 題標題是「魔王佔據的摩天輪」，第 11 題緊接著是同一場戰鬥的延續
-  （`auto_start`，沒有獨立的宣戰大廳），且素材命名習慣以 F1/F2 表示同一隻怪
-  的兩個型態——三者合起來指向「第 10/11 題本來就是對同一隻摩天輪魔王的連續
-  戰鬥」，`mon10.gif` 推測從未作為獨立素材存在過，不是遺失。本次改以
-  `mon11.gif` 還原設計意圖：第 10 題（第一型態）套用濾鏡＋略小尺寸顯示同一張
-  立繪，第 11 題（最終型態）維持原色滿版。這個考證結論後來直接變成 schema：
-  `bosses` 表的第 10、11 題**指向同一列**，型態由 `questions.boss_phase` 決定，
-  取代了原本散在三個 helper method 裡的 `number == 10 ? 11 : number` 判斷
-  （見 `docs/SCHEMA_REDESIGN.md` §2-3——這也是「抽 `bosses` 表」這個決策從
-  「不抽」翻轉成「抽」的原因：怪物與題目不是 1:1）。視覺樣式見
-  `app/assets/stylesheets/boss.scss` 的 `.boss-phase-1`。
-  `boss_asset_available?` 的文字說明 fallback 機制仍保留，作為其餘題號未來若
-  素材缺失時的防禦——`sprite` 是 NOT NULL 字串，這跟 asset 檔案存不存在是兩件事。
+- 題目原文（含第 1、2、9 題的拼圖／熊讚互動題）已於 2026-08-29 依尋回的原始
+  SQL dump 還原本貌。
+- `mon10.gif` 從未存在——第 10/11 題考證後確認是同一隻「摩天輪魔王」的雙型態
+  連戰，非素材遺失。
 
-## 部署
+完整考證過程見 [ARCHITECTURE.md「已知限制（完整版）」](docs/ARCHITECTURE.md#known-limitations)。
 
-**已完成：Fly.io。** 完整的從零到上線操作序列見
-[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)；定價與方案選擇的查證依據見
-`docs/DEPLOYMENT_RESEARCH.md`「Fly.io 深度查證」節。配置檔已就緒：
-
-- `fly.toml`：app machine shared-cpu-1x／512MB＋512MB swap、東京 nrt、
-  `auto_stop_machines = "suspend"` 省成本、`release_command` 部署時跑
-  `bin/rails db:prepare`。
-- `.github/workflows/deploy.yml`：push 到 `main` 自動部署；另有每日排程
-  跑 `bin/rails demo:cleanup`（Fly machine 沒有常駐 host 層 crontab，
-  故清理排程落在 CI 的 schedule job；執行前會先打 `/up` 喚醒
-  auto-suspend 的機器）；兩者都有
-  `FLY_API_TOKEN` secret 存在性檢查，secret 未設定時只是灰色 skip 不會讓
-  build 變紅。
-- `config/environments/production.rb`：`assume_ssl` ＋ `force_ssl` 搭配
-  Fly.io 的 SSL-terminating 代理；`ALLOWED_HOSTS` 環境變數機制沿用既有設計。
-- `Dockerfile`：Rails 預設產生版本，未做任何修改（相容性逐項確認見
-  `docs/DEPLOYMENT.md`「Dockerfile 相容性」節）。
-
-上線前記得重新產生正式環境用的序號池與兌獎序號池（目前 `db/seeds.rb` 裡的
-都是示範用途，見 `docs/DEPLOYMENT.md` 第 7 步的 `db:seed` 說明）。
-
-首頁 Demo 入口的濫用防護已完成：`config/initializers/rack_attack.rb`
-用 `rack-attack` 對 `POST /game/session`（`demo=1` 每 IP 每小時 5 次、
-一般登入每 IP 每分鐘 20 次）與 `POST /admin/session`（每 IP 每分鐘 10 次）
-節流，超過門檻回傳 429 與中文提示；門檻可用環境變數覆寫（見該檔）。
-遊戲行為端點（Boss 攻擊、各種 `*/status` 輪詢）刻意不節流，initializer
-內有明確註解說明邊界。搭配 `rails demo:cleanup`（`lib/tasks/demo_cleanup.rake`）
-定期清除超過 `DEMO_CLEANUP_HOURS`（預設 24）小時的 `test_mode` 隊伍並釋回
-其配發的兌獎序號，`Team::DEMO_SERIAL_NO` 展示隊伍固定排除。實際排程落地方式
-見上方 `deploy.yml` 的每日 schedule job。
+已部署 Fly.io（東京，auto-suspend）＋ rack-attack 節流與每日 demo 資料清理排
+程，完整流程見 `docs/DEPLOYMENT.md`，維運細節見
+[ARCHITECTURE.md「部署與維運細節」](docs/ARCHITECTURE.md#deployment-details)。
