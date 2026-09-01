@@ -11,21 +11,25 @@
   <div class="mb-8! rounded-xl! bg-white! p-6! ring-1! ring-slate-200! shadow-sm!">
     <h2 class="text-base! font-semibold! text-slate-800!">批量產生</h2>
 
-    <%= form_with url: admin_serial_codes_path, method: :post, local: true, class: "mt-4! flex! flex-wrap! items-end! gap-4!" do |f| %>
-      <div>
-        <%= f.label :count, "產生筆數", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
-        <%= f.number_field :count, value: Admin::SerialCodesController::DEFAULT_COUNT,
-              min: 1, max: Admin::SerialCodesController::MAX_COUNT,
-              class: "w-32! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
-      </div>
+    <% if current_admin&.viewer? %>
+      <p class="mt-4! text-sm! text-slate-500!">唯讀模式不可操作。</p>
+    <% else %>
+      <%= form_with url: admin_serial_codes_path, method: :post, local: true, class: "mt-4! flex! flex-wrap! items-end! gap-4!" do |f| %>
+        <div>
+          <%= f.label :count, "產生筆數", class: "mb-1! block! text-sm! font-medium! text-slate-700!" %>
+          <%= f.number_field :count, value: Admin::SerialCodesController::DEFAULT_COUNT,
+                min: 1, max: Admin::SerialCodesController::MAX_COUNT,
+                class: "w-32! rounded-lg! border-0! px-3! py-2! text-slate-800! ring-1! ring-inset! ring-slate-300! focus:ring-2! focus:ring-inset! focus:ring-indigo-500!" %>
+        </div>
 
-      <div class="flex! items-center! gap-2! pb-2!">
-        <%= f.check_box :test_mode, class: "h-4! w-4! rounded! border-slate-300! text-indigo-600! focus:ring-indigo-500!" %>
-        <%= f.label :test_mode, "測試模式 (test_mode)", class: "text-sm! font-medium! text-slate-700!" %>
-      </div>
+        <div class="flex! items-center! gap-2! pb-2!">
+          <%= f.check_box :test_mode, class: "h-4! w-4! rounded! border-slate-300! text-indigo-600! focus:ring-indigo-500!" %>
+          <%= f.label :test_mode, "測試模式 (test_mode)", class: "text-sm! font-medium! text-slate-700!" %>
+        </div>
 
-      <%= f.submit "產生序號",
-            class: "cursor-pointer! rounded-lg! bg-indigo-600! px-4! py-2! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!" %>
+        <%= f.submit "產生序號",
+              class: "cursor-pointer! rounded-lg! bg-indigo-600! px-4! py-2! text-sm! font-semibold! text-white! transition! hover:bg-indigo-500!" %>
+      <% end %>
     <% end %>
   </div>
 

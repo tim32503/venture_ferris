@@ -1,5 +1,10 @@
 class Admin::SessionsController < Admin::BaseController
   skip_before_action :require_admin, only: [ :new, :create ]
+  # Viewer accounts must be able to log in and out like any other admin —
+  # the read-only guard only makes sense once a session already exists, and
+  # login/logout are themselves POST/DELETE requests that would otherwise be
+  # blocked by Admin::BaseController#block_viewer_writes.
+  skip_before_action :block_viewer_writes
 
   def new
   end

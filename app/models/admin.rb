@@ -4,6 +4,11 @@
 class Admin < ApplicationRecord
   has_secure_password
 
+  # operator (default) has full read/write access; viewer is the public
+  # portfolio-showcase account — it can log in and browse every back-office
+  # page, but every write is refused server-side (Admin::BaseController).
+  enum :role, { operator: 0, viewer: 1 }, default: :operator, validate: true
+
   validates :email, presence: true,
                      uniqueness: true,
                      format: { with: URI::MailTo::EMAIL_REGEXP }
