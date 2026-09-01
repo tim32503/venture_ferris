@@ -112,6 +112,11 @@ Rails.application.configure do
   # *.fly.dev hostname, plus any custom domain later attached.
   if ENV["ALLOWED_HOSTS"].present?
     config.hosts = ENV["ALLOWED_HOSTS"].split(",").map(&:strip)
+    # Fly.io health checks hit the machine by its private IP (e.g.
+    # "172.19.11.162:3000"), which the allowlist would block, leaving the
+    # machine permanently unhealthy. Exempt the health-check path only —
+    # same as the Rails 8 generator default.
+    config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
   end
 
   # Skip DNS rebinding protection for the default health check endpoint.
