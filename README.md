@@ -294,30 +294,35 @@ CI（`.github/workflows/ci.yml`）在每個 PR 上會跑上述四項，外加
   `boss_asset_available?` 的文字說明 fallback 機制仍保留，作為其餘題號未來若
   素材缺失時的防禦——`sprite` 是 NOT NULL 字串，這跟 asset 檔案存不存在是兩件事。
 
-## 部署待辦
+## 部署
 
-這個專案目前只整備到「本機/一般 Rails 環境可以正常開機」的程度，尚未決定
-實際部署平台，所以刻意不生成任何平台專屬設定（例如 Kamal 的
-`config/deploy.yml`）。若之後要部署，至少需要：
+**已完成：Fly.io。** 完整的從零到上線操作序列見
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)；定價與方案選擇的查證依據見
+`docs/DEPLOYMENT_RESEARCH.md`「Fly.io 深度查證」節。配置檔已就緒：
 
-- 決定部署目標（Render／Fly.io／Kamal + VM／其他）並補上對應設定檔。
-- 設定 `RAILS_MASTER_KEY`（或改用其他 credentials 管理方式）。
-- 設定 `VENTURE_FERRIS_DATABASE_PASSWORD`（見 `config/database.yml` 的
-  production 區塊）。
-- 若要啟用 Rails 的 Host header 保護，設定環境變數 `ALLOWED_HOSTS`
-  為逗號分隔的允許網域清單（見 `config/environments/production.rb`）；
-  不設定則維持 Rails 預設（不限制 Host）。
-- 重新產生正式環境用的序號池與兌獎序號池（目前 seeds 裡的都是示範用途）。
-- 首頁 Demo 入口的濫用防護已完成：`config/initializers/rack_attack.rb`
-  用 `rack-attack` 對 `POST /game/session`（`demo=1` 每 IP 每小時 5 次、
-  一般登入每 IP 每分鐘 20 次）與 `POST /admin/session`（每 IP 每分鐘 10 次）
-  節流，超過門檻回傳 429 與中文提示；門檻可用環境變數覆寫（見該檔）。
-  遊戲行為端點（Boss 攻擊、各種 `*/status` 輪詢）刻意不節流，initializer
-  內有明確註解說明邊界。搭配 `rails demo:cleanup`（`lib/tasks/demo_cleanup.rake`）
-  定期清除超過 `DEMO_CLEANUP_HOURS`（預設 24）小時的 `test_mode` 隊伍並釋回
-  其配發的兌獎序號，`Team::DEMO_SERIAL_NO` 展示隊伍固定排除。部署時建議加入
-  crontab，例如每小時執行一次：
+- `fly.toml`：app machine shared-cpu-1x／512MB＋512MB swap、東京 nrt、
+  `auto_stop_machines = "suspend"` 省成本、`release_command` 部署時跑
+  `bin/rails db:prepare`。
+- `.github/workflows/deploy.yml`：push 到 `main` 自動部署；另有每日排程
+  跑 `bin/rails demo:cleanup`（Fly machine 沒有常駐 host 層 crontab，
+  故清理排程落在 CI 的 schedule job；執行前會先打 `/up` 喚醒
+  auto-suspend 的機器）；兩者都有
+  `FLY_API_TOKEN` secret 存在性檢查，secret 未設定時只是灰色 skip 不會讓
+  build 變紅。
+- `config/environments/production.rb`：`assume_ssl` ＋ `force_ssl` 搭配
+  Fly.io 的 SSL-terminating 代理；`ALLOWED_HOSTS` 環境變數機制沿用既有設計。
+- `Dockerfile`：Rails 預設產生版本，未做任何修改（相容性逐項確認見
+  `docs/DEPLOYMENT.md`「Dockerfile 相容性」節）。
 
-  ```
-  0 * * * * cd /app && bin/rails demo:cleanup
-  ```
+上線前記得重新產生正式環境用的序號池與兌獎序號池（目前 `db/seeds.rb` 裡的
+都是示範用途，見 `docs/DEPLOYMENT.md` 第 7 步的 `db:seed` 說明）。
+
+首頁 Demo 入口的濫用防護已完成：`config/initializers/rack_attack.rb`
+用 `rack-attack` 對 `POST /game/session`（`demo=1` 每 IP 每小時 5 次、
+一般登入每 IP 每分鐘 20 次）與 `POST /admin/session`（每 IP 每分鐘 10 次）
+節流，超過門檻回傳 429 與中文提示；門檻可用環境變數覆寫（見該檔）。
+遊戲行為端點（Boss 攻擊、各種 `*/status` 輪詢）刻意不節流，initializer
+內有明確註解說明邊界。搭配 `rails demo:cleanup`（`lib/tasks/demo_cleanup.rake`）
+定期清除超過 `DEMO_CLEANUP_HOURS`（預設 24）小時的 `test_mode` 隊伍並釋回
+其配發的兌獎序號，`Team::DEMO_SERIAL_NO` 展示隊伍固定排除。實際排程落地方式
+見上方 `deploy.yml` 的每日 schedule job。

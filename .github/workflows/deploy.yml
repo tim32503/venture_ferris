@@ -1,0 +1,78 @@
+name: Deploy
+
+# Deploys to Fly.io on every push to main, or on demand via workflow_dispatch.
+# A separate daily schedule runs `bin/rails demo:cleanup` on the deployed
+# machine — see lib/tasks/demo_cleanup.rake and docs/DEPLOYMENT.md.
+#
+# Both jobs are guarded by a FLY_API_TOKEN presence check so that merging
+# this workflow before the secret is configured does not turn every push
+# into a red build — see docs/DEPLOYMENT.md "GitHub FLY_API_TOKEN 設定"
+# for how to create and set the secret.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    # 17:00 UTC = 01:00 Asia/Taipei — one demo:cleanup run per day.
+    - cron: "0 17 * * *"
+
+jobs:
+  check-token:
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.check.outputs.has_token }}
+    steps:
+      - name: Check whether FLY_API_TOKEN is configured
+        id: check
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          if [ -n "$FLY_API_TOKEN" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::FLY_API_TOKEN secret is not set — skipping this run. See docs/DEPLOYMENT.md to create and set it, then re-run this workflow (or just push again)."
+          fi
+
+  deploy:
+    needs: check-token
+    if: needs.check-token.outputs.has_token == 'true' && github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: fly-deploy-venture-ferris
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  demo-cleanup:
+    needs: check-token
+    if: needs.check-token.outputs.has_token == 'true' && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Wake the machine before SSH
+        # min_machines_running = 0 + auto-suspend means the machine is almost
+        # certainly asleep when this cron fires, and `flyctl ssh console` does
+        # NOT go through http_service so it cannot trigger auto-start itself.
+        # An HTTP hit on /up wakes the machine first; a few retries cover the
+        # resume window.
+        run: curl -sS --retry 5 --retry-delay 3 --retry-all-errors -o /dev/null https://venture-ferris.fly.dev/up
+
+      - name: Run rails demo:cleanup on the deployed machine
+        # -a matches fly.toml's `app = "venture-ferris"` — update both if
+        # the app is ever renamed (see fly.toml's header comment on name
+        # collisions).
+        run: flyctl ssh console -a venture-ferris -C "bin/rails demo:cleanup"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
