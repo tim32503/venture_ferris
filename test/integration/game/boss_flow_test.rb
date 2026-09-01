@@ -263,5 +263,29 @@ module Game
       assert_select "a[href=?]", game_question_path(11), text: "前往最終考驗"
       assert_select "a[href=?]", game_score_path, count: 0
     end
+
+    test "a battle expiring on timeout also clears last_critical_at so the rematch's first critical counts" do
+      team = create_team
+      sign_in(team, role: "leader", email: "leader@example.com")
+      question = seed_question(1, boss_hp: 50, boss_time_limit: 30)
+
+      post ready_game_boss_path(1)
+      post attacks_game_boss_path(1), params: { critical: "1" }
+      battle = team.boss_battles.find_by!(question: question)
+      assert battle.last_critical_at.present?
+
+      travel 31.seconds do
+        # Any boss request runs expire_if_timed_out! and resets the round.
+        get game_boss_path(1)
+        assert_nil battle.reload.last_critical_at
+
+        # Rematch: the first critical inside what would have been the stale
+        # 2s throttle window must be honored (+2, not downgraded to +1).
+        post ready_game_boss_path(1)
+        assert_difference -> { battle.reload.attack_count }, 2 do
+          post attacks_game_boss_path(1), params: { critical: "1" }
+        end
+      end
+    end
   end
 end

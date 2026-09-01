@@ -177,7 +177,12 @@ module Game
       return unless @battle.started_at.present? && @battle.ended_at.blank?
       return unless Time.current > @battle.started_at + @time_limit
 
-      @battle.update!(started_at: nil, attack_count: 0, bonus_time_seconds: 0, spotlight_until: nil)
+      # last_critical_at must reset with the rest of the battle state:
+      # leaving the previous round's stamp would swallow the first critical
+      # claimed within 2s of the rematch starting (SCHEMA_REDESIGN.md §8.4
+      # deferred fix, now landed).
+      @battle.update!(started_at: nil, attack_count: 0, bonus_time_seconds: 0,
+                      spotlight_until: nil, last_critical_at: nil)
       @battle.boss_readies.destroy_all
       flash.now[:alert] = "王的時限已到，尚未擊敗，請重新宣戰！"
     end
