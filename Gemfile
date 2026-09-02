@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 7.2.2", ">= 7.2.2.1"
+gem "rails", "~> 8.1.3", ">= 8.1.3.1"
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem "sprockets-rails"
 # Use postgresql as the database for Active Record
@@ -42,8 +42,8 @@ gem "bootsnap", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
 
-# Sass 編譯器
-gem "sassc-rails"
+# Sass 編譯器（dart-sass 官方實作；sassc/libsass 已於 2024 停止維護）
+gem "dartsass-rails"
 
 # TailwindCSS via a standalone CLI executable, integrated with the asset
 # pipeline (no Node/npm required) [https://github.com/rails/tailwindcss-rails]

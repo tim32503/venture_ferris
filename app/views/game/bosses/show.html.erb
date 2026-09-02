@@ -8,6 +8,10 @@
     stylesheet without editing app/views/layouts/. %>
 <% content_for :head do %>
   <%= stylesheet_link_tag "boss" %>
+  <%# boss.scss is compiled by dart-sass, which has no sprockets `asset-url()`
+      helper, so the fingerprinted background URL is handed to it here as a
+      custom property (see app/assets/stylesheets/boss.scss). %>
+  <style>:root { --boss-bg-image: url("<%= image_path("bossBg.png") %>"); }</style>
 <% end %>
 
 <header class="mx-auto! max-w-2xl! px-4! pt-8! text-center! sm:pt-12!">

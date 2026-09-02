@@ -3,8 +3,12 @@
 *{ font-family: 'Noto Sans TC'; }
 
 /*----- 基本設定 -----*/
-body { 
-	background-image: asset-url("bg.jpg"); 
+body {
+	/* dart-sass has no sprockets `asset-url()` helper (it would pass the
+	   function through verbatim and the browser could not resolve it), so the
+	   fingerprinted URL is injected from the layout as a custom property.
+	   See app/views/layouts/application.html.erb. */
+	background-image: var(--site-bg-image);
 	background-repeat: repeat; 
 	background-attachment: fixed; 
 	background-position: center top; 

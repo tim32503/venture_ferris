@@ -82,7 +82,7 @@ seeds 明訂中文顯示名（阿北/鄉民/鞋姊/罔美）↔ enum 對映。
 - **jQuery 全站保留，走 classic script（不走 importmap ESM**，minified plugin 非 ESM 且 Bootstrap 4 modal 硬依賴 jQuery）：jQuery 3.3.1 / jQuery UI 1.12.1 / Bootstrap 4.1.3 **沿用舊站的 CDN `<script>` 標籤**（`_layouts/header.php:11-26` 同款）；本地 vendor 只放兩個檔：`jquery.snap-puzzle.min.js`（從舊專案 contents/ 複製）與 **jQuery UI touch-punch shim**（從舊站 `wheel_puzzle.php:166` 的 inline shim 抽出成獨立檔，手機拖拉必需），用 `javascript_include_tag` 依序載入（jQuery→jQuery UI→touch-punch→snap-puzzle）。
 - importmap **只**服務 Turbo/Stimulus 與自寫 controllers；modal 沿用 Bootstrap 4 JS 不用 Stimulus 重寫。
 - 45 張圖 → `app/assets/images/`；CSS 轉 UTF-8 後搬入（含 CRLF→LF）；`@import url(//fonts.googleapis.com/...)` 保留 `url()` 形式。
-- CSS 編譯器：維持 `sassc-rails`（已 EOL 一事在 README 選型理由中記錄，換裝列為未來項，避免本次 Gemfile 變動）。
+- CSS 編譯器：當時維持 `sassc-rails`（已 EOL 一事在 README 選型理由中記錄，換裝列為未來項，避免當時的 Gemfile 變動）。**已於 Rails 8.1 升級批次兌現**：改用 `dartsass-rails`，細節見 `docs/ARCHITECTURE.md`「CSS 編譯器」節與 `docs/RAILS_UPGRADE_RESEARCH.md` 實作附錄。
 - 移除 layout 的 Firebase CDN 標籤與 `window.history.forward(1)`（與 Turbo Drive 衝突；防返回需求以 Turbo 慣例或直接移除）。
 
 ## 4. 測試與品質
