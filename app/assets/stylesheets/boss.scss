@@ -3,8 +3,11 @@
 *{ font-family: 'Noto Sans TC'; }
 
 /*----- 基本設定 -----*/
-body { 
-	background-image: asset-url("bossBg.png");
+body {
+	/* dart-sass has no sprockets `asset-url()` helper, so the fingerprinted
+	   URL is injected from the boss page's `yield :head` block as a custom
+	   property. See app/views/game/bosses/show.html.erb. */
+	background-image: var(--boss-bg-image);
 	background-repeat: no-repeat; 
 	background-attachment: fixed; 
 	background-position: center top; 
@@ -50,7 +53,7 @@ p.text-shadow{ color: white; text-shadow: 1px 0 5px black, 0 1px 5px black; }
 	isolation: isolate;
 	width: 100%;
 	aspect-ratio: 509 / 720;
-	background-image: asset-url("bossBg.png");
+	background-image: var(--boss-bg-image);
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: cover;

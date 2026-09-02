@@ -175,11 +175,23 @@ Bootstrap 4.1.3（含 Font Awesome）全套 CDN，終點是：
 
 `app/assets/tailwind/application.css`（`@import "tailwindcss"`）經
 `tailwindcss-rails` 編譯出 `app/assets/builds/tailwind.css`，負責全站絕大部分
-樣式。`sassc-rails`（`libsass` 綁定）現在只剩下編譯上一節提到的兩份少量自訂
-CSS（`site.scss`／`boss.scss`）——拼圖/Boss 疊圖等 Tailwind utility 表達不了
-或不划算表達的功能性定位樣式。`sassc`/`sassc-rails` 上游已宣告 EOL、不再
-維護；**未來待辦**：換成 `dartsass-rails`（官方目前建議的替代方案），屆時
-只需要把兩個 `.scss` 檔案原樣搬過去、調整 Gemfile，不影響任何其他程式碼。
+樣式。`dartsass-rails`（Dart Sass 官方實作）現在只剩下編譯上一節提到的兩份
+少量自訂 CSS（`site.scss`／`boss.scss`）——拼圖/Boss 疊圖等 Tailwind utility
+表達不了或不划算表達的功能性定位樣式。原本使用的 `sassc`/`sassc-rails`
+（`libsass` 綁定）上游已宣告 EOL，已於 Rails 8 升級時一併換掉。
+
+編譯路徑：`config/initializers/dartsass.rb` 定義兩個 entry point，dart-sass
+把它們編進 `app/assets/builds/`，再由 sprockets 加上 digest 後輸出（與
+`tailwind.css` 同一條路徑，見 `app/assets/config/manifest.js` 的
+`link_tree ../builds`）。`dartsass:build` 已自動掛在 `assets:precompile` 與
+`test:prepare` 之後，`bin/dev`（`Procfile.dev`）則會另起 `dartsass:watch`。
+
+**一個換裝時的取捨要知道**：dart-sass 沒有 sprockets 的 `asset-url()` helper
+（會被當成未知的 CSS 函式原樣輸出，瀏覽器解不開）。兩份 scss 原本共 3 處
+`asset-url()` 引用 `bg.jpg`／`bossBg.png`，改成讀 CSS custom property
+（`--site-bg-image`／`--boss-bg-image`），由 layout 與 Boss 頁的 `yield :head`
+用 `image_path` 注入帶 digest 的網址——這樣才能同時保留 dart-sass 與資產
+指紋。新增背景圖引用時請沿用這個作法，不要寫死路徑。
 
 <a id="new-features"></a>
 ## 相較原作的新增功能

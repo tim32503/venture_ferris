@@ -42,8 +42,8 @@ gem "bootsnap", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
 
-# Sass 編譯器
-gem "sassc-rails"
+# Sass 編譯器（dart-sass 官方實作；sassc/libsass 已於 2024 停止維護）
+gem "dartsass-rails"
 
 # TailwindCSS via a standalone CLI executable, integrated with the asset
 # pipeline (no Node/npm required) [https://github.com/rails/tailwindcss-rails]

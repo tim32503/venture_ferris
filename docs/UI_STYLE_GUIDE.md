@@ -186,7 +186,7 @@
 
 ## 已知陷阱：Tailwind v4 的 `@layer` 會輸給舊 CSS（body/header/main/footer）
 
-Tailwind v4 產出的 CSS 全部包在 `@layer theme, base, components, utilities, properties;` 裡；`site.scss`（sassc 編譯）與 Bootstrap CDN CSS 完全沒有 `@layer` 包裝，屬於「unlayered」。CSS 層疊規則規定：**任何 unlayered 的一般（非 `!important`）宣告，優先度永遠高於任何 layered 宣告，跟選擇器具體度、`<link>` 載入順序都無關。**
+Tailwind v4 產出的 CSS 全部包在 `@layer theme, base, components, utilities, properties;` 裡；`site.scss`（Dart Sass 編譯）與 Bootstrap CDN CSS 完全沒有 `@layer` 包裝，屬於「unlayered」。CSS 層疊規則規定：**任何 unlayered 的一般（非 `!important`）宣告，優先度永遠高於任何 layered 宣告，跟選擇器具體度、`<link>` 載入順序都無關。**
 
 `site.scss` 對 `body`／`header`／`main`／`footer` 這幾個元素本身下了 element 選擇器規則（背景圖、margin、padding、color），Bootstrap reboot 對 `body` 也下了 `color`／`background-color`。只要 Tailwind utility class 直接套在這四個元素標籤本身，且剛好撞到同一個 CSS 屬性，Tailwind 會被無聲蓋掉（不會報錯，畫面就是不對）。範例：本批一開始 `<body class="bg-gradient-to-b ...">` 完全沒有生效，因為 `site.scss` 的 `body{background-image:...}` unlayered 贏了。
 
@@ -216,7 +216,7 @@ Admin 序號表格資料量小、欄位少（4 欄），維持一般 `<table>` �
 
 U3c 收尾時做了一個小實驗，評估能否讓 `site.scss`/`boss.scss` 的內容包進 `@layer components { ... }`，藉由 CSS Cascade Layers 的層級順序（Tailwind v4 編譯出的 CSS 開頭宣告 `@layer theme, base, components, utilities, properties;`，layout 裡 `tailwind` 樣式表也確實排在 `site`/`boss` 之前載入）讓 Tailwind 的 `utilities` 層自動贏過 `site.scss`/`boss.scss` 的 unlayered 規則，理論上可以讓全站 utility class 的 `!` 尾綴變成非必要。
 
-實驗結果：**語法可行**（`SassC::Engine.new("@layer components { .x { color:red; &:hover{...} } }", syntax: :scss).render` 順利編出合法 CSS，libsass 把 `@layer` 當一般 at-rule 原樣保留、`&` 巢狀照常展開），但**本批不採用，維持現有「每個會撞到 site.scss/Bootstrap 既有屬性的 utility 都加 `!`」的作法**，原因：
+實驗結果：**語法可行**（`SassC::Engine.new("@layer components { .x { color:red; &:hover{...} } }", syntax: :scss).render` 順利編出合法 CSS，libsass 把 `@layer` 當一般 at-rule 原樣保留、`&` 巢狀照常展開；當時的編譯器是 sassc/libsass，Rails 8 升級後已換成 Dart Sass，`@layer` 同樣是原樣保留的 at-rule，這個結論不受換裝影響），但**本批不採用，維持現有「每個會撞到 site.scss/Bootstrap 既有屬性的 utility 都加 `!`」的作法**，原因：
 
 1. 這個改動的效益是「省掉 `!` 尾綴」，但風險是「改變全站 CSS 的階層語意」——一旦層級順序判斷有誤（例如未來有人把 `stylesheet_link_tag` 順序調換、或新增一份沒有宣告 `@layer` 的樣式表插在中間），會在**沒有任何錯誤訊息**的情況下讓某個屬性靜默失效，而且影響範圍是全站而不是單一頁面，除錯成本遠高於現在「這個 class 沒作用就加 `!`」的局部風險。
 2. U3a/U3b 已經對十幾個頁面套用了「每個 utility 都加 `!`」的一致寫法；只在 U3c 新頁面改用 `@layer` 會讓同一份風格指南裡出現兩套互斥的 cascade 策略，之後任何人複製既有頁面當範本時都可能選錯策略、混用出更難除錯的組合。

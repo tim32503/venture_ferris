@@ -3,7 +3,7 @@
 [▶ Live Demo](https://venture-ferris.curihaosity.xyz)
 
 一個把 2018 年台北市商業處「勇闖摩天輪」團隊實境解謎活動網站，從 2018 年老舊
-的 CodeIgniter 3 專案重構為 Rails 7.2 的技術作品集專案。
+的 CodeIgniter 3 專案重構為 Rails 8.1 的技術作品集專案。
 
 ![遊戲流程展示](docs/images/demo.gif)
 
@@ -36,7 +36,7 @@
 完整論述、架構總覽（Models／ERD／路由）、相較原作的新增功能全文，見
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)。
 
-**技術棧**：Rails 7.2／PostgreSQL／Hotwire（Turbo + Stimulus）／Tailwind CSS v4／部署 Fly.io（東京）+ Cloudflare。
+**技術棧**：Rails 8.1／PostgreSQL／Hotwire（Turbo + Stimulus）／Tailwind CSS v4／Dart Sass／部署 Fly.io（東京）+ Cloudflare。
 
 ## 本機啟動
 
