@@ -7,7 +7,14 @@ body {
 	/* dart-sass has no sprockets `asset-url()` helper (it would pass the
 	   function through verbatim and the browser could not resolve it), so the
 	   fingerprinted URL is injected from the layout as a custom property.
-	   See app/views/layouts/application.html.erb. */
+	   See app/views/layouts/application.html.erb.
+
+	   Heads-up: since the U3 Tailwind pass, every page view sets a
+	   content_for :body_class with a `!`-suffixed Tailwind background
+	   (bg-gradient-to-b!/bg-none! etc.), which always wins over this
+	   unlayered rule — so this bg.jpg is currently never the visible
+	   backdrop on any page. Kept as the base-layer fallback; verified
+	   pixel-identical before/after the dartsass switch. */
 	background-image: var(--site-bg-image);
 	background-repeat: repeat; 
 	background-attachment: fixed; 
