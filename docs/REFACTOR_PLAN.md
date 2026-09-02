@@ -1,5 +1,8 @@
 # venture_ferris 重構計畫 v2（Taipeicooc2018 → Rails 7.2）
 
+> 📌 歷史文件：本計畫制定並執行於 Rails 7.2 時期；專案已於 2026-09 升級至
+> Rails 8.1（見 `docs/RAILS_UPGRADE_RESEARCH.md`），文內版本敘述維持當時語境。
+
 > 依據：`docs/legacy/ANALYSIS.md`（盤點報告，含勘誤見 §8）＋ opus 反方審查結論（2026-08-19）。
 > 目標：把 2018 年 CodeIgniter 團隊實境解謎遊戲重構成可公開上架的 Rails 7.2 作品集專案。
 > 原則：**UX 流程對齊舊站；架構全面 Rails 化；舊站的已知 bug 依 §1.4/§8 修正，不對齊壞行為**。
